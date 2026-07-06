@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
+import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
 import ContributionForm from "@/components/molecules/ContributionForm";
 import GoalForm from "@/components/molecules/GoalForm";
@@ -28,6 +29,8 @@ export default function GoalsPage() {
   } = useGoals();
 
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
+  const [pendingDelete, setPendingDelete] = useState<Goal | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function close() {
     setMode({ kind: "closed" });
@@ -47,12 +50,15 @@ export default function GoalsPage() {
     close();
   }
 
-  async function handleDelete(goal: Goal) {
-    const confirmed =
-      typeof window !== "undefined" &&
-      window.confirm(`Delete "${goal.name}"? Its contributions will also be removed.`);
-    if (!confirmed) return;
-    await removeGoal(goal.id);
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await removeGoal(pendingDelete.id);
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const modalTitle =
@@ -87,7 +93,7 @@ export default function GoalsPage() {
           monthlyRate={monthlyRate}
           onContribute={(goal) => setMode({ kind: "contribute", goal })}
           onEdit={(goal) => setMode({ kind: "edit", goal })}
-          onDelete={handleDelete}
+          onDelete={(goal) => setPendingDelete(goal)}
           emptyMessage="No goals yet. Add one to start planning."
         />
       )}
@@ -107,6 +113,26 @@ export default function GoalsPage() {
           />
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete goal?"
+        message={
+          pendingDelete && (
+            <>
+              This will permanently delete{" "}
+              <span className="text-fg font-medium">
+                &ldquo;{pendingDelete.name}&rdquo;
+              </span>{" "}
+              and all of its contributions. This can&apos;t be undone.
+            </>
+          )
+        }
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+        submitting={deleting}
+      />
     </div>
   );
 }

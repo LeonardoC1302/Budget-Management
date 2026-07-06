@@ -6,9 +6,10 @@ import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import CategoryPicker from "@/components/molecules/CategoryPicker";
 import { useAccounts } from "@/hooks/useAccounts";
+import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils/cn";
-import { todayISODate } from "@/lib/utils/format";
+import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { NewTransaction, TransactionType } from "@/lib/types";
 
 interface TransactionFormProps {
@@ -17,7 +18,8 @@ interface TransactionFormProps {
 
 export default function TransactionForm({ onSubmit }: TransactionFormProps) {
   const { accounts, loading: accountsLoading } = useAccounts();
-  const { filterByType, loading: categoriesLoading } = useCategories();
+  const { filterByType, byId: categoriesById, loading: categoriesLoading } = useCategories();
+  const { byCategoryId: budgetsByCategoryId, wouldExceed } = useBudgets();
 
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
@@ -63,6 +65,17 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
 
   const loading = accountsLoading || categoriesLoading;
 
+  const parsedAmount = parseFloat(amount);
+  const budget = budgetsByCategoryId[categoryId];
+  const overBudgetWarning =
+    type === "expense" &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0 &&
+    !!budget &&
+    wouldExceed(categoryId, parsedAmount)
+      ? `This would push ${categoriesById[categoryId]?.name ?? "this category"} over its ${formatCurrency(budget.amount, budget.currency)} cap.`
+      : null;
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div
@@ -91,18 +104,25 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
         ))}
       </div>
 
-      <Input
-        label="Amount"
-        name="amount"
-        type="number"
-        inputMode="decimal"
-        step="0.01"
-        min="0"
-        placeholder="0.00"
-        required
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
+      <div className="flex flex-col gap-1.5">
+        <Input
+          label="Amount"
+          name="amount"
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          required
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        {overBudgetWarning && (
+          <p role="status" className="text-xs text-expense">
+            {overBudgetWarning}
+          </p>
+        )}
+      </div>
 
       <Select
         label="Account"

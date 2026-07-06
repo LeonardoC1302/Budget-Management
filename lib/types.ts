@@ -59,6 +59,16 @@ export interface GoalContribution {
 
 export type NewGoalContribution = Omit<GoalContribution, "id" | "createdAt">;
 
+export interface Budget {
+  id: string;
+  categoryId: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+}
+
+export type NewBudget = Omit<Budget, "id" | "createdAt">;
+
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   debit: "Debit",
   credit: "Credit",

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils/cn";
 interface ProgressBarProps {
   /** Value between 0 and 1. */
   value: number;
-  tone?: "accent" | "income";
+  tone?: "accent" | "income" | "expense";
   className?: string;
   ariaLabel?: string;
 }
@@ -16,7 +16,12 @@ export default function ProgressBar({
 }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(1, value));
   const pct = Math.round(clamped * 100);
-  const fillTone = tone === "income" ? "bg-income" : "bg-accent";
+  const fillTone =
+    tone === "income"
+      ? "bg-income"
+      : tone === "expense"
+        ? "bg-expense"
+        : "bg-accent";
 
   return (
     <div
