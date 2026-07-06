@@ -3,21 +3,21 @@ import type { BudgetStore } from "@/lib/storage/BudgetStore";
 import type { CategoryStore } from "@/lib/storage/CategoryStore";
 import type { GoalStore } from "@/lib/storage/GoalStore";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
-import { localAccountStore } from "@/lib/storage/localAccountStore";
-import { localBudgetStore } from "@/lib/storage/localBudgetStore";
-import { localCategoryStore } from "@/lib/storage/localCategoryStore";
-import { localGoalStore } from "@/lib/storage/localGoalStore";
-import { localTransactionStore } from "@/lib/storage/localTransactionStore";
+import { firebaseAccountStore } from "@/lib/storage/firebaseAccountStore";
+import { firebaseBudgetStore } from "@/lib/storage/firebaseBudgetStore";
+import { firebaseCategoryStore } from "@/lib/storage/firebaseCategoryStore";
+import { firebaseGoalStore } from "@/lib/storage/firebaseGoalStore";
+import { firebaseTransactionStore } from "@/lib/storage/firebaseTransactionStore";
 
 /**
- * Single entry point for storage. Swap the implementations here (e.g. a
- * `firebaseTransactionStore`) and every consumer picks it up transparently.
+ * Single entry point for storage. Swap the implementations here (e.g. back to a
+ * `local*Store`) and every consumer picks it up transparently.
  */
-export const accountStore: AccountStore = localAccountStore;
-export const budgetStore: BudgetStore = localBudgetStore;
-export const categoryStore: CategoryStore = localCategoryStore;
-export const goalStore: GoalStore = localGoalStore;
-export const transactionStore: TransactionStore = localTransactionStore;
+export const accountStore: AccountStore = firebaseAccountStore;
+export const budgetStore: BudgetStore = firebaseBudgetStore;
+export const categoryStore: CategoryStore = firebaseCategoryStore;
+export const goalStore: GoalStore = firebaseGoalStore;
+export const transactionStore: TransactionStore = firebaseTransactionStore;
 
 export type {
   AccountStore,

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import BottomNav from "@/components/organisms/BottomNav";
+import AppShell from "@/components/organisms/AppShell";
 
 export const metadata: Metadata = {
   title: "Budget",
@@ -21,10 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full flex flex-col">
-        <main className="flex-1 w-full max-w-2xl mx-auto px-4 pt-6 pb-28 sm:px-6">
-          {children}
-        </main>
-        <BottomNav />
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

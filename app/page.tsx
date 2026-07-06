@@ -5,6 +5,7 @@ import Link from "next/link";
 import Button from "@/components/atoms/Button";
 import BudgetRow from "@/components/molecules/BudgetRow";
 import GoalCard from "@/components/molecules/GoalCard";
+import SignOutButton from "@/components/molecules/SignOutButton";
 import DashboardSummary from "@/components/organisms/DashboardSummary";
 import InsightsSection from "@/components/organisms/InsightsSection";
 import TransactionList from "@/components/organisms/TransactionList";
@@ -39,9 +40,12 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <span className="label-sm">Overview</span>
-        <h1 className="heading-xl">This month</h1>
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <span className="label-sm">Overview</span>
+          <h1 className="heading-xl">This month</h1>
+        </div>
+        <SignOutButton />
       </header>
 
       <DashboardSummary
