@@ -8,6 +8,7 @@ export function defaultAccount(): Account {
     name: "Cash",
     type: "cash",
     initialBalance: 0,
+    initialBalanceUSD: 0,
     currency: "USD",
     createdAt: new Date(0).toISOString(),
   };

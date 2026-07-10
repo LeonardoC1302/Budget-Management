@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
+import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import CategoryPicker from "@/components/molecules/CategoryPicker";
@@ -9,6 +10,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils/cn";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { NewTransaction, TransactionType } from "@/lib/types";
 
@@ -38,6 +40,9 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
       ? selectedAccountId
       : accounts[0]?.id ?? "";
 
+  const accountCurrency =
+    accounts.find((a) => a.id === accountId)?.currency ?? BASE_CURRENCY;
+
   const categoryId =
     categoriesForType.some((c) => c.id === selectedCategoryId)
       ? selectedCategoryId
@@ -53,6 +58,7 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
     await onSubmit({
       type,
       amount: parsed,
+      currency: accountCurrency,
       accountId,
       categoryId,
       description: description.trim(),
@@ -69,6 +75,7 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
   const budget = budgetsByCategoryId[categoryId];
   const overBudgetWarning =
     type === "expense" &&
+    accountCurrency === BASE_CURRENCY &&
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0 &&
     !!budget &&
@@ -106,7 +113,7 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
 
       <div className="flex flex-col gap-1.5">
         <Input
-          label="Amount"
+          label={`Amount (${accountCurrency})`}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -147,13 +154,12 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
         onChange={(e) => setDescription(e.target.value)}
       />
 
-      <Input
+      <DatePicker
         label="Date"
         name="date"
-        type="date"
         required
         value={date}
-        onChange={(e) => setDate(e.target.value)}
+        onChange={setDate}
       />
 
       <Button

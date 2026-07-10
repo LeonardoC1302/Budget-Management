@@ -8,6 +8,7 @@ interface TransactionListProps {
   accountsById?: Record<string, Account>;
   categoriesById?: Record<string, Category>;
   onDelete?: (id: string) => void;
+  onSelect?: (transaction: Transaction) => void;
   emptyMessage?: string;
 }
 
@@ -16,6 +17,7 @@ export default function TransactionList({
   accountsById,
   categoriesById,
   onDelete,
+  onSelect,
   emptyMessage = "No transactions yet.",
 }: TransactionListProps) {
   if (transactions.length === 0) {
@@ -35,6 +37,7 @@ export default function TransactionList({
           account={accountsById?.[t.accountId]}
           category={categoriesById?.[t.categoryId]}
           onDelete={onDelete}
+          onSelect={onSelect}
         />
       ))}
     </ul>

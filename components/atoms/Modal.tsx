@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
 interface ModalProps {
@@ -34,7 +35,7 @@ export default function Modal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -69,8 +70,9 @@ export default function Modal({
             ×
           </button>
         </header>
-        <div className="p-5 overflow-y-auto">{children}</div>
+        <div className="p-5 overflow-y-auto scrollbar-thin">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -5,6 +5,7 @@ import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import { useCategories } from "@/hooks/useCategories";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type { Budget, NewBudget } from "@/lib/types";
 
 interface BudgetFormProps {
@@ -37,7 +38,6 @@ export default function BudgetForm({
   const [amount, setAmount] = useState(
     initial ? String(initial.amount) : "",
   );
-  const [currency, setCurrency] = useState(initial?.currency ?? "USD");
   const [submitting, setSubmitting] = useState(false);
 
   const categoryId =
@@ -54,7 +54,7 @@ export default function BudgetForm({
     await onSubmit({
       categoryId,
       amount: parsed,
-      currency: currency.trim().toUpperCase() || "USD",
+      currency: BASE_CURRENCY,
     });
     setSubmitting(false);
   }
@@ -80,7 +80,7 @@ export default function BudgetForm({
       )}
 
       <Input
-        label="Monthly cap"
+        label="Monthly cap (USD)"
         name="amount"
         type="number"
         inputMode="decimal"
@@ -90,14 +90,6 @@ export default function BudgetForm({
         required
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-      />
-
-      <Input
-        label="Currency"
-        name="currency"
-        placeholder="USD"
-        value={currency}
-        onChange={(e) => setCurrency(e.target.value)}
       />
 
       <div className="flex gap-2 pt-2">

@@ -43,7 +43,7 @@ export function computeCategorySpend(
       t.categoryId === categoryId &&
       monthKeyOf(t.date) === monthKey
     ) {
-      sum += t.amount;
+      sum += t.amountUSD;
     }
   }
   return sum;
@@ -84,8 +84,8 @@ export function computeBudgetTotals(
 
   for (const t of transactions) {
     if (t.type !== "expense" || monthKeyOf(t.date) !== monthKey) continue;
-    if (cappedIds.has(t.categoryId)) totalSpent += t.amount;
-    else uncappedSpend += t.amount;
+    if (cappedIds.has(t.categoryId)) totalSpent += t.amountUSD;
+    else uncappedSpend += t.amountUSD;
   }
 
   return { totalCap, totalSpent, uncappedSpend };

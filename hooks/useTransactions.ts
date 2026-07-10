@@ -29,8 +29,8 @@ export function useTransactions() {
     let income = 0;
     let expense = 0;
     for (const t of transactions) {
-      if (t.type === "income") income += t.amount;
-      else expense += t.amount;
+      if (t.type === "income") income += t.amountUSD;
+      else expense += t.amountUSD;
     }
     return { income, expense, balance: income - expense };
   }, [transactions]);
