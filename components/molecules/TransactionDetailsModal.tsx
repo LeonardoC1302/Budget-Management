@@ -9,6 +9,7 @@ interface TransactionDetailsModalProps {
   transaction: Transaction | null;
   account?: Account;
   category?: Category;
+  linkedAccount?: Account;
   onClose: () => void;
 }
 
@@ -16,9 +17,14 @@ export default function TransactionDetailsModal({
   transaction,
   account,
   category,
+  linkedAccount,
   onClose,
 }: TransactionDetailsModalProps) {
+  const isTransfer = transaction?.type === "transfer";
   const isIncome = transaction?.type === "income";
+  const isInflow =
+    isIncome ||
+    (isTransfer && transaction?.transferDirection === "in");
 
   return (
     <Modal
@@ -32,22 +38,51 @@ export default function TransactionDetailsModal({
             <span className="text-sm text-fg-subtle">Amount</span>
             <Amount
               value={transaction.amount}
-              tone={isIncome ? "income" : "expense"}
+              tone={
+                isTransfer
+                  ? isInflow
+                    ? "income"
+                    : "expense"
+                  : isIncome
+                    ? "income"
+                    : "expense"
+              }
               size="lg"
               currency={transaction.currency}
-              showSign
+              showSign={!isTransfer}
               className="text-right"
             />
           </div>
 
           <dl className="flex flex-col divide-y divide-border">
             <Row label="Type">
-              <span className={isIncome ? "text-income" : "text-expense"}>
-                {isIncome ? "Income" : "Expense"}
-              </span>
+              {isTransfer ? (
+                <span className="text-fg">Transfer</span>
+              ) : (
+                <span className={isIncome ? "text-income" : "text-expense"}>
+                  {isIncome ? "Income" : "Expense"}
+                </span>
+              )}
             </Row>
-            <Row label="Category">{category?.name ?? "—"}</Row>
-            <Row label="Account">{account?.name ?? "—"}</Row>
+            {isTransfer ? (
+              <>
+                <Row label="From">
+                  {transaction.transferDirection === "out"
+                    ? (account?.name ?? "—")
+                    : (linkedAccount?.name ?? "—")}
+                </Row>
+                <Row label="To">
+                  {transaction.transferDirection === "out"
+                    ? (linkedAccount?.name ?? "—")
+                    : (account?.name ?? "—")}
+                </Row>
+              </>
+            ) : (
+              <>
+                <Row label="Category">{category?.name ?? "—"}</Row>
+                <Row label="Account">{account?.name ?? "—"}</Row>
+              </>
+            )}
             <Row label="Date">{formatDate(transaction.date)}</Row>
             {transaction.description && (
               <Row label="Description">{transaction.description}</Row>

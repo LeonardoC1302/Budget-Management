@@ -12,18 +12,20 @@ import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
-import type { NewTransaction, TransactionType } from "@/lib/types";
+import type { NewTransaction } from "@/lib/types";
 
 interface TransactionFormProps {
   onSubmit: (input: NewTransaction) => void | Promise<void>;
 }
+
+type EntryType = "income" | "expense";
 
 export default function TransactionForm({ onSubmit }: TransactionFormProps) {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { filterByType, byId: categoriesById, loading: categoriesLoading } = useCategories();
   const { byCategoryId: budgetsByCategoryId, wouldExceed } = useBudgets();
 
-  const [type, setType] = useState<TransactionType>("expense");
+  const [type, setType] = useState<EntryType>("expense");
   const [amount, setAmount] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");

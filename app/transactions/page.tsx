@@ -39,6 +39,11 @@ export default function TransactionsPage() {
         transaction={selected}
         account={selected ? accountsById[selected.accountId] : undefined}
         category={selected ? categoriesById[selected.categoryId] : undefined}
+        linkedAccount={
+          selected?.linkedAccountId
+            ? accountsById[selected.linkedAccountId]
+            : undefined
+        }
         onClose={() => setSelected(null)}
       />
     </div>

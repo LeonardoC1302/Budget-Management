@@ -12,7 +12,11 @@ function computeDerived(accounts: Account[], transactions: Transaction[]) {
     counts[a.id] = 0;
   }
   for (const t of transactions) {
-    const delta = t.type === "income" ? t.amount : -t.amount;
+    let delta = 0;
+    if (t.type === "income") delta = t.amount;
+    else if (t.type === "expense") delta = -t.amount;
+    else if (t.type === "transfer")
+      delta = t.transferDirection === "in" ? t.amount : -t.amount;
     balances[t.accountId] = (balances[t.accountId] ?? 0) + delta;
     counts[t.accountId] = (counts[t.accountId] ?? 0) + 1;
   }
@@ -97,5 +101,6 @@ export function useAccounts() {
     add,
     update,
     remove,
+    refresh,
   };
 }

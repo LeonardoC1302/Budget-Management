@@ -1,4 +1,6 @@
-export type TransactionType = "income" | "expense";
+export type TransactionType = "income" | "expense" | "transfer";
+
+export type TransferDirection = "out" | "in";
 
 export type AccountType = "debit" | "credit" | "wallet" | "cash" | "savings";
 
@@ -17,7 +19,7 @@ export type NewAccount = Omit<Account, "id" | "createdAt" | "initialBalanceUSD">
 export interface Category {
   id: string;
   name: string;
-  type: TransactionType;
+  type: Exclude<TransactionType, "transfer">;
   isDefault: boolean;
   createdAt: string;
 }
@@ -35,9 +37,22 @@ export interface Transaction {
   description: string;
   date: string;
   createdAt: string;
+  transferId?: string;
+  transferDirection?: TransferDirection;
+  linkedAccountId?: string;
 }
 
 export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "amountUSD">;
+
+export interface NewTransfer {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  fromCurrency: string;
+  toCurrency: string;
+  description: string;
+  date: string;
+}
 
 export interface Goal {
   id: string;

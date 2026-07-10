@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
-import type { NewCategory, TransactionType } from "@/lib/types";
+import type { Category, NewCategory } from "@/lib/types";
 
 interface CategoryFormProps {
-  type: TransactionType;
+  type: Category["type"];
   onSubmit: (input: NewCategory) => void | Promise<void>;
   onCancel?: () => void;
 }

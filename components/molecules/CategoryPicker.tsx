@@ -6,10 +6,10 @@ import Select from "@/components/atoms/Select";
 import CategoryForm from "@/components/molecules/CategoryForm";
 import CategoryManageModal from "@/components/molecules/CategoryManageModal";
 import { useCategories } from "@/hooks/useCategories";
-import type { Category, NewCategory, TransactionType } from "@/lib/types";
+import type { Category, NewCategory } from "@/lib/types";
 
 interface CategoryPickerProps {
-  type: TransactionType;
+  type: Category["type"];
   value: string;
   onChange: (categoryId: string) => void;
   label?: string;
