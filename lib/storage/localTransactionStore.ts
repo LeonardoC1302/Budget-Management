@@ -1,4 +1,4 @@
-import type { Transaction } from "@/lib/types";
+import type { NewTransfer, Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
 import { getRate } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -54,7 +54,56 @@ export const localTransactionStore: TransactionStore = {
     write([transaction, ...read()]);
     return transaction;
   },
+  async addTransfer(input: NewTransfer) {
+    const createdAt = new Date().toISOString();
+    const conversionRate =
+      input.fromCurrency === input.toCurrency
+        ? 1
+        : await getRate(input.fromCurrency, input.toCurrency);
+    const toAmount = input.amount * conversionRate;
+    const usdRate = await getRate(input.fromCurrency, BASE_CURRENCY);
+    const amountUSD = input.amount * usdRate;
+
+    const outId = makeId();
+    const inId = makeId();
+    const transferId = outId;
+
+    const outDoc: Transaction = {
+      id: outId,
+      type: "transfer",
+      amount: input.amount,
+      amountUSD,
+      currency: input.fromCurrency,
+      accountId: input.fromAccountId,
+      categoryId: "",
+      description: input.description,
+      date: input.date,
+      createdAt,
+      transferId,
+      transferDirection: "out",
+      linkedAccountId: input.toAccountId,
+    };
+    const inDoc: Transaction = {
+      id: inId,
+      type: "transfer",
+      amount: toAmount,
+      amountUSD,
+      currency: input.toCurrency,
+      accountId: input.toAccountId,
+      categoryId: "",
+      description: input.description,
+      date: input.date,
+      createdAt,
+      transferId,
+      transferDirection: "in",
+      linkedAccountId: input.fromAccountId,
+    };
+    write([outDoc, inDoc, ...read()]);
+  },
   async remove(id) {
     write(read().filter((t) => t.id !== id));
+  },
+  async removeTransfer(transferId) {
+    write(read().filter((t) => t.transferId !== transferId));
   },
 };

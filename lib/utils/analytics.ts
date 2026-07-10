@@ -36,7 +36,7 @@ export function getMonthlyTotals(
   for (const t of transactions) {
     if (monthKeyOf(t.date) !== monthKey) continue;
     if (t.type === "income") income += t.amountUSD;
-    else expense += t.amountUSD;
+    else if (t.type === "expense") expense += t.amountUSD;
   }
   return { income, expense, net: income - expense };
 }

@@ -51,7 +51,7 @@ export function computeMonthlySavingsRate(
   let expense = 0;
   for (const t of transactions) {
     if (t.type === "income") income += t.amount;
-    else expense += t.amount;
+    else if (t.type === "expense") expense += t.amount;
   }
   const net = income - expense;
   return (net * DAYS_PER_MONTH) / spanDays;

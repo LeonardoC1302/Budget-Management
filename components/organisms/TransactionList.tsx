@@ -36,6 +36,9 @@ export default function TransactionList({
           transaction={t}
           account={accountsById?.[t.accountId]}
           category={categoriesById?.[t.categoryId]}
+          linkedAccount={
+            t.linkedAccountId ? accountsById?.[t.linkedAccountId] : undefined
+          }
           onDelete={onDelete}
           onSelect={onSelect}
         />

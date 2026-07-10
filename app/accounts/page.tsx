@@ -4,15 +4,27 @@ import { useState } from "react";
 import Button from "@/components/atoms/Button";
 import Modal from "@/components/atoms/Modal";
 import AccountForm from "@/components/molecules/AccountForm";
+import TransferForm from "@/components/molecules/TransferForm";
 import AccountList from "@/components/organisms/AccountList";
 import { useAccounts } from "@/hooks/useAccounts";
-import type { Account, NewAccount } from "@/lib/types";
+import { useTransactions } from "@/hooks/useTransactions";
+import type { Account, NewAccount, NewTransfer } from "@/lib/types";
 
 export default function AccountsPage() {
-  const { accounts, balances, txCountByAccount, loading, add, update, remove } =
-    useAccounts();
+  const {
+    accounts,
+    balances,
+    txCountByAccount,
+    loading,
+    add,
+    update,
+    remove,
+    refresh: refreshAccounts,
+  } = useAccounts();
+  const { addTransfer } = useTransactions();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +50,12 @@ export default function AccountsPage() {
     setEditing(null);
   }
 
+  async function handleTransfer(input: NewTransfer) {
+    await addTransfer(input);
+    await refreshAccounts();
+    setTransferOpen(false);
+  }
+
   async function handleDelete(account: Account) {
     setError(null);
     try {
@@ -47,6 +65,8 @@ export default function AccountsPage() {
     }
   }
 
+  const canTransfer = accounts.length >= 2;
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
@@ -54,9 +74,24 @@ export default function AccountsPage() {
           <span className="label-sm">Manage</span>
           <h1 className="heading-xl">Accounts</h1>
         </div>
-        <Button size="md" onClick={openCreate}>
-          + Add
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="md"
+            variant="secondary"
+            onClick={() => setTransferOpen(true)}
+            disabled={!canTransfer}
+            title={
+              canTransfer
+                ? undefined
+                : "Add at least two accounts to enable transfers"
+            }
+          >
+            ↔ Transfer
+          </Button>
+          <Button size="md" onClick={openCreate}>
+            + Add
+          </Button>
+        </div>
       </header>
 
       {error && (
@@ -89,6 +124,17 @@ export default function AccountsPage() {
           initial={editing ?? undefined}
           onSubmit={handleSubmit}
           onCancel={() => setModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        title="Transfer between accounts"
+      >
+        <TransferForm
+          onSubmit={handleTransfer}
+          onCancel={() => setTransferOpen(false)}
         />
       </Modal>
     </div>
