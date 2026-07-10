@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
+import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import {
   ACCOUNT_TYPE_LABELS,
   type Account,
@@ -31,7 +33,7 @@ export default function AccountForm({
   const [initialBalance, setInitialBalance] = useState(
     initial ? String(initial.initialBalance) : "0",
   );
-  const [currency, setCurrency] = useState(initial?.currency ?? "USD");
+  const [currency, setCurrency] = useState(initial?.currency ?? BASE_CURRENCY);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -44,7 +46,7 @@ export default function AccountForm({
       name: name.trim(),
       type,
       initialBalance: parsedBalance,
-      currency: currency.trim().toUpperCase() || "USD",
+      currency: currency || BASE_CURRENCY,
     });
     setSubmitting(false);
   }
@@ -79,12 +81,11 @@ export default function AccountForm({
         onChange={(e) => setInitialBalance(e.target.value)}
       />
 
-      <Input
+      <CurrencyCombobox
         label="Currency"
         name="currency"
-        placeholder="USD"
         value={currency}
-        onChange={(e) => setCurrency(e.target.value)}
+        onChange={setCurrency}
       />
 
       <div className="flex gap-2 pt-2">

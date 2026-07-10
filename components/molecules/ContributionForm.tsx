@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
+import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import { todayISODate } from "@/lib/utils/format";
 import type { NewGoalContribution } from "@/lib/types";
@@ -60,13 +61,12 @@ export default function ContributionForm({
         onChange={(e) => setNote(e.target.value)}
       />
 
-      <Input
+      <DatePicker
         label="Date"
         name="date"
-        type="date"
         required
         value={date}
-        onChange={(e) => setDate(e.target.value)}
+        onChange={setDate}
       />
 
       <div className="flex gap-2 pt-2">

@@ -1,5 +1,7 @@
 import type { Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
+import { getRate } from "@/lib/services/exchangeRates";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 
 // Schema v2: transactions now reference `accountId` and `categoryId`.
 // Any data stored under the v1 key is ignored (pre-release breaking change).
@@ -27,13 +29,25 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function hydrate(t: Transaction): Transaction {
+  return {
+    ...t,
+    currency: t.currency ?? BASE_CURRENCY,
+    amountUSD: typeof t.amountUSD === "number" ? t.amountUSD : t.amount,
+  };
+}
+
 export const localTransactionStore: TransactionStore = {
   async list() {
-    return read().sort((a, b) => b.date.localeCompare(a.date));
+    return read()
+      .map(hydrate)
+      .sort((a, b) => b.date.localeCompare(a.date));
   },
   async add(input) {
+    const rate = await getRate(input.currency, BASE_CURRENCY);
     const transaction: Transaction = {
       ...input,
+      amountUSD: input.amount * rate,
       id: makeId(),
       createdAt: new Date().toISOString(),
     };

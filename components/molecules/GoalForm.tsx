@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
+import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type { Goal, NewGoal } from "@/lib/types";
 
 interface GoalFormProps {
@@ -19,7 +21,6 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
   const [initialAmount, setInitialAmount] = useState(
     initial ? String(initial.initialAmount) : "0",
   );
-  const [currency, setCurrency] = useState(initial?.currency ?? "USD");
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? "");
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,7 +36,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
       name: name.trim(),
       targetAmount: parsedTarget,
       initialAmount: parsedInitial,
-      currency: currency.trim().toUpperCase() || "USD",
+      currency: BASE_CURRENCY,
       targetDate: targetDate || undefined,
     });
     setSubmitting(false);
@@ -53,7 +54,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
       />
 
       <Input
-        label="Target amount"
+        label="Target amount (USD)"
         name="targetAmount"
         type="number"
         inputMode="decimal"
@@ -66,7 +67,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
       />
 
       <Input
-        label="Initial progress"
+        label="Initial progress (USD)"
         hint="Money you already have toward this goal."
         name="initialAmount"
         type="number"
@@ -77,20 +78,11 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
         onChange={(e) => setInitialAmount(e.target.value)}
       />
 
-      <Input
-        label="Currency"
-        name="currency"
-        placeholder="USD"
-        value={currency}
-        onChange={(e) => setCurrency(e.target.value)}
-      />
-
-      <Input
+      <DatePicker
         label="Target date (optional)"
         name="targetDate"
-        type="date"
         value={targetDate}
-        onChange={(e) => setTargetDate(e.target.value)}
+        onChange={setTargetDate}
       />
 
       <div className="flex gap-2 pt-2">

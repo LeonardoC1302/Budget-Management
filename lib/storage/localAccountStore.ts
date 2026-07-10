@@ -1,6 +1,8 @@
 import type { Account } from "@/lib/types";
 import type { AccountStore } from "@/lib/storage/AccountStore";
 import { defaultAccount } from "@/lib/storage/seeds";
+import { getRate } from "@/lib/services/exchangeRates";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 
 const KEY = "budget:accounts:v1";
 
@@ -31,13 +33,28 @@ function write(items: Account[]): void {
   window.localStorage.setItem(KEY, JSON.stringify(items));
 }
 
+function hydrate(a: Account): Account {
+  return {
+    ...a,
+    currency: a.currency ?? BASE_CURRENCY,
+    initialBalanceUSD:
+      typeof a.initialBalanceUSD === "number"
+        ? a.initialBalanceUSD
+        : a.initialBalance,
+  };
+}
+
 export const localAccountStore: AccountStore = {
   async list() {
-    return read().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return read()
+      .map(hydrate)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   },
   async add(input) {
+    const rate = await getRate(input.currency, BASE_CURRENCY);
     const account: Account = {
       ...input,
+      initialBalanceUSD: input.initialBalance * rate,
       id: makeId(),
       createdAt: new Date().toISOString(),
     };
@@ -48,10 +65,14 @@ export const localAccountStore: AccountStore = {
     const items = read();
     const idx = items.findIndex((a) => a.id === id);
     if (idx === -1) throw new Error(`Account ${id} not found`);
-    const updated: Account = { ...items[idx], ...patch };
-    items[idx] = updated;
+    const merged: Account = { ...items[idx], ...patch };
+    if (patch.currency !== undefined || patch.initialBalance !== undefined) {
+      const rate = await getRate(merged.currency, BASE_CURRENCY);
+      merged.initialBalanceUSD = merged.initialBalance * rate;
+    }
+    items[idx] = merged;
     write(items);
-    return updated;
+    return merged;
   },
   async remove(id) {
     write(read().filter((a) => a.id !== id));

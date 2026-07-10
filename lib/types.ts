@@ -7,11 +7,12 @@ export interface Account {
   name: string;
   type: AccountType;
   initialBalance: number;
+  initialBalanceUSD: number;
   currency: string;
   createdAt: string;
 }
 
-export type NewAccount = Omit<Account, "id" | "createdAt">;
+export type NewAccount = Omit<Account, "id" | "createdAt" | "initialBalanceUSD">;
 
 export interface Category {
   id: string;
@@ -27,6 +28,8 @@ export interface Transaction {
   id: string;
   type: TransactionType;
   amount: number;
+  amountUSD: number;
+  currency: string;
   accountId: string;
   categoryId: string;
   description: string;
@@ -34,7 +37,7 @@ export interface Transaction {
   createdAt: string;
 }
 
-export type NewTransaction = Omit<Transaction, "id" | "createdAt">;
+export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "amountUSD">;
 
 export interface Goal {
   id: string;

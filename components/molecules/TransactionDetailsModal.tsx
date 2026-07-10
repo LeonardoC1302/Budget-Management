@@ -1,0 +1,69 @@
+"use client";
+
+import Amount from "@/components/atoms/Amount";
+import Modal from "@/components/atoms/Modal";
+import { formatDate } from "@/lib/utils/format";
+import type { Account, Category, Transaction } from "@/lib/types";
+
+interface TransactionDetailsModalProps {
+  transaction: Transaction | null;
+  account?: Account;
+  category?: Category;
+  onClose: () => void;
+}
+
+export default function TransactionDetailsModal({
+  transaction,
+  account,
+  category,
+  onClose,
+}: TransactionDetailsModalProps) {
+  const isIncome = transaction?.type === "income";
+
+  return (
+    <Modal
+      open={!!transaction}
+      onClose={onClose}
+      title="Transaction details"
+    >
+      {transaction && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-3 rounded-[10px] bg-surface-2 px-4 py-3">
+            <span className="text-sm text-fg-subtle">Amount</span>
+            <Amount
+              value={transaction.amount}
+              tone={isIncome ? "income" : "expense"}
+              size="lg"
+              currency={transaction.currency}
+              showSign
+              className="text-right"
+            />
+          </div>
+
+          <dl className="flex flex-col divide-y divide-border">
+            <Row label="Type">
+              <span className={isIncome ? "text-income" : "text-expense"}>
+                {isIncome ? "Income" : "Expense"}
+              </span>
+            </Row>
+            <Row label="Category">{category?.name ?? "—"}</Row>
+            <Row label="Account">{account?.name ?? "—"}</Row>
+            <Row label="Date">{formatDate(transaction.date)}</Row>
+            {transaction.description && (
+              <Row label="Description">{transaction.description}</Row>
+            )}
+          </dl>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
+      <dt className="text-fg-subtle">{label}</dt>
+      <dd className="text-fg text-right">{children}</dd>
+    </div>
+  );
+}

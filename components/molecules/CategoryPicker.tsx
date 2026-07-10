@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/atoms/Modal";
 import Select from "@/components/atoms/Select";
 import CategoryForm from "@/components/molecules/CategoryForm";
+import CategoryManageModal from "@/components/molecules/CategoryManageModal";
 import { useCategories } from "@/hooks/useCategories";
 import type { Category, NewCategory, TransactionType } from "@/lib/types";
 
@@ -21,7 +22,8 @@ export default function CategoryPicker({
   label = "Category",
 }: CategoryPickerProps) {
   const { filterByType, add } = useCategories();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
 
   const options = filterByType(type).map((c) => ({
     value: c.id,
@@ -31,7 +33,7 @@ export default function CategoryPicker({
   async function handleCreate(input: NewCategory) {
     const created: Category = await add(input);
     onChange(created.id);
-    setModalOpen(false);
+    setCreateOpen(false);
   }
 
   return (
@@ -43,30 +45,48 @@ export default function CategoryPicker({
         onChange={onChange}
         options={options}
         footer={(closeMenu) => (
-          <button
-            type="button"
-            onClick={() => {
-              closeMenu();
-              setModalOpen(true);
-            }}
-            className="w-full text-left px-3 py-2 rounded-[8px] text-sm text-accent hover:bg-surface-2 transition-colors"
-          >
-            + New category
-          </button>
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                setCreateOpen(true);
+              }}
+              className="w-full text-left px-3 py-2 rounded-[8px] text-sm text-accent hover:bg-surface-2 transition-colors"
+            >
+              + New category
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                setManageOpen(true);
+              }}
+              className="w-full text-left px-3 py-2 rounded-[8px] text-sm text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors"
+            >
+              Manage categories
+            </button>
+          </div>
         )}
       />
 
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
         title="New category"
       >
         <CategoryForm
           type={type}
           onSubmit={handleCreate}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => setCreateOpen(false)}
         />
       </Modal>
+
+      <CategoryManageModal
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
+        type={type}
+      />
     </>
   );
 }

@@ -41,7 +41,14 @@ export default function Amount({
   const sign = showSign ? (tone === "expense" ? "−" : tone === "income" ? "+" : "") : "";
 
   return (
-    <span className={cn("tabular-nums", sizeClass[size], toneClass[tone], className)}>
+    <span
+      className={cn(
+        "tabular-nums whitespace-nowrap",
+        sizeClass[size],
+        toneClass[tone],
+        className,
+      )}
+    >
       {sign}
       {formatted}
     </span>

@@ -35,8 +35,8 @@ export function getMonthlyTotals(
   let expense = 0;
   for (const t of transactions) {
     if (monthKeyOf(t.date) !== monthKey) continue;
-    if (t.type === "income") income += t.amount;
-    else expense += t.amount;
+    if (t.type === "income") income += t.amountUSD;
+    else expense += t.amountUSD;
   }
   return { income, expense, net: income - expense };
 }
@@ -77,8 +77,8 @@ export function getCategoryBreakdown(
 
   for (const t of transactions) {
     if (t.type !== "expense" || monthKeyOf(t.date) !== monthKey) continue;
-    totals[t.categoryId] = (totals[t.categoryId] ?? 0) + t.amount;
-    total += t.amount;
+    totals[t.categoryId] = (totals[t.categoryId] ?? 0) + t.amountUSD;
+    total += t.amountUSD;
   }
 
   const sorted = Object.entries(totals)
