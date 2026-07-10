@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Fonts */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Surfaces — dark, minimalist palette */
+  --color-bg: #0a0a0b;
+  --color-surface: #111114;
+  --color-surface-2: #17171b;
+  --color-border: #26262c;
+  --color-border-strong: #35353d;
+
+  /* Text */
+  --color-fg: #f4f4f5;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-subtle: #71717a;
+
+  /* Semantic accents */
+  --color-accent: #6366f1;
+  --color-accent-hover: #7c7ff5;
+  --color-income: #10b981;
+  --color-income-soft: #10b98118;
+  --color-expense: #f43f5e;
+  --color-expense-soft: #f43f5e18;
+
+  /* Radii */
+  --radius-card: 14px;
+  --radius-control: 10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Shared utilities so components don't repeat token references */
+@layer components {
+  .surface {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  .surface-2 {
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  .heading-xl {
+    font-size: 1.75rem;
+    line-height: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .heading-lg {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .label-sm {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-fg-subtle);
+  }
+}
+
+/* Prevent iOS from zooming inputs when they focus */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
