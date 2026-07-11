@@ -4,12 +4,12 @@ import PWARegister from "@/components/atoms/PWARegister";
 import AppShell from "@/components/organisms/AppShell";
 
 export const metadata: Metadata = {
-  title: "Budget",
-  description: "Track your income and expenses.",
-  applicationName: "Budget",
+  title: "Perch",
+  description: "Perch — track your income and expenses.",
+  applicationName: "Perch",
   appleWebApp: {
     capable: true,
-    title: "Budget",
+    title: "Perch",
     statusBarStyle: "black-translucent",
   },
   formatDetection: {

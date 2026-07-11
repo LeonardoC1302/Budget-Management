@@ -3,7 +3,7 @@
  * Everything else (HTML, Firestore, exchange rates) bypasses the cache
  * so the app stays live. */
 
-const CACHE_NAME = "budget-shell-v1";
+const CACHE_NAME = "perch-shell-v2";
 
 const STATIC_PREFIXES = ["/_next/static/"];
 const STATIC_EXACT = new Set([
