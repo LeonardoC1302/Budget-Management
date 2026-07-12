@@ -3,6 +3,7 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import ProgressBar from "@/components/atoms/ProgressBar";
+import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency } from "@/lib/utils/format";
 import {
   computeGoalProgress,
@@ -59,7 +60,7 @@ function EstimateLine({
     <p className="text-sm text-fg-muted">
       If you keep saving{" "}
       <span className="text-fg font-medium">
-        {formatCurrency(estimate.monthlyRate, goal.currency)}
+        {formatCurrency(estimate.monthlyRate, BASE_CURRENCY)}
       </span>{" "}
       per month, you&apos;ll reach it in{" "}
       <span className="text-fg font-medium">

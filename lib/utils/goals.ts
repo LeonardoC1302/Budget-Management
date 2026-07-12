@@ -34,6 +34,8 @@ export function computeGoalProgress(
 /**
  * Average monthly net savings inferred from the transaction history span.
  * Returns null when there isn't enough history (<30 days) to estimate.
+ * Result is denominated in USD (BASE_CURRENCY) so amounts from mixed-currency
+ * accounts are comparable.
  */
 export function computeMonthlySavingsRate(
   transactions: Transaction[],
@@ -50,8 +52,8 @@ export function computeMonthlySavingsRate(
   let income = 0;
   let expense = 0;
   for (const t of transactions) {
-    if (t.type === "income") income += t.amount;
-    else if (t.type === "expense") expense += t.amount;
+    if (t.type === "income") income += t.amountUSD;
+    else if (t.type === "expense") expense += t.amountUSD;
   }
   const net = income - expense;
   return (net * DAYS_PER_MONTH) / spanDays;
