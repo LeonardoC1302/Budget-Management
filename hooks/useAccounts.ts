@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { accountStore, transactionStore } from "@/lib/storage";
 import type { Account, NewAccount, Transaction } from "@/lib/types";
 
@@ -53,6 +54,8 @@ export function useAccounts() {
       },
     );
   }, []);
+
+  useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
   const add = useCallback(
     async (input: NewAccount) => {

@@ -1,4 +1,4 @@
-import type { NewTransfer, Transaction } from "@/lib/types";
+import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
 import { getRate } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -53,6 +53,22 @@ export const localTransactionStore: TransactionStore = {
     };
     write([transaction, ...read()]);
     return transaction;
+  },
+  async addMany(inputs: NewTransaction[]) {
+    if (inputs.length === 0) return;
+    const createdAt = new Date().toISOString();
+    const priced: Transaction[] = await Promise.all(
+      inputs.map(async (input) => {
+        const rate = await getRate(input.currency, BASE_CURRENCY);
+        return {
+          ...input,
+          amountUSD: input.amount * rate,
+          id: makeId(),
+          createdAt,
+        };
+      }),
+    );
+    write([...priced, ...read()]);
   },
   async addTransfer(input: NewTransfer) {
     const createdAt = new Date().toISOString();

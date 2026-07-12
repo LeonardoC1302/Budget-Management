@@ -24,6 +24,14 @@ function hydrate(id: string, data: Omit<Transaction, "id">): Transaction {
   return { ...data, id, currency, amountUSD };
 }
 
+function stripUndefined<T extends Record<string, unknown>>(input: T): T {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) out[key] = value;
+  }
+  return out as T;
+}
+
 export const firebaseTransactionStore: TransactionStore = {
   async list() {
     const snap = await getDocs(query(userCollection(COL), orderBy("date", "desc")));
@@ -35,9 +43,29 @@ export const firebaseTransactionStore: TransactionStore = {
     const createdAt = new Date().toISOString();
     const rate = await getRate(input.currency, BASE_CURRENCY);
     const amountUSD = input.amount * rate;
-    const transaction = { ...input, amountUSD, createdAt };
+    const transaction = stripUndefined({ ...input, amountUSD, createdAt });
     const ref = await addDoc(userCollection(COL), transaction);
-    return { id: ref.id, ...transaction };
+    return { id: ref.id, ...transaction } as Transaction;
+  },
+  async addMany(inputs: NewTransaction[]) {
+    if (inputs.length === 0) return;
+    const createdAt = new Date().toISOString();
+    const priced = await Promise.all(
+      inputs.map(async (input) => {
+        const rate = await getRate(input.currency, BASE_CURRENCY);
+        return stripUndefined({
+          ...input,
+          amountUSD: input.amount * rate,
+          createdAt,
+        });
+      }),
+    );
+    const col = userCollection(COL);
+    const batch = writeBatch(db);
+    for (const payload of priced) {
+      batch.set(doc(col), payload);
+    }
+    await batch.commit();
   },
   async addTransfer(input: NewTransfer) {
     const createdAt = new Date().toISOString();

@@ -64,7 +64,18 @@ export default function TransactionItem({
       </div>
 
       <div className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-medium text-fg truncate">{title}</p>
+        <p className="text-sm font-medium text-fg truncate flex items-center gap-1.5">
+          <span className="truncate">{title}</span>
+          {transaction.recurringId && (
+            <span
+              aria-label="Recurring"
+              title="From a recurring rule"
+              className="text-xs text-fg-subtle shrink-0"
+            >
+              ↻
+            </span>
+          )}
+        </p>
         <p className="text-xs text-fg-subtle truncate">{subtitle}</p>
       </div>
 

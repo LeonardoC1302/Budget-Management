@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { budgetStore, transactionStore } from "@/lib/storage";
 import {
   computeBudgetProgress,
@@ -36,6 +37,8 @@ export function useBudgets() {
       ),
     [],
   );
+
+  useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
   const add = useCallback(
     async (input: NewBudget) => {

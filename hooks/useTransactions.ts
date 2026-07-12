@@ -1,12 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { transactionStore } from "@/lib/storage";
 import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    const items = await transactionStore.list();
+    setTransactions(items);
+  }, []);
 
   useEffect(() => {
     transactionStore.list().then((items) => {
@@ -15,10 +21,7 @@ export function useTransactions() {
     });
   }, []);
 
-  const refresh = useCallback(async () => {
-    const items = await transactionStore.list();
-    setTransactions(items);
-  }, []);
+  useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
   const add = useCallback(async (input: NewTransaction) => {
     const created = await transactionStore.add(input);
@@ -56,5 +59,5 @@ export function useTransactions() {
     return { income, expense, balance: income - expense };
   }, [transactions]);
 
-  return { transactions, loading, add, addTransfer, remove, totals };
+  return { transactions, loading, add, addTransfer, remove, totals, refresh };
 }

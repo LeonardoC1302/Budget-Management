@@ -40,9 +40,47 @@ export interface Transaction {
   transferId?: string;
   transferDirection?: TransferDirection;
   linkedAccountId?: string;
+  recurringId?: string;
 }
 
 export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "amountUSD">;
+
+export type RecurrenceFrequency =
+  | "monthly"
+  | "semi-monthly"
+  | "weekly"
+  | "biweekly"
+  | "yearly";
+
+export interface RecurringTransaction {
+  id: string;
+  type: Exclude<TransactionType, "transfer">;
+  amount: number;
+  currency: string;
+  accountId: string;
+  categoryId: string;
+  description: string;
+  frequency: RecurrenceFrequency;
+  startDate: string;
+  semiMonthlyDays?: [number, number];
+  endDate?: string;
+  lastGeneratedDate?: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export type NewRecurringTransaction = Omit<
+  RecurringTransaction,
+  "id" | "createdAt" | "lastGeneratedDate"
+>;
+
+export const RECURRENCE_FREQUENCY_LABELS: Record<RecurrenceFrequency, string> = {
+  monthly: "Monthly",
+  "semi-monthly": "Semi-monthly (two days)",
+  weekly: "Weekly",
+  biweekly: "Every 2 weeks",
+  yearly: "Yearly",
+};
 
 export interface NewTransfer {
   fromAccountId: string;
