@@ -21,6 +21,7 @@ export default function CategoryForm({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    event.stopPropagation();
     if (!name.trim()) return;
     setSubmitting(true);
     await onSubmit({ name: name.trim(), type });
