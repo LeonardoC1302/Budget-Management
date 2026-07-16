@@ -12,25 +12,41 @@ import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
-import type { NewTransaction } from "@/lib/types";
+import type { NewTransaction, Transaction } from "@/lib/types";
 
 interface TransactionFormProps {
   onSubmit: (input: NewTransaction) => void | Promise<void>;
+  initial?: Transaction;
+  submitLabel?: string;
 }
 
 type EntryType = "income" | "expense";
 
-export default function TransactionForm({ onSubmit }: TransactionFormProps) {
+export default function TransactionForm({
+  onSubmit,
+  initial,
+  submitLabel,
+}: TransactionFormProps) {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { filterByType, byId: categoriesById, loading: categoriesLoading } = useCategories();
   const { byCategoryId: budgetsByCategoryId, wouldExceed } = useBudgets();
 
-  const [type, setType] = useState<EntryType>("expense");
-  const [amount, setAmount] = useState("");
-  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(todayISODate());
+  const initialType: EntryType =
+    initial && initial.type !== "transfer" ? initial.type : "expense";
+  const isEditing = !!initial;
+
+  const [type, setType] = useState<EntryType>(initialType);
+  const [amount, setAmount] = useState(
+    initial ? String(initial.amount) : "",
+  );
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(
+    initial?.accountId ?? "",
+  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    initial?.categoryId ?? "",
+  );
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [date, setDate] = useState(initial?.date ?? todayISODate());
   const [submitting, setSubmitting] = useState(false);
 
   const categoriesForType = filterByType(type);
@@ -65,9 +81,12 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
       categoryId,
       description: description.trim(),
       date,
+      ...(initial?.recurringId ? { recurringId: initial.recurringId } : {}),
     });
-    setAmount("");
-    setDescription("");
+    if (!isEditing) {
+      setAmount("");
+      setDescription("");
+    }
     setSubmitting(false);
   }
 
@@ -170,7 +189,9 @@ export default function TransactionForm({ onSubmit }: TransactionFormProps) {
         fullWidth
         disabled={submitting || loading || !accountId || !categoryId}
       >
-        {submitting ? "Adding…" : "Add transaction"}
+        {submitting
+          ? isEditing ? "Saving…" : "Adding…"
+          : submitLabel ?? (isEditing ? "Save changes" : "Add transaction")}
       </Button>
     </form>
   );

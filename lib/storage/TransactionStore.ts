@@ -9,6 +9,7 @@ export interface TransactionStore {
   add(input: NewTransaction): Promise<Transaction>;
   addMany(inputs: NewTransaction[]): Promise<void>;
   addTransfer(input: NewTransfer): Promise<void>;
+  update(id: string, input: NewTransaction): Promise<Transaction>;
   remove(id: string): Promise<void>;
   removeTransfer(transferId: string): Promise<void>;
 }

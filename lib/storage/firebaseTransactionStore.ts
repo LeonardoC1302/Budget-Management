@@ -2,9 +2,11 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -116,6 +118,15 @@ export const firebaseTransactionStore: TransactionStore = {
   },
   async remove(id) {
     await deleteDoc(userDoc(COL, id));
+  },
+  async update(id, input) {
+    const rate = await getRate(input.currency, BASE_CURRENCY);
+    const amountUSD = input.amount * rate;
+    const payload = stripUndefined({ ...input, amountUSD });
+    const ref = userDoc(COL, id);
+    await updateDoc(ref, payload);
+    const snap = await getDoc(ref);
+    return hydrate(id, snap.data() as Omit<Transaction, "id">);
   },
   async removeTransfer(transferId) {
     const snap = await getDocs(
