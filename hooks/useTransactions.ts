@@ -49,6 +49,11 @@ export function useTransactions() {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   }, [transactions]);
 
+  const update = useCallback(async (id: string, input: NewTransaction) => {
+    const updated = await transactionStore.update(id, input);
+    setTransactions((prev) => prev.map((t) => (t.id === id ? updated : t)));
+  }, []);
+
   const totals = useMemo(() => {
     let income = 0;
     let expense = 0;
@@ -59,5 +64,5 @@ export function useTransactions() {
     return { income, expense, balance: income - expense };
   }, [transactions]);
 
-  return { transactions, loading, add, addTransfer, remove, totals, refresh };
+  return { transactions, loading, add, addTransfer, update, remove, totals, refresh };
 }

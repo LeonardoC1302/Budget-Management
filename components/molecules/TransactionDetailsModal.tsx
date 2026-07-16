@@ -1,6 +1,7 @@
 "use client";
 
 import Amount from "@/components/atoms/Amount";
+import Button from "@/components/atoms/Button";
 import Modal from "@/components/atoms/Modal";
 import { formatDate } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
@@ -11,6 +12,7 @@ interface TransactionDetailsModalProps {
   category?: Category;
   linkedAccount?: Account;
   onClose: () => void;
+  onEdit?: (transaction: Transaction) => void;
 }
 
 export default function TransactionDetailsModal({
@@ -19,6 +21,7 @@ export default function TransactionDetailsModal({
   category,
   linkedAccount,
   onClose,
+  onEdit,
 }: TransactionDetailsModalProps) {
   const isTransfer = transaction?.type === "transfer";
   const isIncome = transaction?.type === "income";
@@ -88,6 +91,17 @@ export default function TransactionDetailsModal({
               <Row label="Description">{transaction.description}</Row>
             )}
           </dl>
+
+          {onEdit && !isTransfer && (
+            <Button
+              variant="secondary"
+              size="md"
+              fullWidth
+              onClick={() => onEdit(transaction)}
+            >
+              Edit
+            </Button>
+          )}
         </div>
       )}
     </Modal>

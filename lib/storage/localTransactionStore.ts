@@ -119,6 +119,20 @@ export const localTransactionStore: TransactionStore = {
   async remove(id) {
     write(read().filter((t) => t.id !== id));
   },
+  async update(id, input) {
+    const rate = await getRate(input.currency, BASE_CURRENCY);
+    const amountUSD = input.amount * rate;
+    const items = read();
+    const existing = items.find((t) => t.id === id);
+    if (!existing) throw new Error(`Transaction ${id} not found`);
+    const updated: Transaction = {
+      ...existing,
+      ...input,
+      amountUSD,
+    };
+    write(items.map((t) => (t.id === id ? updated : t)));
+    return updated;
+  },
   async removeTransfer(transferId) {
     write(read().filter((t) => t.transferId !== transferId));
   },
