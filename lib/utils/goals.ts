@@ -42,7 +42,11 @@ export function computeMonthlySavingsRate(
 ): number | null {
   if (transactions.length === 0) return null;
 
-  const times = transactions.map((t) => new Date(t.date).getTime());
+  const times = transactions.map((t) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(t.date);
+    if (!match) return new Date(t.date).getTime();
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+  });
   const earliest = Math.min(...times);
   const latest = Math.max(...times, Date.now());
   const spanDays = Math.max((latest - earliest) / MS_PER_DAY, 1);

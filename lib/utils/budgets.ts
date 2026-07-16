@@ -16,7 +16,9 @@ export interface BudgetTotals {
 }
 
 export function currentMonthKey(): string {
-  return new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  return `${now.getFullYear()}-${month < 10 ? `0${month}` : month}`;
 }
 
 export function monthKeyOf(dateISO: string): string {
