@@ -116,3 +116,12 @@ body {
   background-clip: padding-box;
   border: 2px solid transparent;
 }
+
+/* Hide native scrollbars while keeping scroll behavior */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
