@@ -25,6 +25,7 @@ export default function TransactionItem({
 }: TransactionItemProps) {
   const isTransfer = transaction.type === "transfer";
   const isIncome = transaction.type === "income";
+  const isInvestment = transaction.type === "investment";
   const isInflow = isIncome || (isTransfer && transaction.transferDirection === "in");
 
   let title: string;
@@ -43,6 +44,14 @@ export default function TransactionItem({
     subtitle = `${account?.name ?? "—"} · ${formatDate(transaction.date)}`;
     icon = "↔";
     iconClass = "text-fg-muted";
+    tone = "neutral";
+  } else if (isInvestment) {
+    title = transaction.description || category?.name || "Investment";
+    subtitle = `${category?.name ?? "—"}${
+      account ? ` · ${account.name}` : ""
+    } · ${formatDate(transaction.date)}`;
+    icon = "▲";
+    iconClass = "text-invest";
     tone = "neutral";
   } else {
     title = transaction.description || category?.name || "Untitled transaction";
@@ -84,10 +93,11 @@ export default function TransactionItem({
         tone={tone}
         size="sm"
         currency={isTransfer ? transaction.currency : "USD"}
-        showSign={!isTransfer}
+        showSign={!isTransfer && !isInvestment}
         className={cn(
           "shrink-0 text-right sm:text-base",
           isTransfer && (isInflow ? "text-income" : "text-expense"),
+          isInvestment && "text-invest",
         )}
       />
     </>

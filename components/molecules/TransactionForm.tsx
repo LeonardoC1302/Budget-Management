@@ -12,15 +12,13 @@ import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
-import type { NewTransaction, Transaction } from "@/lib/types";
+import type { EntryType, NewTransaction, Transaction } from "@/lib/types";
 
 interface TransactionFormProps {
   onSubmit: (input: NewTransaction) => void | Promise<void>;
   initial?: Transaction;
   submitLabel?: string;
 }
-
-type EntryType = "income" | "expense";
 
 export default function TransactionForm({
   onSubmit,
@@ -109,27 +107,32 @@ export default function TransactionForm({
       <div
         role="tablist"
         aria-label="Transaction type"
-        className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
+        className="grid grid-cols-3 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={type === t}
-            onClick={() => setType(t)}
-            className={cn(
-              "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
-              type === t
-                ? t === "income"
-                  ? "bg-income-soft text-income"
-                  : "bg-expense-soft text-expense"
-                : "text-fg-muted hover:text-fg",
-            )}
-          >
-            {t}
-          </button>
-        ))}
+        {(["expense", "income", "investment"] as const).map((t) => {
+          const activeClass =
+            t === "income"
+              ? "bg-income-soft text-income"
+              : t === "expense"
+                ? "bg-expense-soft text-expense"
+                : "bg-invest-soft text-invest";
+          const label = t === "investment" ? "Invest" : t;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={type === t}
+              onClick={() => setType(t)}
+              className={cn(
+                "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
+                type === t ? activeClass : "text-fg-muted hover:text-fg",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -166,6 +169,12 @@ export default function TransactionForm({
         value={categoryId}
         onChange={setSelectedCategoryId}
       />
+
+      {type === "investment" && categoriesForType.length === 0 && (
+        <p className="text-xs text-invest">
+          Create at least one investment category to log an investment.
+        </p>
+      )}
 
       <Input
         label="Description"

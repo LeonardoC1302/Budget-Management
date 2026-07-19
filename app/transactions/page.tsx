@@ -21,9 +21,14 @@ export default function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_FILTER);
 
+  const nonInvestment = useMemo(
+    () => transactions.filter((t) => t.type !== "investment"),
+    [transactions],
+  );
+
   const usedCategories = useMemo(() => {
     const ids = new Set<string>();
-    for (const t of transactions) {
+    for (const t of nonInvestment) {
       if (t.categoryId) ids.add(t.categoryId);
     }
     return Array.from(ids)
@@ -32,12 +37,12 @@ export default function TransactionsPage() {
         name: categoriesById[id]?.name ?? "Unknown",
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [transactions, categoriesById]);
+  }, [nonInvestment, categoriesById]);
 
   const filtered = useMemo(() => {
-    if (categoryFilter === ALL_FILTER) return transactions;
-    return transactions.filter((t) => t.categoryId === categoryFilter);
-  }, [transactions, categoryFilter]);
+    if (categoryFilter === ALL_FILTER) return nonInvestment;
+    return nonInvestment.filter((t) => t.categoryId === categoryFilter);
+  }, [nonInvestment, categoryFilter]);
 
   return (
     <div className="flex flex-col gap-6">

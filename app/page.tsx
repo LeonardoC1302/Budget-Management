@@ -28,7 +28,7 @@ export default function HomePage() {
     [transactions],
   );
 
-  const recent = transactions.slice(0, 5);
+  const recent = transactions.filter((t) => t.type !== "investment").slice(0, 5);
   const previewGoals = goals.slice(0, 2);
   const previewBudgets = [...budgets]
     .sort(

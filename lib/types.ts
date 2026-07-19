@@ -1,4 +1,6 @@
-export type TransactionType = "income" | "expense" | "transfer";
+export type TransactionType = "income" | "expense" | "transfer" | "investment";
+
+export type EntryType = Exclude<TransactionType, "transfer">;
 
 export type TransferDirection = "out" | "in";
 
@@ -19,7 +21,7 @@ export type NewAccount = Omit<Account, "id" | "createdAt" | "initialBalanceUSD">
 export interface Category {
   id: string;
   name: string;
-  type: Exclude<TransactionType, "transfer">;
+  type: EntryType;
   isDefault: boolean;
   createdAt: string;
 }
@@ -54,7 +56,7 @@ export type RecurrenceFrequency =
 
 export interface RecurringTransaction {
   id: string;
-  type: Exclude<TransactionType, "transfer">;
+  type: EntryType;
   amount: number;
   currency: string;
   accountId: string;

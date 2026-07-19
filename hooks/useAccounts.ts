@@ -16,6 +16,7 @@ function computeDerived(accounts: Account[], transactions: Transaction[]) {
     let delta = 0;
     if (t.type === "income") delta = t.amount;
     else if (t.type === "expense") delta = -t.amount;
+    else if (t.type === "investment") delta = -t.amount;
     else if (t.type === "transfer")
       delta = t.transferDirection === "in" ? t.amount : -t.amount;
     balances[t.accountId] = (balances[t.accountId] ?? 0) + delta;
