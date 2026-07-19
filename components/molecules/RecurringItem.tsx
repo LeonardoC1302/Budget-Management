@@ -2,6 +2,7 @@
 
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
+import TransactionTypeIcon from "@/components/atoms/TransactionTypeIcon";
 import { nextOccurrenceAfter, toRule } from "@/lib/recurring/engine";
 import { cn } from "@/lib/utils/cn";
 import { formatDate, todayISODate } from "@/lib/utils/format";
@@ -31,7 +32,11 @@ export default function RecurringItem({
 }: RecurringItemProps) {
   const isIncome = template.type === "income";
   const isInvestment = template.type === "investment";
-  const icon = isInvestment ? "▲" : isIncome ? "↑" : "↓";
+  const iconVariant: "up" | "down" | "invest" = isInvestment
+    ? "invest"
+    : isIncome
+      ? "up"
+      : "down";
   const iconClass = isInvestment
     ? "text-invest"
     : isIncome
@@ -63,9 +68,9 @@ export default function RecurringItem({
     <li className={cn("flex items-center gap-3 py-3", !template.active && "opacity-60")}>
       <div
         aria-hidden
-        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface-2 border border-border text-base"
+        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface-2 border border-border"
       >
-        <span className={iconClass}>{icon}</span>
+        <TransactionTypeIcon variant={iconVariant} className={iconClass} />
       </div>
 
       <div className="flex-1 min-w-0 text-left">
