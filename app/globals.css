@@ -28,6 +28,8 @@
   --color-income-soft: #10b98118;
   --color-expense: #f43f5e;
   --color-expense-soft: #f43f5e18;
+  --color-invest: #f59e0b;
+  --color-invest-soft: #f59e0b18;
 
   /* Radii */
   --radius-card: 14px;
@@ -115,4 +117,13 @@ body {
   background-color: var(--color-fg-subtle);
   background-clip: padding-box;
   border: 2px solid transparent;
+}
+
+/* Hide native scrollbars while keeping scroll behavior */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

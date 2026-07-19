@@ -19,7 +19,7 @@ export default function BottomNav() {
         aria-label="Primary"
         className="fixed bottom-0 inset-x-0 border-t border-border bg-bg/90 backdrop-blur pb-[env(safe-area-inset-bottom)]"
       >
-        <ul className="hidden md:grid max-w-2xl mx-auto grid-cols-6">
+        <ul className="hidden md:grid max-w-3xl mx-auto grid-cols-8">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;
             return (

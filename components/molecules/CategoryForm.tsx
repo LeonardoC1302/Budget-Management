@@ -32,7 +32,15 @@ export default function CategoryForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-xs text-fg-subtle">
         Adding a new{" "}
-        <span className={type === "income" ? "text-income" : "text-expense"}>
+        <span
+          className={
+            type === "income"
+              ? "text-income"
+              : type === "expense"
+                ? "text-expense"
+                : "text-invest"
+          }
+        >
           {type}
         </span>{" "}
         category.

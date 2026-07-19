@@ -13,6 +13,7 @@ import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { todayISODate } from "@/lib/utils/format";
 import {
   RECURRENCE_FREQUENCY_LABELS,
+  type EntryType,
   type NewRecurringTransaction,
   type RecurrenceFrequency,
   type RecurringTransaction,
@@ -23,8 +24,6 @@ interface RecurringFormProps {
   onSubmit: (input: NewRecurringTransaction) => void | Promise<void>;
   onCancel?: () => void;
 }
-
-type EntryType = "income" | "expense";
 
 const FREQUENCY_OPTIONS = (
   Object.keys(RECURRENCE_FREQUENCY_LABELS) as RecurrenceFrequency[]
@@ -142,27 +141,32 @@ export default function RecurringForm({
       <div
         role="tablist"
         aria-label="Recurring type"
-        className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
+        className="grid grid-cols-3 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={type === t}
-            onClick={() => setType(t)}
-            className={cn(
-              "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
-              type === t
-                ? t === "income"
-                  ? "bg-income-soft text-income"
-                  : "bg-expense-soft text-expense"
-                : "text-fg-muted hover:text-fg",
-            )}
-          >
-            {t}
-          </button>
-        ))}
+        {(["expense", "income", "investment"] as const).map((t) => {
+          const activeClass =
+            t === "income"
+              ? "bg-income-soft text-income"
+              : t === "expense"
+                ? "bg-expense-soft text-expense"
+                : "bg-invest-soft text-invest";
+          const label = t === "investment" ? "Invest" : t;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={type === t}
+              onClick={() => setType(t)}
+              className={cn(
+                "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
+                type === t ? activeClass : "text-fg-muted hover:text-fg",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       <Input
@@ -192,6 +196,12 @@ export default function RecurringForm({
         value={categoryId}
         onChange={setSelectedCategoryId}
       />
+
+      {type === "investment" && categoriesForType.length === 0 && (
+        <p className="text-xs text-invest">
+          Create at least one investment category to set up an investment rule.
+        </p>
+      )}
 
       <Input
         label="Description"

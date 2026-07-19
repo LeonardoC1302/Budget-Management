@@ -30,9 +30,18 @@ export default function RecurringItem({
   onToggleActive,
 }: RecurringItemProps) {
   const isIncome = template.type === "income";
-  const icon = isIncome ? "↑" : "↓";
-  const iconClass = isIncome ? "text-income" : "text-expense";
-  const tone: "income" | "expense" = isIncome ? "income" : "expense";
+  const isInvestment = template.type === "investment";
+  const icon = isInvestment ? "▲" : isIncome ? "↑" : "↓";
+  const iconClass = isInvestment
+    ? "text-invest"
+    : isIncome
+      ? "text-income"
+      : "text-expense";
+  const tone: "income" | "expense" | "neutral" = isInvestment
+    ? "neutral"
+    : isIncome
+      ? "income"
+      : "expense";
 
   const title =
     template.description || category?.name || "Untitled recurring";
@@ -74,7 +83,8 @@ export default function RecurringItem({
           tone={tone}
           size="sm"
           currency={template.currency}
-          showSign
+          showSign={!isInvestment}
+          className={isInvestment ? "text-invest" : undefined}
         />
         <div className="flex gap-1">
           {onToggleActive && (

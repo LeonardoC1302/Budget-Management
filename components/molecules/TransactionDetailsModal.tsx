@@ -25,6 +25,7 @@ export default function TransactionDetailsModal({
 }: TransactionDetailsModalProps) {
   const isTransfer = transaction?.type === "transfer";
   const isIncome = transaction?.type === "income";
+  const isInvestment = transaction?.type === "investment";
   const isInflow =
     isIncome ||
     (isTransfer && transaction?.transferDirection === "in");
@@ -48,12 +49,14 @@ export default function TransactionDetailsModal({
                     : "expense"
                   : isIncome
                     ? "income"
-                    : "expense"
+                    : isInvestment
+                      ? "neutral"
+                      : "expense"
               }
               size="lg"
               currency={transaction.currency}
-              showSign={!isTransfer}
-              className="text-right"
+              showSign={!isTransfer && !isInvestment}
+              className={isInvestment ? "text-invest text-right" : "text-right"}
             />
           </div>
 
@@ -61,6 +64,8 @@ export default function TransactionDetailsModal({
             <Row label="Type">
               {isTransfer ? (
                 <span className="text-fg">Transfer</span>
+              ) : isInvestment ? (
+                <span className="text-invest">Investment</span>
               ) : (
                 <span className={isIncome ? "text-income" : "text-expense"}>
                   {isIncome ? "Income" : "Expense"}
