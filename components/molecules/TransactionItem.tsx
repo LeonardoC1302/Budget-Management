@@ -2,6 +2,7 @@
 
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
+import TransactionTypeIcon from "@/components/atoms/TransactionTypeIcon";
 import { cn } from "@/lib/utils/cn";
 import { formatDate } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
@@ -30,7 +31,7 @@ export default function TransactionItem({
 
   let title: string;
   let subtitle: string;
-  let icon: string;
+  let iconVariant: "up" | "down" | "transfer" | "invest";
   let iconClass: string;
   let tone: "income" | "expense" | "neutral";
 
@@ -42,7 +43,7 @@ export default function TransactionItem({
         : `Transfer to ${other}`;
     title = transaction.description || defaultTitle;
     subtitle = `${account?.name ?? "—"} · ${formatDate(transaction.date)}`;
-    icon = "↔";
+    iconVariant = "transfer";
     iconClass = "text-fg-muted";
     tone = "neutral";
   } else if (isInvestment) {
@@ -50,7 +51,7 @@ export default function TransactionItem({
     subtitle = `${category?.name ?? "—"}${
       account ? ` · ${account.name}` : ""
     } · ${formatDate(transaction.date)}`;
-    icon = "▲";
+    iconVariant = "invest";
     iconClass = "text-invest";
     tone = "neutral";
   } else {
@@ -58,7 +59,7 @@ export default function TransactionItem({
     subtitle = `${category?.name ?? "—"}${
       account ? ` · ${account.name}` : ""
     } · ${formatDate(transaction.date)}`;
-    icon = isIncome ? "↑" : "↓";
+    iconVariant = isIncome ? "up" : "down";
     iconClass = isIncome ? "text-income" : "text-expense";
     tone = isIncome ? "income" : "expense";
   }
@@ -67,9 +68,9 @@ export default function TransactionItem({
     <>
       <div
         aria-hidden
-        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface-2 border border-border text-base"
+        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface-2 border border-border"
       >
-        <span className={iconClass}>{icon}</span>
+        <TransactionTypeIcon variant={iconVariant} className={iconClass} />
       </div>
 
       <div className="flex-1 min-w-0 text-left">
