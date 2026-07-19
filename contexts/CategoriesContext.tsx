@@ -9,7 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { categoryStore, transactionStore } from "@/lib/storage";
+import { budgetStore, categoryStore, transactionStore } from "@/lib/storage";
+import { emitDataChanged } from "@/lib/events/dataChanged";
 import type { Category, NewCategory, TransactionType } from "@/lib/types";
 
 interface CategoriesContextValue {
@@ -80,8 +81,14 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
           `This category is used by ${count} transaction${count === 1 ? "" : "s"}.`,
         );
       }
+      const budgets = await budgetStore.list();
+      const orphanedBudgets = budgets.filter((b) => b.categoryId === id);
+      for (const b of orphanedBudgets) {
+        await budgetStore.remove(b.id);
+      }
       await categoryStore.remove(id);
       await refresh();
+      if (orphanedBudgets.length > 0) emitDataChanged();
     },
     [categories, usage, refresh],
   );
