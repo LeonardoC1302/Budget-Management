@@ -1,5 +1,6 @@
 "use client";
 
+import EmptyState from "@/components/atoms/EmptyState";
 import BudgetRow from "@/components/molecules/BudgetRow";
 import type { Budget, Category } from "@/lib/types";
 import type { BudgetProgress } from "@/lib/utils/budgets";
@@ -10,6 +11,12 @@ interface BudgetListProps {
   progressByCategory: Record<string, BudgetProgress>;
   onEdit?: (budget: Budget) => void;
   onDelete?: (budget: Budget) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyActionLabel?: string;
+  emptyActionOnClick?: () => void;
+  emptyActionHref?: string;
+  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
 }
 
@@ -19,13 +26,22 @@ export default function BudgetList({
   progressByCategory,
   onEdit,
   onDelete,
+  emptyTitle,
+  emptyDescription,
+  emptyActionLabel,
+  emptyActionOnClick,
+  emptyActionHref,
   emptyMessage = "No budgets yet.",
 }: BudgetListProps) {
   if (budgets.length === 0) {
     return (
-      <div className="surface p-8 text-center">
-        <p className="text-fg-muted text-sm">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        title={emptyTitle ?? emptyMessage}
+        description={emptyDescription}
+        actionLabel={emptyActionLabel}
+        actionOnClick={emptyActionOnClick}
+        actionHref={emptyActionHref}
+      />
     );
   }
 

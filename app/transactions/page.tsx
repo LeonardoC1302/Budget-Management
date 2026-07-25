@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Modal from "@/components/atoms/Modal";
+import RowSkeleton from "@/components/atoms/RowSkeleton";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
 import TransactionDetailsModal from "@/components/molecules/TransactionDetailsModal";
 import TransactionForm from "@/components/molecules/TransactionForm";
 import TransactionList from "@/components/organisms/TransactionList";
@@ -46,10 +48,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <span className="label-sm">History</span>
-        <h1 className="heading-xl">All transactions</h1>
-      </header>
+      <RouteMasthead kicker="History" title="All transactions" />
 
       {usedCategories.length > 0 && (
         <div className="relative -mx-1">
@@ -80,22 +79,28 @@ export default function TransactionsPage() {
       )}
 
       {loading ? (
-        <div className="surface p-8 text-center text-sm text-fg-muted">
-          Loading…
-        </div>
+        <RowSkeleton count={5} />
       ) : (
         <TransactionList
           transactions={filtered}
           accountsById={accountsById}
           categoriesById={categoriesById}
-          onDelete={remove}
           onSelect={setSelected}
           groupByDate
-          emptyMessage={
+          emptyTitle={
             categoryFilter === ALL_FILTER
-              ? "No transactions yet."
-              : "No transactions in this category."
+              ? "No transactions yet"
+              : "Nothing in this category yet"
           }
+          emptyDescription={
+            categoryFilter === ALL_FILTER
+              ? "Add your first entry — income, expense, or transfer — to start seeing the shape of the month."
+              : "Nothing matches this category yet. Add a transaction or pick a different filter."
+          }
+          emptyActionLabel={
+            categoryFilter === ALL_FILTER ? "Add a transaction" : undefined
+          }
+          emptyActionHref={categoryFilter === ALL_FILTER ? "/add" : undefined}
         />
       )}
 
@@ -113,6 +118,7 @@ export default function TransactionsPage() {
           setSelected(null);
           setEditing(t);
         }}
+        onDelete={remove}
       />
 
       <Modal

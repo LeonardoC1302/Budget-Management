@@ -6,6 +6,8 @@ interface DeltaPillProps {
   delta: Delta;
   /** Whether an "up" movement is favorable (e.g., income up = good). */
   goodWhen: "up" | "down";
+  /** Optional soft rider shown when the movement is unfavorable. */
+  reassuranceWhenBad?: string;
   className?: string;
 }
 
@@ -13,6 +15,7 @@ export default function DeltaPill({
   label,
   delta,
   goodWhen,
+  reassuranceWhenBad,
   className,
 }: DeltaPillProps) {
   const { direction, percent } = delta;
@@ -25,6 +28,9 @@ export default function DeltaPill({
       : direction === "flat"
         ? "0%"
         : "n/a";
+
+  const isBad =
+    (direction === "up" || direction === "down") && direction !== goodWhen;
 
   const tone =
     direction === "flat" || direction === "na"
@@ -45,6 +51,11 @@ export default function DeltaPill({
         {arrow} {pct}
       </span>
       <span className="text-[10px] text-fg-subtle">vs last month</span>
+      {isBad && reassuranceWhenBad && (
+        <span className="text-[10px] text-fg-subtle leading-snug mt-0.5">
+          {reassuranceWhenBad}
+        </span>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import Amount from "@/components/atoms/Amount";
 import ProgressBar from "@/components/atoms/ProgressBar";
+import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/format";
 import type { BudgetTotals } from "@/lib/utils/budgets";
 
@@ -20,31 +21,36 @@ export default function BudgetSummary({
   const remaining = totalCap - totalSpent;
 
   return (
-    <section className="surface p-5 flex flex-col gap-3">
+    <section className="masthead-balance surface p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="label-sm">Total budgeted</p>
+        <div className="min-w-0 flex flex-col gap-1">
+          <span className="label-sm">Spent this month</span>
           <Amount
             value={totalSpent}
             size="xl"
             tone={over ? "expense" : "neutral"}
             currency={currency}
           />
-          <p className="text-xs text-fg-subtle mt-0.5">
-            of {formatCurrency(totalCap, currency)}
+          <p className="text-xs text-fg-subtle tabular-nums">
+            of {formatCurrency(totalCap, currency)} capped
           </p>
         </div>
-        <span
-          className={
-            over
-              ? "text-sm font-medium text-expense"
-              : "text-sm text-fg-muted"
-          }
-        >
-          {over
-            ? `${formatCurrency(-remaining, currency)} over`
-            : `${formatCurrency(remaining, currency)} left`}
-        </span>
+        <div className="text-right shrink-0 flex flex-col gap-1">
+          <span className="label-sm">{over ? "Over" : "Left"}</span>
+          <p
+            className={cn(
+              "text-lg font-semibold tabular-nums leading-tight",
+              over ? "text-expense" : "text-fg",
+            )}
+          >
+            {over
+              ? formatCurrency(-remaining, currency)
+              : formatCurrency(remaining, currency)}
+          </p>
+          <p className="text-[11px] text-fg-subtle uppercase tracking-wide">
+            {Math.round(percent * 100)}% used
+          </p>
+        </div>
       </div>
 
       <ProgressBar

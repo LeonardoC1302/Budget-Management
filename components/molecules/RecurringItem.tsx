@@ -3,6 +3,13 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import TransactionTypeIcon from "@/components/atoms/TransactionTypeIcon";
+import {
+  DeleteIcon,
+  EditIcon,
+  PauseIcon,
+  PlayIcon,
+  RefreshIcon,
+} from "@/lib/action/icons";
 import { nextOccurrenceAfter, toRule } from "@/lib/recurring/engine";
 import { cn } from "@/lib/utils/cn";
 import { formatDate, todayISODate } from "@/lib/utils/format";
@@ -76,7 +83,12 @@ export default function RecurringItem({
       <div className="flex-1 min-w-0 text-left">
         <p className="text-sm font-medium text-fg truncate flex items-center gap-1.5">
           <span className="truncate">{title}</span>
-          <span aria-hidden className="text-xs text-fg-subtle shrink-0">↻</span>
+          <RefreshIcon
+            width={12}
+            height={12}
+            className="text-fg-subtle shrink-0"
+            aria-hidden
+          />
         </p>
         <p className="text-xs text-fg-subtle truncate">{subtitle}</p>
         <p className="text-xs text-fg-subtle truncate">{nextLabel}</p>
@@ -100,7 +112,11 @@ export default function RecurringItem({
               onClick={() => onToggleActive(template.id)}
               className="px-2"
             >
-              {template.active ? "⏸" : "▶"}
+              {template.active ? (
+                <PauseIcon aria-hidden />
+              ) : (
+                <PlayIcon aria-hidden />
+              )}
             </Button>
           )}
           {onEdit && (
@@ -111,7 +127,7 @@ export default function RecurringItem({
               onClick={() => onEdit(template)}
               className="px-2"
             >
-              ✎
+              <EditIcon aria-hidden />
             </Button>
           )}
           {onDelete && (
@@ -122,7 +138,7 @@ export default function RecurringItem({
               onClick={() => onDelete(template.id)}
               className="px-2"
             >
-              ×
+              <DeleteIcon aria-hidden />
             </Button>
           )}
         </div>

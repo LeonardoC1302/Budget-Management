@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import CategoryDonut from "@/components/atoms/CategoryDonut";
 import DeltaPill from "@/components/atoms/DeltaPill";
+import EmptyState from "@/components/atoms/EmptyState";
 import SavingsLineChart from "@/components/atoms/SavingsLineChart";
 import {
   computeDelta,
@@ -56,9 +57,12 @@ export default function InsightsSection({
       <h2 className="heading-lg">Insights</h2>
 
       {!hasData ? (
-        <div className="surface p-6 text-center text-sm text-fg-muted">
-          Add a few transactions to see monthly trends and breakdowns here.
-        </div>
+        <EmptyState
+          title="Trends need a few entries"
+          description="Add a handful of transactions and this space will fill in with monthly changes and category breakdowns."
+          actionLabel="Add a transaction"
+          actionHref="/add"
+        />
       ) : (
         <>
           {deltas && (
@@ -69,7 +73,12 @@ export default function InsightsSection({
                 delta={deltas.expense}
                 goodWhen="down"
               />
-              <DeltaPill label="Savings" delta={deltas.net} goodWhen="up" />
+              <DeltaPill
+                label="Savings"
+                delta={deltas.net}
+                goodWhen="up"
+                reassuranceWhenBad="Some months ebb — check a longer window before adjusting."
+              />
             </div>
           )}
 

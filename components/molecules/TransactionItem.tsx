@@ -1,8 +1,8 @@
 "use client";
 
 import Amount from "@/components/atoms/Amount";
-import Button from "@/components/atoms/Button";
 import TransactionTypeIcon from "@/components/atoms/TransactionTypeIcon";
+import { RefreshIcon } from "@/lib/action/icons";
 import { cn } from "@/lib/utils/cn";
 import { formatDate } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
@@ -12,7 +12,6 @@ interface TransactionItemProps {
   account?: Account;
   category?: Category;
   linkedAccount?: Account;
-  onDelete?: (id: string) => void;
   onSelect?: (transaction: Transaction) => void;
 }
 
@@ -21,7 +20,6 @@ export default function TransactionItem({
   account,
   category,
   linkedAccount,
-  onDelete,
   onSelect,
 }: TransactionItemProps) {
   const isTransfer = transaction.type === "transfer";
@@ -77,13 +75,12 @@ export default function TransactionItem({
         <p className="text-sm font-medium text-fg truncate flex items-center gap-1.5">
           <span className="truncate">{title}</span>
           {transaction.recurringId && (
-            <span
-              aria-label="Recurring"
-              title="From a recurring rule"
-              className="text-xs text-fg-subtle shrink-0"
-            >
-              ↻
-            </span>
+            <RefreshIcon
+              width={12}
+              height={12}
+              aria-label="From a recurring rule"
+              className="text-fg-subtle shrink-0"
+            />
           )}
         </p>
         <p className="text-xs text-fg-subtle truncate">{subtitle}</p>
@@ -120,21 +117,6 @@ export default function TransactionItem({
         </button>
       ) : (
         <div className="flex flex-1 items-center gap-3 min-w-0">{body}</div>
-      )}
-
-      {onDelete && (
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label="Delete transaction"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete(transaction.id);
-          }}
-          className="px-2"
-        >
-          ×
-        </Button>
       )}
     </li>
   );

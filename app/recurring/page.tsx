@@ -4,7 +4,9 @@ import { useState } from "react";
 import Button from "@/components/atoms/Button";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
+import RowSkeleton from "@/components/atoms/RowSkeleton";
 import RecurringForm from "@/components/molecules/RecurringForm";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
 import RecurringList from "@/components/organisms/RecurringList";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
@@ -72,24 +74,32 @@ export default function RecurringPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="label-sm">Automations</span>
-          <h1 className="heading-xl">Recurring</h1>
-        </div>
-        <Button size="md" onClick={() => setMode({ kind: "create" })}>
-          + Add
-        </Button>
-      </header>
+      <RouteMasthead
+        kicker="Automations"
+        title="Recurring"
+        actions={
+          <Button size="md" onClick={() => setMode({ kind: "create" })}>
+            + Add
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="surface p-8 text-center text-sm text-fg-muted">
-          Loading…
-        </div>
+        <RowSkeleton count={4} />
       ) : (
         <>
-          <section className="flex flex-col gap-2">
-            <h2 className="label-sm">Active</h2>
+          <section className="flex flex-col gap-3" aria-labelledby="recurring-active">
+            <h2
+              id="recurring-active"
+              className="heading-lg flex items-baseline gap-2"
+            >
+              <span>Active</span>
+              {active.length > 0 && (
+                <span className="text-sm font-normal text-fg-subtle tabular-nums">
+                  {active.length}
+                </span>
+              )}
+            </h2>
             <RecurringList
               templates={active}
               accountsById={accountsById}
@@ -99,13 +109,27 @@ export default function RecurringPage() {
                 setPendingDelete(recurring.find((r) => r.id === id) ?? null)
               }
               onToggleActive={toggleActive}
-              emptyMessage="No active recurring items. Add one to auto-log salary, subscriptions, etc."
+              emptyTitle="No recurring rules yet"
+              emptyDescription="Automate the shape of a normal month — salary, rent, subscriptions — so you only enter the surprises."
+              emptyActionLabel="Add a recurring rule"
+              emptyActionOnClick={() => setMode({ kind: "create" })}
             />
           </section>
 
           {paused.length > 0 && (
-            <section className="flex flex-col gap-2">
-              <h2 className="label-sm">Paused</h2>
+            <section
+              className="flex flex-col gap-3"
+              aria-labelledby="recurring-paused"
+            >
+              <h2
+                id="recurring-paused"
+                className="heading-lg flex items-baseline gap-2 text-fg-muted"
+              >
+                <span>Paused</span>
+                <span className="text-sm font-normal text-fg-subtle tabular-nums">
+                  {paused.length}
+                </span>
+              </h2>
               <RecurringList
                 templates={paused}
                 accountsById={accountsById}

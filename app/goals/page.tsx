@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
+import ProgressBar from "@/components/atoms/ProgressBar";
+import RowSkeleton from "@/components/atoms/RowSkeleton";
 import ContributionForm from "@/components/molecules/ContributionForm";
 import GoalForm from "@/components/molecules/GoalForm";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
 import GoalList from "@/components/organisms/GoalList";
 import { useGoals } from "@/hooks/useGoals";
 import type { Goal, NewGoal, NewGoalContribution } from "@/lib/types";
@@ -70,32 +74,98 @@ export default function GoalsPage() {
           ? `Contribute to ${mode.goal.name}`
           : "";
 
+  const totalsByCurrency = useMemo(() => {
+    const map: Record<string, { saved: number; target: number }> = {};
+    for (const g of goals) {
+      const contribs = contributionsByGoal[g.id] ?? [];
+      const saved =
+        g.initialAmount + contribs.reduce((s, c) => s + c.amount, 0);
+      if (!map[g.currency]) map[g.currency] = { saved: 0, target: 0 };
+      map[g.currency].saved += saved;
+      map[g.currency].target += g.targetAmount;
+    }
+    return Object.entries(map)
+      .map(([currency, sums]) => ({
+        currency,
+        saved: sums.saved,
+        target: sums.target,
+        percent: sums.target > 0 ? Math.min(sums.saved / sums.target, 1) : 0,
+      }))
+      .sort((a, b) => b.target - a.target);
+  }, [goals, contributionsByGoal]);
+
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="label-sm">Plan</span>
-          <h1 className="heading-xl">Saving goals</h1>
-        </div>
-        <Button size="md" onClick={() => setMode({ kind: "create" })}>
-          + Add
-        </Button>
-      </header>
+      <RouteMasthead
+        kicker="Plan"
+        title="Saving goals"
+        actions={
+          <Button size="md" onClick={() => setMode({ kind: "create" })}>
+            + Add
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="surface p-8 text-center text-sm text-fg-muted">
-          Loading…
-        </div>
+        <RowSkeleton count={3} />
       ) : (
-        <GoalList
+        <>
+          {goals.length > 0 && (
+            <section
+              className="surface p-5 flex flex-col gap-3"
+              aria-label="Total saved across goals"
+            >
+              <div className="flex items-center justify-between">
+                <span className="label-sm">Total saved</span>
+                <span className="text-xs text-fg-subtle">
+                  {goals.length} goal{goals.length === 1 ? "" : "s"} &middot;{" "}
+                  {totalsByCurrency.length} currenc
+                  {totalsByCurrency.length === 1 ? "y" : "ies"}
+                </span>
+              </div>
+              <ul className="flex flex-col gap-3">
+                {totalsByCurrency.map((row) => (
+                  <li key={row.currency} className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-baseline gap-2 min-w-0">
+                        <Amount
+                          value={row.saved}
+                          tone="neutral"
+                          size="md"
+                          currency={row.currency}
+                        />
+                        <span className="text-xs text-fg-subtle truncate">
+                          of {row.target.toLocaleString("en-US")} {row.currency}
+                        </span>
+                      </div>
+                      <span className="text-xs text-fg-subtle tabular-nums">
+                        {Math.round(row.percent * 100)}%
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={row.percent}
+                      tone="accent"
+                      ariaLabel={`${row.currency} saved progress`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <GoalList
           goals={goals}
           contributionsByGoal={contributionsByGoal}
           monthlyRate={monthlyRate}
           onContribute={(goal) => setMode({ kind: "contribute", goal })}
           onEdit={(goal) => setMode({ kind: "edit", goal })}
           onDelete={(goal) => setPendingDelete(goal)}
-          emptyMessage="No goals yet. Add one to start planning."
+          emptyTitle="No goals yet"
+          emptyDescription="Name something you're saving for and Perch will track your monthly pace toward it."
+          emptyActionLabel="Create a goal"
+          emptyActionOnClick={() => setMode({ kind: "create" })}
         />
+        </>
       )}
 
       <Modal open={mode.kind !== "closed"} onClose={close} title={modalTitle}>

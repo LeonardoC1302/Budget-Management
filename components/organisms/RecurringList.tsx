@@ -1,5 +1,6 @@
 "use client";
 
+import EmptyState from "@/components/atoms/EmptyState";
 import RecurringItem from "@/components/molecules/RecurringItem";
 import type { Account, Category, RecurringTransaction } from "@/lib/types";
 
@@ -10,6 +11,12 @@ interface RecurringListProps {
   onEdit?: (template: RecurringTransaction) => void;
   onDelete?: (id: string) => void;
   onToggleActive?: (id: string) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyActionLabel?: string;
+  emptyActionOnClick?: () => void;
+  emptyActionHref?: string;
+  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
 }
 
@@ -20,13 +27,22 @@ export default function RecurringList({
   onEdit,
   onDelete,
   onToggleActive,
+  emptyTitle,
+  emptyDescription,
+  emptyActionLabel,
+  emptyActionOnClick,
+  emptyActionHref,
   emptyMessage = "No recurring transactions yet.",
 }: RecurringListProps) {
   if (templates.length === 0) {
     return (
-      <div className="surface p-8 text-center">
-        <p className="text-fg-muted text-sm">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        title={emptyTitle ?? emptyMessage}
+        description={emptyDescription}
+        actionLabel={emptyActionLabel}
+        actionOnClick={emptyActionOnClick}
+        actionHref={emptyActionHref}
+      />
     );
   }
 

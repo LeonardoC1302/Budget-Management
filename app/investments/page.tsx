@@ -1,24 +1,34 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
+import EmptyState from "@/components/atoms/EmptyState";
 import Modal from "@/components/atoms/Modal";
+import RowSkeleton from "@/components/atoms/RowSkeleton";
+import SavingsLineChart from "@/components/atoms/SavingsLineChart";
 import CategoryForm from "@/components/molecules/CategoryForm";
 import CategoryManageModal from "@/components/molecules/CategoryManageModal";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
 import TransactionDetailsModal from "@/components/molecules/TransactionDetailsModal";
 import TransactionForm from "@/components/molecules/TransactionForm";
 import TransactionList from "@/components/organisms/TransactionList";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import { useTransactions } from "@/hooks/useTransactions";
+import {
+  monthKeyOffset,
+  monthLabel,
+  type MonthlyPoint,
+} from "@/lib/utils/analytics";
+import { monthKeyOf } from "@/lib/utils/budgets";
 import { formatCurrency } from "@/lib/utils/format";
 import type { NewCategory, Transaction } from "@/lib/types";
 
 export default function InvestmentsPage() {
   const { transactions, remove, update, loading } = useTransactions();
   const { byId: accountsById } = useAccounts();
-  const { byId: categoriesById, filterByType, add: addCategory } = useCategories();
+  const { byId: categoriesById, filterByType, add: addCategory } =
+    useCategories();
   const [selected, setSelected] = useState<Transaction | null>(null);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
@@ -51,6 +61,27 @@ export default function InvestmentsPage() {
     return rows.sort((a, b) => b.amount - a.amount);
   }, [investmentCategories, byCategory, total]);
 
+  const contributionSeries = useMemo<MonthlyPoint[]>(() => {
+    const points: MonthlyPoint[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const key = monthKeyOffset(-i);
+      let sum = 0;
+      for (const t of investments) {
+        if (monthKeyOf(t.date) === key) sum += t.amountUSD;
+      }
+      points.push({
+        monthKey: key,
+        label: monthLabel(key),
+        income: sum,
+        expense: 0,
+        net: sum,
+      });
+    }
+    return points;
+  }, [investments]);
+
+  const hasContributions = contributionSeries.some((p) => p.net > 0);
+
   async function handleCreateCategory(input: NewCategory) {
     await addCategory(input);
     setCreateCategoryOpen(false);
@@ -60,12 +91,10 @@ export default function InvestmentsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="label-sm">Portfolio</span>
-          <h1 className="heading-xl">Investments</h1>
-        </div>
-        {hasCategories && (
+      <RouteMasthead
+        kicker="Portfolio"
+        title="Investments"
+        actions={
           <Button
             variant="secondary"
             size="sm"
@@ -73,8 +102,8 @@ export default function InvestmentsPage() {
           >
             Manage
           </Button>
-        )}
-      </header>
+        }
+      />
 
       <section
         className="surface p-5 flex flex-col gap-1.5"
@@ -90,24 +119,32 @@ export default function InvestmentsPage() {
         </span>
       </section>
 
-      <section className="flex flex-col gap-3">
+      {hasContributions && (
+        <section className="surface p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-fg">
+              Contribution rhythm
+            </h2>
+            <span className="text-xs text-fg-subtle">Last 6 months</span>
+          </div>
+          <SavingsLineChart data={contributionSeries} currency="USD" />
+        </section>
+      )}
+
+      <section className="flex flex-col gap-3" aria-labelledby="by-category">
         <div className="flex items-center justify-between">
-          <h2 className="heading-lg">By category</h2>
+          <h2 id="by-category" className="heading-lg">
+            By category
+          </h2>
         </div>
 
         {!hasCategories ? (
-          <div className="surface p-6 flex flex-col items-center gap-3 text-center">
-            <p className="text-sm text-fg-muted">
-              No investment categories yet. Create at least one to start
-              logging investments.
-            </p>
-            <Button
-              size="sm"
-              onClick={() => setCreateCategoryOpen(true)}
-            >
-              + New category
-            </Button>
-          </div>
+          <EmptyState
+            title="No investment categories yet"
+            description="Create at least one category (index funds, retirement, crypto…) so you can group and see the share of each."
+            actionLabel="New investment category"
+            actionOnClick={() => setCreateCategoryOpen(true)}
+          />
         ) : (
           <ul className="surface divide-y divide-border">
             {breakdown.map((row) => (
@@ -135,36 +172,32 @@ export default function InvestmentsPage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3" aria-labelledby="activity">
         <div className="flex items-center justify-between">
-          <h2 className="heading-lg">Activity</h2>
-          {hasCategories && (
-            <Link
-              href="/add"
-              className="text-sm text-fg-muted hover:text-fg"
-            >
-              + Add
-            </Link>
-          )}
+          <h2 id="activity" className="heading-lg">
+            Activity
+          </h2>
         </div>
 
         {loading ? (
-          <div className="surface p-8 text-center text-sm text-fg-muted">
-            Loading…
-          </div>
+          <RowSkeleton count={4} />
         ) : (
           <TransactionList
             transactions={investments}
             accountsById={accountsById}
             categoriesById={categoriesById}
-            onDelete={remove}
             onSelect={setSelected}
             groupByDate
-            emptyMessage={
-              hasCategories
-                ? "No investments yet. Add one from the Add tab."
-                : "No investments yet."
+            emptyTitle={
+              hasCategories ? "No investments yet" : "Nothing logged yet"
             }
+            emptyDescription={
+              hasCategories
+                ? "Log a contribution to a category from the Add tab to see it here."
+                : "Create an investment category first, then log a contribution from the Add tab."
+            }
+            emptyActionLabel={hasCategories ? "Add a contribution" : undefined}
+            emptyActionHref={hasCategories ? "/add" : undefined}
           />
         )}
       </section>
@@ -183,6 +216,7 @@ export default function InvestmentsPage() {
           setSelected(null);
           setEditing(t);
         }}
+        onDelete={remove}
       />
 
       <Modal
