@@ -4,8 +4,10 @@ import { useState } from "react";
 import Button from "@/components/atoms/Button";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
+import RowSkeleton from "@/components/atoms/RowSkeleton";
 import BudgetForm from "@/components/molecules/BudgetForm";
 import BudgetSummary from "@/components/molecules/BudgetSummary";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
 import BudgetList from "@/components/organisms/BudgetList";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
@@ -73,20 +75,18 @@ export default function BudgetsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="label-sm">{formatMonthLabel(monthKey)}</span>
-          <h1 className="heading-xl">Budgets</h1>
-        </div>
-        <Button size="md" onClick={() => setMode({ kind: "create" })}>
-          + Add
-        </Button>
-      </header>
+      <RouteMasthead
+        kicker={formatMonthLabel(monthKey)}
+        title="Budgets"
+        actions={
+          <Button size="md" onClick={() => setMode({ kind: "create" })}>
+            + Add
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="surface p-8 text-center text-sm text-fg-muted">
-          Loading…
-        </div>
+        <RowSkeleton count={4} />
       ) : (
         <>
           {budgets.length > 0 && (
@@ -99,7 +99,10 @@ export default function BudgetsPage() {
             progressByCategory={progressByCategory}
             onEdit={(budget) => setMode({ kind: "edit", budget })}
             onDelete={(budget) => setPendingDelete(budget)}
-            emptyMessage="No budgets yet. Add a monthly cap to a category."
+            emptyTitle="No budgets yet"
+            emptyDescription="Set a monthly cap on a category so you can catch trends before the end of the month."
+            emptyActionLabel="Add a monthly cap"
+            emptyActionOnClick={() => setMode({ kind: "create" })}
           />
         </>
       )}

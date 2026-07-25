@@ -148,11 +148,16 @@ export default function TransactionForm({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        {overBudgetWarning && (
+        {overBudgetWarning ? (
           <p role="status" className="text-xs text-expense">
             {overBudgetWarning}
           </p>
-        )}
+        ) : amount.trim() !== "" &&
+          (!Number.isFinite(parsedAmount) || parsedAmount <= 0) ? (
+          <p role="status" className="text-xs text-fg-subtle">
+            Enter an amount greater than zero to enable the save button.
+          </p>
+        ) : null}
       </div>
 
       <Select

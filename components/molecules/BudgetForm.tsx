@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
+import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import { useCategories } from "@/hooks/useCategories";
@@ -38,6 +39,7 @@ export default function BudgetForm({
   const [amount, setAmount] = useState(
     initial ? String(initial.amount) : "",
   );
+  const [currency, setCurrency] = useState(initial?.currency ?? BASE_CURRENCY);
   const [submitting, setSubmitting] = useState(false);
 
   const categoryId =
@@ -54,7 +56,7 @@ export default function BudgetForm({
     await onSubmit({
       categoryId,
       amount: parsed,
-      currency: BASE_CURRENCY,
+      currency,
     });
     setSubmitting(false);
   }
@@ -79,18 +81,25 @@ export default function BudgetForm({
         </p>
       )}
 
-      <Input
-        label="Monthly cap (USD)"
-        name="amount"
-        type="number"
-        inputMode="decimal"
-        step="0.01"
-        min="0"
-        placeholder="0.00"
-        required
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
+      <div className="grid grid-cols-[1fr_9rem] gap-3">
+        <Input
+          label={`Monthly cap (${currency})`}
+          name="amount"
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          required
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <CurrencyCombobox
+          label="Currency"
+          value={currency}
+          onChange={setCurrency}
+        />
+      </div>
 
       <div className="flex gap-2 pt-2">
         {onCancel && (

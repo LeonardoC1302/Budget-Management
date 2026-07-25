@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Impeccable design skill — local state, session artifacts, and temp bodies.
+# Keep `.impeccable/critique/*.md` committed so scores trend across runs, and
+# `.impeccable/config.json` / `.impeccable/design.json` shared across the team.
+.impeccable/config.local.json
+.impeccable/live/
+.impeccable/tmp/

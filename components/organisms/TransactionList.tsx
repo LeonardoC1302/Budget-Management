@@ -1,5 +1,6 @@
 "use client";
 
+import EmptyState from "@/components/atoms/EmptyState";
 import TransactionItem from "@/components/molecules/TransactionItem";
 import { formatDateHeader } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
@@ -8,8 +9,13 @@ interface TransactionListProps {
   transactions: Transaction[];
   accountsById?: Record<string, Account>;
   categoriesById?: Record<string, Category>;
-  onDelete?: (id: string) => void;
   onSelect?: (transaction: Transaction) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyActionLabel?: string;
+  emptyActionOnClick?: () => void;
+  emptyActionHref?: string;
+  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
   groupByDate?: boolean;
 }
@@ -18,16 +24,24 @@ export default function TransactionList({
   transactions,
   accountsById,
   categoriesById,
-  onDelete,
   onSelect,
+  emptyTitle,
+  emptyDescription,
+  emptyActionLabel,
+  emptyActionOnClick,
+  emptyActionHref,
   emptyMessage = "No transactions yet.",
   groupByDate = false,
 }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
-      <div className="surface p-8 text-center">
-        <p className="text-fg-muted text-sm">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        title={emptyTitle ?? emptyMessage}
+        description={emptyDescription}
+        actionLabel={emptyActionLabel}
+        actionOnClick={emptyActionOnClick}
+        actionHref={emptyActionHref}
+      />
     );
   }
 
@@ -40,7 +54,6 @@ export default function TransactionList({
       linkedAccount={
         t.linkedAccountId ? accountsById?.[t.linkedAccountId] : undefined
       }
-      onDelete={onDelete}
       onSelect={onSelect}
     />
   );

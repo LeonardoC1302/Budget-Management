@@ -220,28 +220,36 @@ export default function RecurringForm({
       />
 
       {frequency === "semi-monthly" && (
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="First day"
-            name="dayA"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="31"
-            value={dayA}
-            onChange={(e) => setDayA(e.target.value)}
-            hint="1–31; last-of-month if fewer days."
-          />
-          <Input
-            label="Second day"
-            name="dayB"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="31"
-            value={dayB}
-            onChange={(e) => setDayB(e.target.value)}
-          />
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-fg-muted">
+            Two days each month
+          </span>
+          <p className="text-xs text-fg-subtle">
+            If a month has fewer days, the rule falls on the last day of the
+            month. Choose two different days.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="First day"
+              name="dayA"
+              value={dayA}
+              onChange={setDayA}
+              options={Array.from({ length: 31 }, (_, i) => ({
+                value: String(i + 1),
+                label: String(i + 1),
+              }))}
+            />
+            <Select
+              label="Second day"
+              name="dayB"
+              value={dayB}
+              onChange={setDayB}
+              options={Array.from({ length: 31 }, (_, i) => ({
+                value: String(i + 1),
+                label: String(i + 1),
+              }))}
+            />
+          </div>
         </div>
       )}
 

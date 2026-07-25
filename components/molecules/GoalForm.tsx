@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
+import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -21,6 +22,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
   const [initialAmount, setInitialAmount] = useState(
     initial ? String(initial.initialAmount) : "0",
   );
+  const [currency, setCurrency] = useState(initial?.currency ?? BASE_CURRENCY);
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? "");
   const [submitting, setSubmitting] = useState(false);
 
@@ -36,7 +38,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
       name: name.trim(),
       targetAmount: parsedTarget,
       initialAmount: parsedInitial,
-      currency: BASE_CURRENCY,
+      currency,
       targetDate: targetDate || undefined,
     });
     setSubmitting(false);
@@ -53,21 +55,28 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
         onChange={(e) => setName(e.target.value)}
       />
 
-      <Input
-        label="Target amount (USD)"
-        name="targetAmount"
-        type="number"
-        inputMode="decimal"
-        step="0.01"
-        min="0"
-        placeholder="0.00"
-        required
-        value={targetAmount}
-        onChange={(e) => setTargetAmount(e.target.value)}
-      />
+      <div className="grid grid-cols-[1fr_9rem] gap-3">
+        <Input
+          label={`Target amount (${currency})`}
+          name="targetAmount"
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          required
+          value={targetAmount}
+          onChange={(e) => setTargetAmount(e.target.value)}
+        />
+        <CurrencyCombobox
+          label="Currency"
+          value={currency}
+          onChange={setCurrency}
+        />
+      </div>
 
       <Input
-        label="Initial progress (USD)"
+        label={`Initial progress (${currency})`}
         hint="Money you already have toward this goal."
         name="initialAmount"
         type="number"

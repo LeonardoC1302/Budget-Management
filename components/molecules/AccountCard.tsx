@@ -1,5 +1,6 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
+import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import { ACCOUNT_TYPE_LABELS, type Account } from "@/lib/types";
 
 interface AccountCardProps {
@@ -24,7 +25,7 @@ export default function AccountCard({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-fg truncate">{account.name}</p>
         <p className="text-xs text-fg-subtle">
-          {ACCOUNT_TYPE_LABELS[account.type]} · {transactionCount} tx
+          {ACCOUNT_TYPE_LABELS[account.type]} &middot; {transactionCount} tx
         </p>
       </div>
 
@@ -45,7 +46,7 @@ export default function AccountCard({
               onClick={() => onEdit(account)}
               className="px-2"
             >
-              ✎
+              <EditIcon aria-hidden />
             </Button>
           )}
           {onDelete && (
@@ -62,7 +63,7 @@ export default function AccountCard({
               }
               className="px-2"
             >
-              ×
+              <DeleteIcon aria-hidden />
             </Button>
           )}
         </div>

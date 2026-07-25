@@ -2,7 +2,10 @@
 
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
+import PhaseIndicator from "@/components/atoms/PhaseIndicator";
 import ProgressBar from "@/components/atoms/ProgressBar";
+import { DeleteIcon, EditIcon } from "@/lib/action/icons";
+import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency } from "@/lib/utils/format";
 import {
@@ -35,9 +38,7 @@ function EstimateLine({
 
   if (estimate.kind === "reached") {
     return (
-      <p className="text-sm text-income">
-        Goal reached — nice work.
-      </p>
+      <p className="text-sm text-income">Goal reached &mdash; nice work.</p>
     );
   }
   if (estimate.kind === "no-data") {
@@ -50,14 +51,14 @@ function EstimateLine({
   }
   if (estimate.kind === "negative") {
     return (
-      <p className="text-sm text-expense">
-        You&apos;re spending more than you earn right now, so this goal
-        isn&apos;t on track.
+      <p className="text-sm text-fg-muted">
+        This month you&apos;re spending more than you earn, so the estimate
+        pauses. It&apos;ll resume as soon as savings turn positive.
       </p>
     );
   }
   return (
-    <p className="text-sm text-fg-muted">
+    <p className="text-sm text-fg-muted leading-snug">
       If you keep saving{" "}
       <span className="text-fg font-medium">
         {formatCurrency(estimate.monthlyRate, BASE_CURRENCY)}
@@ -66,7 +67,7 @@ function EstimateLine({
       <span className="text-fg font-medium">
         {formatMonthsRough(estimate.months)}
       </span>{" "}
-      — around{" "}
+      &mdash; around{" "}
       <span className="text-fg font-medium">
         {formatTargetMonth(estimate.targetDate)}
       </span>
@@ -84,46 +85,85 @@ export default function GoalCard({
   onDelete,
 }: GoalCardProps) {
   const progress = computeGoalProgress(goal, contributions);
+  const contributionCount = contributions.length;
 
   return (
-    <article className="surface p-5 flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-base font-semibold text-fg truncate">
+    <article
+      className={cn(
+        "surface relative overflow-hidden p-5 flex flex-col gap-4",
+        progress.reached && "goal-reached",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1",
+          progress.reached ? "bg-income" : "bg-accent/60",
+        )}
+      />
+
+      <div className="flex items-start gap-4">
+        <PhaseIndicator
+          progress={progress.percent}
+          reached={progress.reached}
+          tone={progress.reached ? "income" : "accent"}
+          size={48}
+          ariaLabel={`${goal.name}: ${Math.round(progress.percent * 100)}%`}
+        />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold text-fg leading-tight truncate">
             {goal.name}
           </h3>
           {goal.targetDate && (
-            <p className="text-xs text-fg-subtle mt-0.5">
-              Target: {formatTargetMonth(new Date(goal.targetDate))}
+            <p className="text-xs text-fg-subtle mt-1">
+              Target {formatTargetMonth(new Date(goal.targetDate))}
             </p>
           )}
         </div>
-        <div className="text-right shrink-0">
-          <Amount
-            value={progress.saved}
-            size="lg"
-            tone={progress.reached ? "income" : "neutral"}
-            currency={goal.currency}
-          />
-          <p className="text-xs text-fg-subtle mt-0.5">
-            of {formatCurrency(goal.targetAmount, goal.currency)}
-          </p>
-        </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0 flex flex-col gap-0.5">
+            <span className="label-sm">Saved</span>
+            <Amount
+              value={progress.saved}
+              size="lg"
+              tone={progress.reached ? "income" : "neutral"}
+              currency={goal.currency}
+            />
+          </div>
+          <div className="text-right shrink-0 flex flex-col gap-0.5">
+            <span className="label-sm">
+              {progress.reached ? "Complete" : "To go"}
+            </span>
+            <p
+              className={cn(
+                "text-base font-semibold tabular-nums",
+                progress.reached ? "text-income" : "text-fg",
+              )}
+            >
+              {progress.reached
+                ? "\u2713"
+                : formatCurrency(progress.remaining, goal.currency)}
+            </p>
+          </div>
+        </div>
         <ProgressBar
           value={progress.percent}
           tone={progress.reached ? "income" : "accent"}
           ariaLabel={`${goal.name} progress`}
         />
         <div className="flex items-center justify-between text-xs text-fg-subtle">
-          <span>{Math.round(progress.percent * 100)}%</span>
           <span>
-            {progress.reached
-              ? "Complete"
-              : `${formatCurrency(progress.remaining, goal.currency)} to go`}
+            {formatCurrency(goal.targetAmount, goal.currency)} target
           </span>
+          {contributionCount > 0 && (
+            <span>
+              {contributionCount} contribution
+              {contributionCount === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
       </div>
 
@@ -134,22 +174,36 @@ export default function GoalCard({
       />
 
       {(onContribute || onEdit || onDelete) && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex items-center gap-2 pt-3 border-t border-border">
           {onContribute && !progress.reached && (
             <Button size="sm" onClick={() => onContribute(goal)}>
               + Contribute
             </Button>
           )}
-          {onEdit && (
-            <Button variant="secondary" size="sm" onClick={() => onEdit(goal)}>
-              Edit
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="ghost" size="sm" onClick={() => onDelete(goal)}>
-              Delete
-            </Button>
-          )}
+          <div className="ml-auto flex gap-1">
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={`Edit ${goal.name}`}
+                onClick={() => onEdit(goal)}
+                className="px-2"
+              >
+                <EditIcon aria-hidden />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={`Delete ${goal.name}`}
+                onClick={() => onDelete(goal)}
+                className="px-2"
+              >
+                <DeleteIcon aria-hidden />
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </article>
