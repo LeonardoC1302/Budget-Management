@@ -98,7 +98,8 @@ export default function AddTransactionPage() {
             </span>
           </div>
           <p className="text-xs text-fg-subtle">
-            The form&apos;s ready for the next one. Tap <em>Done</em> when you&apos;re finished.
+            The form&apos;s ready for the next one. Tap <em>Done </em> when
+            you&apos;re finished.
           </p>
         </section>
       )}
