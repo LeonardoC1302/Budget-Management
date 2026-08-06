@@ -75,7 +75,10 @@ export const firebaseTransactionStore: TransactionStore = {
       input.fromCurrency === input.toCurrency
         ? 1
         : await getRate(input.fromCurrency, input.toCurrency);
-    const toAmount = input.amount * conversionRate;
+    const toAmount =
+      typeof input.toAmount === "number" && input.toAmount > 0
+        ? input.toAmount
+        : input.amount * conversionRate;
     const usdRate = await getRate(input.fromCurrency, BASE_CURRENCY);
     const amountUSD = input.amount * usdRate;
 

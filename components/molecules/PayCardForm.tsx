@@ -18,14 +18,9 @@ interface PayCardFormProps {
   onCancel?: () => void;
 }
 
-function toCardCurrency(sourceAmount: number, rateFromSourceToCard: number) {
-  return sourceAmount * rateFromSourceToCard;
-}
-
 function fromCardCurrency(cardAmount: number, rateFromSourceToCard: number) {
   return rateFromSourceToCard === 0 ? 0 : cardAmount / rateFromSourceToCard;
 }
-
 function roundMoney(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -44,8 +39,10 @@ export default function PayCardForm({
   );
 
   const [fromId, setFromId] = useState<string>("");
-  const [amountRaw, setAmountRaw] = useState("");
-  const [amountTouched, setAmountTouched] = useState(false);
+  const [cardAmountRaw, setCardAmountRaw] = useState("");
+  const [cardTouched, setCardTouched] = useState(false);
+  const [sourceAmountRaw, setSourceAmountRaw] = useState("");
+  const [sourceManual, setSourceManual] = useState(false);
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(todayISODate());
   const [submitting, setSubmitting] = useState(false);
@@ -97,31 +94,44 @@ export default function PayCardForm({
   const unbilledInCard = Math.max(0, totals.unbilledPurchases - totals.paymentsBeforeCutBacklog);
 
   const preferredCardAmount = statementDueInCard > 0 ? statementDueInCard : fullBalanceInCard;
-  const prefillSource =
-    !amountTouched && rate !== null && preferredCardAmount > 0
-      ? String(roundMoney(fromCardCurrency(preferredCardAmount, rate)))
+  const cardAmountDisplay = cardTouched
+    ? cardAmountRaw
+    : preferredCardAmount > 0
+      ? String(roundMoney(preferredCardAmount))
       : "";
-  const amount = amountTouched ? amountRaw : prefillSource;
+  const parsedCardAmount = parseFloat(cardAmountDisplay);
+  const hasCardAmount = Number.isFinite(parsedCardAmount) && parsedCardAmount > 0;
 
-  const parsedAmount = parseFloat(amount);
-  const hasAmount = Number.isFinite(parsedAmount) && parsedAmount > 0;
-  const cardEquivalent = hasAmount && rate !== null ? toCardCurrency(parsedAmount, rate) : null;
+  const sourceAmountDisplay = sourceManual
+    ? sourceAmountRaw
+    : rate !== null && hasCardAmount
+      ? String(roundMoney(fromCardCurrency(parsedCardAmount, rate)))
+      : "";
+  const parsedSourceAmount = parseFloat(sourceAmountDisplay);
+  const hasSourceAmount = Number.isFinite(parsedSourceAmount) && parsedSourceAmount > 0;
 
-  function setAmount(next: string) {
-    setAmountTouched(true);
-    setAmountRaw(next);
+  function handleCardAmountChange(next: string) {
+    setCardTouched(true);
+    setCardAmountRaw(next);
+    setSourceManual(false);
+  }
+
+  function handleSourceAmountChange(next: string) {
+    setSourceManual(true);
+    setSourceAmountRaw(next);
   }
 
   function fillWithCardTarget(cardAmount: number) {
-    if (rate === null || cardAmount <= 0) return;
-    setAmountTouched(true);
-    setAmountRaw(String(roundMoney(fromCardCurrency(cardAmount, rate))));
+    if (cardAmount <= 0) return;
+    setCardTouched(true);
+    setCardAmountRaw(String(roundMoney(cardAmount)));
+    setSourceManual(false);
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!effectiveFromId) return;
-    if (!hasAmount) return;
+    if (!hasCardAmount || !hasSourceAmount) return;
 
     setSubmitting(true);
     setError(null);
@@ -129,7 +139,8 @@ export default function PayCardForm({
       await onSubmit({
         fromAccountId: effectiveFromId,
         toAccountId: card.id,
-        amount: parsedAmount,
+        amount: parsedSourceAmount,
+        toAmount: parsedCardAmount,
         fromCurrency: sourceCurrency,
         toCurrency: cardCurrency,
         description: description.trim() || `Payment · ${card.name}`,
@@ -168,7 +179,8 @@ export default function PayCardForm({
   const canSubmit =
     !submitting &&
     !accountsLoading &&
-    hasAmount &&
+    hasCardAmount &&
+    hasSourceAmount &&
     !!effectiveFromId &&
     (differentCurrencies ? rate !== null : true);
 
@@ -222,51 +234,62 @@ export default function PayCardForm({
 
       <div className="flex flex-col gap-2">
         <Input
-          label={`Amount (${sourceCurrency})`}
-          name="amount"
+          label={`Applied to card (${cardCurrency})`}
+          name="cardAmount"
           type="number"
           inputMode="decimal"
           step="0.01"
           min="0"
           placeholder="0.00"
           required
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          value={cardAmountDisplay}
+          onChange={(e) => handleCardAmountChange(e.target.value)}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {statementDueInCard > 0 && (
             <QuickChip
               label={`Statement due · ${formatCurrency(statementDueInCard, cardCurrency)}`}
-              disabled={rate === null}
               onClick={() => fillWithCardTarget(statementDueInCard)}
             />
           )}
           {fullBalanceInCard > 0 && fullBalanceInCard !== statementDueInCard && (
             <QuickChip
               label={`Full balance · ${formatCurrency(fullBalanceInCard, cardCurrency)}`}
-              disabled={rate === null}
               onClick={() => fillWithCardTarget(fullBalanceInCard)}
             />
           )}
         </div>
-        {differentCurrencies && (
-          <p className="text-xs text-fg-subtle">
-            {rateError ? (
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Input
+          label={`Charged from source (${sourceCurrency})`}
+          name="sourceAmount"
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          required
+          value={sourceAmountDisplay}
+          onChange={(e) => handleSourceAmountChange(e.target.value)}
+          disabled={differentCurrencies && rate === null}
+        />
+        <p className="text-xs text-fg-subtle">
+          {differentCurrencies ? (
+            rateError ? (
               <span className="text-expense">{rateError}</span>
             ) : rate === null ? (
               "Fetching exchange rate…"
-            ) : cardEquivalent !== null ? (
-              <>
-                ≈ {formatCurrency(cardEquivalent, cardCurrency)} to the card at{" "}
-                {rate.toFixed(4)} {cardCurrency}/{sourceCurrency}
-              </>
             ) : (
               <>
-                1 {sourceCurrency} ≈ {rate.toFixed(4)} {cardCurrency}
+                Default rate: 1 {sourceCurrency} ≈ {rate.toFixed(4)} {cardCurrency}. Adjust if the bank charges a different amount — only what&apos;s here leaves the source; the card is credited by the amount above.
               </>
-            )}
-          </p>
-        )}
+            )
+          ) : (
+            "Adjust if the bank charges a fee or different amount. The card is still credited by the amount above."
+          )}
+        </p>
       </div>
 
       <Input

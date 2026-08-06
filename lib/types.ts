@@ -103,6 +103,10 @@ export interface NewTransfer {
   description: string;
   date: string;
   paymentForAccountId?: string;
+  // Overrides the destination-side amount. Used for card payments where the
+  // bank charges the source account more than what actually pays down the card
+  // (e.g. FX spread or fees). Falls back to `amount * fx(fromCurrency,toCurrency)`.
+  toAmount?: number;
 }
 
 export interface Goal {
