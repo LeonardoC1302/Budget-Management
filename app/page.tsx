@@ -8,6 +8,7 @@ import RowSkeleton from "@/components/atoms/RowSkeleton";
 import BudgetRow from "@/components/molecules/BudgetRow";
 import GoalCard from "@/components/molecules/GoalCard";
 import Masthead from "@/components/molecules/Masthead";
+import CreditCardNudge from "@/components/organisms/CreditCardNudge";
 import DashboardSummary from "@/components/organisms/DashboardSummary";
 import InsightsSection from "@/components/organisms/InsightsSection";
 import TransactionList from "@/components/organisms/TransactionList";
@@ -47,6 +48,8 @@ export default function HomePage() {
   return (
     <div className="flex flex-col gap-7">
       <Masthead balance={monthTotals.net} />
+
+      <CreditCardNudge />
 
       <DashboardSummary
         income={monthTotals.income}

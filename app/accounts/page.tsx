@@ -28,6 +28,12 @@ export default function AccountsPage() {
   } = useAccounts();
   const { addTransfer } = useTransactions();
 
+  const nonCreditAccounts = useMemo(
+    () => accounts.filter((a) => a.type !== "credit"),
+    [accounts],
+  );
+  const creditCardCount = accounts.length - nonCreditAccounts.length;
+
   const [modalOpen, setModalOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
@@ -77,16 +83,16 @@ export default function AccountsPage() {
     }
   }
 
-  const canTransfer = accounts.length >= 2;
+  const canTransfer = nonCreditAccounts.length >= 2;
 
   const balancesByCurrency = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const a of accounts) {
+    for (const a of nonCreditAccounts) {
       const bal = balances[a.id] ?? a.initialBalance;
       map[a.currency] = (map[a.currency] ?? 0) + bal;
     }
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
-  }, [accounts, balances]);
+  }, [nonCreditAccounts, balances]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -126,7 +132,7 @@ export default function AccountsPage() {
         <RowSkeleton count={3} />
       ) : (
         <>
-          {accounts.length > 0 && (
+          {nonCreditAccounts.length > 0 && (
             <section
               className="surface p-5 flex flex-col gap-3"
               aria-label="Net across accounts"
@@ -134,7 +140,8 @@ export default function AccountsPage() {
               <div className="flex items-center justify-between">
                 <span className="label-sm">Net across accounts</span>
                 <span className="text-xs text-fg-subtle">
-                  {accounts.length} account{accounts.length === 1 ? "" : "s"} &middot;{" "}
+                  {nonCreditAccounts.length} account
+                  {nonCreditAccounts.length === 1 ? "" : "s"} &middot;{" "}
                   {balancesByCurrency.length} currenc
                   {balancesByCurrency.length === 1 ? "y" : "ies"}
                 </span>
@@ -162,16 +169,29 @@ export default function AccountsPage() {
           )}
 
           <AccountList
-          accounts={accounts}
-          balances={balances}
-          txCountByAccount={txCountByAccount}
-          onEdit={openEdit}
-          onDelete={setPendingDelete}
-          emptyTitle="No accounts yet"
-          emptyDescription="Add your first account so transactions have somewhere to land."
-          emptyActionLabel="Add an account"
-          emptyActionOnClick={openCreate}
-        />
+            accounts={nonCreditAccounts}
+            balances={balances}
+            txCountByAccount={txCountByAccount}
+            onEdit={openEdit}
+            onDelete={setPendingDelete}
+            emptyTitle="No accounts yet"
+            emptyDescription="Add your first account so transactions have somewhere to land."
+            emptyActionLabel="Add an account"
+            emptyActionOnClick={openCreate}
+          />
+
+          {creditCardCount > 0 && (
+            <p className="text-xs text-fg-subtle text-center">
+              {creditCardCount} credit card{creditCardCount === 1 ? "" : "s"} live on the{" "}
+              <a
+                href="/cards"
+                className="text-fg-muted hover:text-fg underline decoration-dotted underline-offset-4"
+              >
+                Cards
+              </a>{" "}
+              tab.
+            </p>
+          )}
         </>
       )}
 

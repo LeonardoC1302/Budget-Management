@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { accountStore, transactionStore } from "@/lib/storage";
+import { computeCardTotals, type CardTotals } from "@/lib/credit/statement";
 import type { Account, NewAccount, Transaction } from "@/lib/types";
 
 function computeDerived(accounts: Account[], transactions: Transaction[]) {
@@ -25,8 +26,23 @@ function computeDerived(accounts: Account[], transactions: Transaction[]) {
   return { balances, counts };
 }
 
+function computeCreditTotals(
+  accounts: Account[],
+  transactions: Transaction[],
+): Record<string, CardTotals> {
+  const now = new Date();
+  const out: Record<string, CardTotals> = {};
+  for (const a of accounts) {
+    if (a.type !== "credit") continue;
+    const totals = computeCardTotals(a, transactions, now);
+    if (totals) out[a.id] = totals;
+  }
+  return out;
+}
+
 export function useAccounts() {
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [txCountByAccount, setTxCountByAccount] = useState<
     Record<string, number>
@@ -35,9 +51,10 @@ export function useAccounts() {
 
   useEffect(() => {
     Promise.all([accountStore.list(), transactionStore.list()]).then(
-      ([nextAccounts, transactions]) => {
-        const derived = computeDerived(nextAccounts, transactions);
+      ([nextAccounts, nextTransactions]) => {
+        const derived = computeDerived(nextAccounts, nextTransactions);
         setAccounts(nextAccounts);
+        setTransactions(nextTransactions);
         setBalances(derived.balances);
         setTxCountByAccount(derived.counts);
         setLoading(false);
@@ -47,9 +64,10 @@ export function useAccounts() {
 
   const refresh = useCallback(() => {
     return Promise.all([accountStore.list(), transactionStore.list()]).then(
-      ([nextAccounts, transactions]) => {
-        const derived = computeDerived(nextAccounts, transactions);
+      ([nextAccounts, nextTransactions]) => {
+        const derived = computeDerived(nextAccounts, nextTransactions);
         setAccounts(nextAccounts);
+        setTransactions(nextTransactions);
         setBalances(derived.balances);
         setTxCountByAccount(derived.counts);
       },
@@ -96,11 +114,17 @@ export function useAccounts() {
     return map;
   }, [accounts]);
 
+  const creditTotalsByAccount = useMemo(
+    () => computeCreditTotals(accounts, transactions),
+    [accounts, transactions],
+  );
+
   return {
     accounts,
     balances,
     txCountByAccount,
     byId,
+    creditTotalsByAccount,
     loading,
     add,
     update,

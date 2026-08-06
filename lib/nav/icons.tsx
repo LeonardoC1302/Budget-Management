@@ -66,6 +66,14 @@ export const AccountsIcon: ComponentType<IconProps> = (props) => (
   </svg>
 );
 
+export const CardsIcon: ComponentType<IconProps> = (props) => (
+  <svg {...base(props)}>
+    <rect x="3" y="6" width="18" height="12" rx="2.5" />
+    <path d="M3 10h18" />
+    <path d="M7 14.5h4" />
+  </svg>
+);
+
 export const InvestIcon: ComponentType<IconProps> = (props) => (
   <svg {...base(props)}>
     <path d="M4 17l6-6 3 3 7-8" />

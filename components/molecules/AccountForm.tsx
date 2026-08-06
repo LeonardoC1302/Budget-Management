@@ -19,9 +19,9 @@ interface AccountFormProps {
   onCancel?: () => void;
 }
 
-const TYPE_OPTIONS = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[]).map(
-  (value) => ({ value, label: ACCOUNT_TYPE_LABELS[value] }),
-);
+const TYPE_OPTIONS = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[])
+  .filter((value) => value !== "credit")
+  .map((value) => ({ value, label: ACCOUNT_TYPE_LABELS[value] }));
 
 export default function AccountForm({
   initial,
@@ -87,6 +87,17 @@ export default function AccountForm({
         value={currency}
         onChange={setCurrency}
       />
+
+      <p className="text-xs text-fg-subtle">
+        Adding a credit card? Manage those on the{" "}
+        <a
+          href="/cards"
+          className="text-fg-muted hover:text-fg underline decoration-dotted underline-offset-4"
+        >
+          Cards
+        </a>{" "}
+        tab.
+      </p>
 
       <div className="flex gap-2 pt-2">
         {onCancel && (

@@ -13,6 +13,8 @@ interface TransactionItemProps {
   category?: Category;
   linkedAccount?: Account;
   onSelect?: (transaction: Transaction) => void;
+  /** Collapsed view for transfers: shows source → destination on a single row. */
+  groupedTransfer?: boolean;
 }
 
 export default function TransactionItem({
@@ -21,6 +23,7 @@ export default function TransactionItem({
   category,
   linkedAccount,
   onSelect,
+  groupedTransfer = false,
 }: TransactionItemProps) {
   const isTransfer = transaction.type === "transfer";
   const isIncome = transaction.type === "income";
@@ -35,12 +38,34 @@ export default function TransactionItem({
 
   if (isTransfer) {
     const other = linkedAccount?.name ?? "another account";
-    const defaultTitle =
+    const isCardPayment = !!transaction.paymentForAccountId;
+    const cardName =
       transaction.transferDirection === "in"
-        ? `Transfer from ${other}`
-        : `Transfer to ${other}`;
-    title = transaction.description || defaultTitle;
-    subtitle = `${account?.name ?? "—"} · ${formatDate(transaction.date)}`;
+        ? account?.name
+        : linkedAccount?.name;
+    if (groupedTransfer) {
+      // For the "out" side (kept when grouping), account = source, linkedAccount = destination.
+      const source =
+        transaction.transferDirection === "in"
+          ? linkedAccount?.name
+          : account?.name;
+      const destination =
+        transaction.transferDirection === "in"
+          ? account?.name
+          : linkedAccount?.name;
+      title =
+        transaction.description ||
+        (isCardPayment ? "Card payment" : "Transfer");
+      subtitle = `${source ?? "—"} → ${destination ?? "—"} · ${formatDate(transaction.date)}`;
+    } else {
+      const defaultTitle = isCardPayment
+        ? `Card payment · ${cardName ?? other}`
+        : transaction.transferDirection === "in"
+          ? `Transfer from ${other}`
+          : `Transfer to ${other}`;
+      title = transaction.description || defaultTitle;
+      subtitle = `${account?.name ?? "—"} · ${formatDate(transaction.date)}`;
+    }
     iconVariant = "transfer";
     iconClass = "text-fg-muted";
     tone = "neutral";
@@ -94,7 +119,10 @@ export default function TransactionItem({
         showSign={!isTransfer && !isInvestment}
         className={cn(
           "shrink-0 text-right sm:text-base",
-          isTransfer && (isInflow ? "text-income" : "text-expense"),
+          isTransfer &&
+            !groupedTransfer &&
+            (isInflow ? "text-income" : "text-expense"),
+          isTransfer && groupedTransfer && "text-fg-muted",
           isInvestment && "text-invest",
         )}
       />
