@@ -18,6 +18,8 @@ interface TransactionListProps {
   /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
   groupByDate?: boolean;
+  /** Collapse each transfer's paired docs into a single source → destination row. */
+  groupTransfers?: boolean;
 }
 
 export default function TransactionList({
@@ -32,8 +34,15 @@ export default function TransactionList({
   emptyActionHref,
   emptyMessage = "No transactions yet.",
   groupByDate = false,
+  groupTransfers = false,
 }: TransactionListProps) {
-  if (transactions.length === 0) {
+  const visible = groupTransfers
+    ? transactions.filter(
+        (t) => t.type !== "transfer" || t.transferDirection !== "in",
+      )
+    : transactions;
+
+  if (visible.length === 0) {
     return (
       <EmptyState
         title={emptyTitle ?? emptyMessage}
@@ -55,19 +64,20 @@ export default function TransactionList({
         t.linkedAccountId ? accountsById?.[t.linkedAccountId] : undefined
       }
       onSelect={onSelect}
+      groupedTransfer={groupTransfers}
     />
   );
 
   if (!groupByDate) {
     return (
       <ul className="surface divide-y divide-border px-4">
-        {transactions.map(renderItem)}
+        {visible.map(renderItem)}
       </ul>
     );
   }
 
   const groups: { date: string; items: Transaction[] }[] = [];
-  for (const t of transactions) {
+  for (const t of visible) {
     const dateKey = t.date.slice(0, 10);
     const last = groups[groups.length - 1];
     if (last && last.date === dateKey) {

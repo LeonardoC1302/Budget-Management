@@ -98,6 +98,9 @@ export const localTransactionStore: TransactionStore = {
       transferId,
       transferDirection: "out",
       linkedAccountId: input.toAccountId,
+      ...(input.paymentForAccountId
+        ? { paymentForAccountId: input.paymentForAccountId }
+        : {}),
     };
     const inDoc: Transaction = {
       id: inId,
@@ -113,6 +116,9 @@ export const localTransactionStore: TransactionStore = {
       transferId,
       transferDirection: "in",
       linkedAccountId: input.fromAccountId,
+      ...(input.paymentForAccountId
+        ? { paymentForAccountId: input.paymentForAccountId }
+        : {}),
     };
     write([outDoc, inDoc, ...read()]);
   },

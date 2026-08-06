@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@/components/atoms/Modal";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
@@ -22,6 +22,7 @@ export default function TransactionsPage() {
   const [selected, setSelected] = useState<Transaction | null>(null);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_FILTER);
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   const nonInvestment = useMemo(
     () => transactions.filter((t) => t.type !== "investment"),
@@ -46,13 +47,31 @@ export default function TransactionsPage() {
     return nonInvestment.filter((t) => t.categoryId === categoryFilter);
   }, [nonInvestment, categoryFilter]);
 
+  // Redirect vertical wheel to horizontal scroll on the filter row so desktop
+  // users (who lack touch scrolling) can navigate the overflowing pills.
+  useEffect(() => {
+    const el = filtersRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [usedCategories.length]);
+
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead kicker="History" title="All transactions" />
 
       {usedCategories.length > 0 && (
         <div className="relative -mx-1">
-          <div className="scrollbar-hide flex gap-2 overflow-x-auto px-1 pb-1">
+          <div
+            ref={filtersRef}
+            className="scrollbar-hide flex gap-2 overflow-x-auto px-1 pb-1"
+          >
             <FilterPill
               label="All"
               active={categoryFilter === ALL_FILTER}
@@ -87,6 +106,7 @@ export default function TransactionsPage() {
           categoriesById={categoriesById}
           onSelect={setSelected}
           groupByDate
+          groupTransfers
           emptyTitle={
             categoryFilter === ALL_FILTER
               ? "No transactions yet"

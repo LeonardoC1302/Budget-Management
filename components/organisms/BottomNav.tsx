@@ -27,7 +27,7 @@ export default function BottomNav() {
             ))}
           </ul>
           <div className="w-px my-3 bg-border" aria-hidden />
-          <ul className="grid grid-cols-4 flex-1">
+          <ul className="grid grid-cols-5 flex-1">
             {SECONDARY_ITEMS.map((item) => (
               <NavCell
                 key={item.href}

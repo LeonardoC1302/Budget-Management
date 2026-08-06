@@ -52,9 +52,10 @@ function NavGroup({ heading, items, pathname, onClose, muted }: NavGroupProps) {
     <div className="flex flex-col gap-2">
       <span className="label-sm px-1">{heading}</span>
       <div className="grid grid-cols-2 gap-3">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const active = pathname === item.href;
           const Icon = item.Icon;
+          const isLastOdd = idx === items.length - 1 && items.length % 2 === 1;
           return (
             <Link
               key={item.href}
@@ -64,6 +65,7 @@ function NavGroup({ heading, items, pathname, onClose, muted }: NavGroupProps) {
                 "flex flex-col items-center justify-center gap-2 h-24 rounded-[14px]",
                 "border transition-colors",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
+                isLastOdd && "col-span-2",
                 active
                   ? "border-accent bg-accent/10 text-accent"
                   : muted

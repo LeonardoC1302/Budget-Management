@@ -14,9 +14,17 @@ export interface Account {
   initialBalanceUSD: number;
   currency: string;
   createdAt: string;
+  // Credit-card only. Both required together to enable statement math.
+  cutDay?: number;
+  paymentDay?: number;
+  creditLimit?: number;
+  creditLimitUSD?: number;
 }
 
-export type NewAccount = Omit<Account, "id" | "createdAt" | "initialBalanceUSD">;
+export type NewAccount = Omit<
+  Account,
+  "id" | "createdAt" | "initialBalanceUSD" | "creditLimitUSD"
+>;
 
 export interface Category {
   id: string;
@@ -43,6 +51,8 @@ export interface Transaction {
   transferDirection?: TransferDirection;
   linkedAccountId?: string;
   recurringId?: string;
+  // Set on both paired docs of a credit-card payment transfer.
+  paymentForAccountId?: string;
 }
 
 export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "amountUSD">;
@@ -92,6 +102,7 @@ export interface NewTransfer {
   toCurrency: string;
   description: string;
   date: string;
+  paymentForAccountId?: string;
 }
 
 export interface Goal {

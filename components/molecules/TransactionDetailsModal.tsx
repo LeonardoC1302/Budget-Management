@@ -31,19 +31,22 @@ export default function TransactionDetailsModal({
   const [deleting, setDeleting] = useState(false);
 
   const isTransfer = transaction?.type === "transfer";
+  const isCardPayment = isTransfer && !!transaction?.paymentForAccountId;
   const isIncome = transaction?.type === "income";
   const isInvestment = transaction?.type === "investment";
   const isInflow =
     isIncome ||
     (isTransfer && transaction?.transferDirection === "in");
 
-  const noun = isTransfer
-    ? "transfer"
-    : isInvestment
-      ? "investment"
-      : isIncome
-        ? "income entry"
-        : "expense";
+  const noun = isCardPayment
+    ? "card payment"
+    : isTransfer
+      ? "transfer"
+      : isInvestment
+        ? "investment"
+        : isIncome
+          ? "income entry"
+          : "expense";
 
   async function handleConfirmDelete() {
     if (!transaction || !onDelete) return;
@@ -96,7 +99,9 @@ export default function TransactionDetailsModal({
 
             <dl className="flex flex-col divide-y divide-border">
               <Row label="Type">
-                {isTransfer ? (
+                {isCardPayment ? (
+                  <span className="text-fg">Card payment</span>
+                ) : isTransfer ? (
                   <span className="text-fg">Transfer</span>
                 ) : isInvestment ? (
                   <span className="text-invest">Investment</span>

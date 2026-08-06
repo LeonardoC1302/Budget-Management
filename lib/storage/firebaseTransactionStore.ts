@@ -84,7 +84,7 @@ export const firebaseTransactionStore: TransactionStore = {
     const inRef = doc(col);
     const transferId = outRef.id;
 
-    const shared = {
+    const shared = stripUndefined({
       type: "transfer" as const,
       categoryId: "",
       description: input.description,
@@ -92,7 +92,8 @@ export const firebaseTransactionStore: TransactionStore = {
       createdAt,
       amountUSD,
       transferId,
-    };
+      paymentForAccountId: input.paymentForAccountId,
+    });
 
     const outDoc = {
       ...shared,

@@ -41,6 +41,10 @@ function hydrate(a: Account): Account {
       typeof a.initialBalanceUSD === "number"
         ? a.initialBalanceUSD
         : a.initialBalance,
+    creditLimitUSD:
+      typeof a.creditLimit === "number" && typeof a.creditLimitUSD !== "number"
+        ? a.creditLimit
+        : a.creditLimitUSD,
   };
 }
 
@@ -55,6 +59,10 @@ export const localAccountStore: AccountStore = {
     const account: Account = {
       ...input,
       initialBalanceUSD: input.initialBalance * rate,
+      creditLimitUSD:
+        typeof input.creditLimit === "number"
+          ? input.creditLimit * rate
+          : undefined,
       id: makeId(),
       createdAt: new Date().toISOString(),
     };
@@ -69,6 +77,17 @@ export const localAccountStore: AccountStore = {
     if (patch.currency !== undefined || patch.initialBalance !== undefined) {
       const rate = await getRate(merged.currency, BASE_CURRENCY);
       merged.initialBalanceUSD = merged.initialBalance * rate;
+    }
+    if (
+      patch.currency !== undefined ||
+      patch.creditLimit !== undefined
+    ) {
+      if (typeof merged.creditLimit === "number") {
+        const rate = await getRate(merged.currency, BASE_CURRENCY);
+        merged.creditLimitUSD = merged.creditLimit * rate;
+      } else {
+        merged.creditLimitUSD = undefined;
+      }
     }
     items[idx] = merged;
     write(items);
