@@ -101,6 +101,9 @@ export default function HoldingForm({
           : {
               kind: "manual",
               name: name.trim(),
+              ...(symbol.trim()
+                ? { symbol: symbol.trim().toUpperCase() }
+                : {}),
             };
       await onSubmit(payload);
     } finally {
@@ -222,6 +225,22 @@ export default function HoldingForm({
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
+
+      {kind === "manual" && (
+        <div className="flex flex-col gap-1">
+          <Input
+            label="Symbol (optional)"
+            name="manual-symbol"
+            placeholder="e.g. PENS, GOLD, RE"
+            maxLength={6}
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+          />
+          <p className="text-xs text-fg-subtle">
+            Up to 6 characters. Shown on the position tile instead of “MANUAL”.
+          </p>
+        </div>
+      )}
 
       <div className="flex gap-2 pt-2">
         {onCancel && (

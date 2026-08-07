@@ -47,7 +47,12 @@ export default function HoldingCard({
         ? "text-expense"
         : "text-fg-muted";
 
-  const label = isMarket ? (holding.symbol ?? "?") : "MANUAL";
+  const label =
+    holding.symbol && holding.symbol.trim()
+      ? holding.symbol
+      : isMarket
+        ? "?"
+        : "MANUAL";
   const shares = position?.shares ?? 0;
   const showShares = isMarket && shares > 0;
 
@@ -62,7 +67,9 @@ export default function HoldingCard({
           <span
             className={cn(
               "text-[10px] font-semibold tracking-tight",
-              isMarket ? "text-invest" : "text-fg-muted",
+              holding.symbol && holding.symbol.trim()
+                ? "text-invest"
+                : "text-fg-muted",
             )}
           >
             {label.length > 5 ? label.slice(0, 5) : label}

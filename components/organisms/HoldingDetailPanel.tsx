@@ -161,7 +161,9 @@ export default function HoldingDetailPanel({
           <p className="label-sm">
             {isMarket
               ? `${holding.symbol ?? ""}${holding.quoteCurrency && holding.quoteCurrency !== "USD" ? ` · quoted in ${holding.quoteCurrency}` : ""}`
-              : "Manual position"}
+              : holding.symbol
+                ? `${holding.symbol} · Manual position`
+                : "Manual position"}
           </p>
           <h3 className="heading-lg truncate">{holding.name}</h3>
           {snapshot.asOf && (
