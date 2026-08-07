@@ -14,12 +14,16 @@ function computeDerived(accounts: Account[], transactions: Transaction[]) {
     counts[a.id] = 0;
   }
   for (const t of transactions) {
+    // Use amount converted to the account's currency so mixed-currency
+    // transactions (e.g. a CRC purchase on a USD card) don't corrupt the
+    // balance. Falls back to `amount` for legacy docs where currency matched.
+    const nativeAmount = t.accountAmount ?? t.amount;
     let delta = 0;
-    if (t.type === "income") delta = t.amount;
-    else if (t.type === "expense") delta = -t.amount;
-    else if (t.type === "investment") delta = -t.amount;
+    if (t.type === "income") delta = nativeAmount;
+    else if (t.type === "expense") delta = -nativeAmount;
+    else if (t.type === "investment") delta = -nativeAmount;
     else if (t.type === "transfer")
-      delta = t.transferDirection === "in" ? t.amount : -t.amount;
+      delta = t.transferDirection === "in" ? nativeAmount : -nativeAmount;
     balances[t.accountId] = (balances[t.accountId] ?? 0) + delta;
     counts[t.accountId] = (counts[t.accountId] ?? 0) + 1;
   }

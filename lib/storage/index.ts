@@ -2,12 +2,14 @@ import type { AccountStore } from "@/lib/storage/AccountStore";
 import type { BudgetStore } from "@/lib/storage/BudgetStore";
 import type { CategoryStore } from "@/lib/storage/CategoryStore";
 import type { GoalStore } from "@/lib/storage/GoalStore";
+import type { HoldingStore } from "@/lib/storage/HoldingStore";
 import type { RecurringTransactionStore } from "@/lib/storage/RecurringTransactionStore";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
 import { firebaseAccountStore } from "@/lib/storage/firebaseAccountStore";
 import { firebaseBudgetStore } from "@/lib/storage/firebaseBudgetStore";
 import { firebaseCategoryStore } from "@/lib/storage/firebaseCategoryStore";
 import { firebaseGoalStore } from "@/lib/storage/firebaseGoalStore";
+import { firebaseHoldingStore } from "@/lib/storage/firebaseHoldingStore";
 import { firebaseRecurringTransactionStore } from "@/lib/storage/firebaseRecurringTransactionStore";
 import { firebaseTransactionStore } from "@/lib/storage/firebaseTransactionStore";
 
@@ -19,6 +21,7 @@ export const accountStore: AccountStore = firebaseAccountStore;
 export const budgetStore: BudgetStore = firebaseBudgetStore;
 export const categoryStore: CategoryStore = firebaseCategoryStore;
 export const goalStore: GoalStore = firebaseGoalStore;
+export const holdingStore: HoldingStore = firebaseHoldingStore;
 export const recurringTransactionStore: RecurringTransactionStore =
   firebaseRecurringTransactionStore;
 export const transactionStore: TransactionStore = firebaseTransactionStore;
@@ -28,6 +31,7 @@ export type {
   BudgetStore,
   CategoryStore,
   GoalStore,
+  HoldingStore,
   RecurringTransactionStore,
   TransactionStore,
 };

@@ -5,89 +5,143 @@ import Button from "@/components/atoms/Button";
 import EmptyState from "@/components/atoms/EmptyState";
 import Modal from "@/components/atoms/Modal";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
-import SavingsLineChart from "@/components/atoms/SavingsLineChart";
-import CategoryForm from "@/components/molecules/CategoryForm";
-import CategoryManageModal from "@/components/molecules/CategoryManageModal";
+import HoldingCard from "@/components/molecules/HoldingCard";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
-import TransactionDetailsModal from "@/components/molecules/TransactionDetailsModal";
-import TransactionForm from "@/components/molecules/TransactionForm";
-import TransactionList from "@/components/organisms/TransactionList";
+import HoldingForm from "@/components/molecules/HoldingForm";
+import HoldingDetailPanel from "@/components/organisms/HoldingDetailPanel";
+import UnassignedMapper from "@/components/organisms/UnassignedMapper";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
-import { useTransactions } from "@/hooks/useTransactions";
-import {
-  monthKeyOffset,
-  monthLabel,
-  type MonthlyPoint,
-} from "@/lib/utils/analytics";
-import { monthKeyOf } from "@/lib/utils/budgets";
+import { useHoldings } from "@/hooks/useHoldings";
+import { useMarketQuotes } from "@/hooks/useMarketQuotes";
+import { emitDataChanged } from "@/lib/events/dataChanged";
+import type { Holding, NewHolding, NewTransaction } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/format";
-import type { NewCategory, Transaction } from "@/lib/types";
+import {
+  latestValuationFor,
+  manualSnapshot,
+  marketSnapshot,
+  type HoldingValueSnapshot,
+} from "@/lib/utils/holdings";
+import { transactionStore } from "@/lib/storage";
 
 export default function InvestmentsPage() {
-  const { transactions, remove, update, loading } = useTransactions();
+  const {
+    holdings,
+    byId,
+    positionsById,
+    valuationsByHolding,
+    unassignedInvestments,
+    loading,
+    addHolding,
+    updateHolding,
+    removeHolding,
+    addValuation,
+    removeValuation,
+  } = useHoldings();
   const { byId: accountsById } = useAccounts();
-  const { byId: categoriesById, filterByType, add: addCategory } =
-    useCategories();
-  const [selected, setSelected] = useState<Transaction | null>(null);
-  const [editing, setEditing] = useState<Transaction | null>(null);
-  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
+  const { byId: categoriesById } = useCategories();
 
-  const investments = useMemo(
-    () => transactions.filter((t) => t.type === "investment"),
-    [transactions],
+  const [createOpen, setCreateOpen] = useState(false);
+  const [openHoldingId, setOpenHoldingId] = useState<string | null>(null);
+  const [mapperOpen, setMapperOpen] = useState(false);
+
+  const marketSymbols = useMemo(
+    () =>
+      holdings
+        .filter((h) => h.kind === "market" && !!h.symbol)
+        .map((h) => h.symbol as string),
+    [holdings],
   );
+  const { quotes, status: quoteStatus } = useMarketQuotes(marketSymbols);
 
-  const investmentCategories = filterByType("investment");
-
-  const { total, byCategory } = useMemo(() => {
-    let total = 0;
-    const byCategory: Record<string, number> = {};
-    for (const t of investments) {
-      total += t.amountUSD;
-      byCategory[t.categoryId] = (byCategory[t.categoryId] ?? 0) + t.amountUSD;
-    }
-    return { total, byCategory };
-  }, [investments]);
-
-  const breakdown = useMemo(() => {
-    const rows = investmentCategories.map((c) => ({
-      id: c.id,
-      name: c.name,
-      amount: byCategory[c.id] ?? 0,
-      share: total > 0 ? (byCategory[c.id] ?? 0) / total : 0,
-    }));
-    return rows.sort((a, b) => b.amount - a.amount);
-  }, [investmentCategories, byCategory, total]);
-
-  const contributionSeries = useMemo<MonthlyPoint[]>(() => {
-    const points: MonthlyPoint[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const key = monthKeyOffset(-i);
-      let sum = 0;
-      for (const t of investments) {
-        if (monthKeyOf(t.date) === key) sum += t.amountUSD;
+  const snapshots = useMemo(() => {
+    const map = new Map<string, HoldingValueSnapshot>();
+    for (const h of holdings) {
+      const position = positionsById[h.id];
+      if (h.kind === "market") {
+        map.set(
+          h.id,
+          marketSnapshot(position, h.symbol ? quotes[h.symbol] : undefined),
+        );
+      } else {
+        const latest = latestValuationFor(
+          h.id,
+          valuationsByHolding[h.id] ?? [],
+        );
+        map.set(h.id, manualSnapshot(position, latest));
       }
-      points.push({
-        monthKey: key,
-        label: monthLabel(key),
-        income: sum,
-        expense: 0,
-        net: sum,
-      });
     }
-    return points;
-  }, [investments]);
+    return map;
+  }, [holdings, positionsById, quotes, valuationsByHolding]);
 
-  const hasContributions = contributionSeries.some((p) => p.net > 0);
+  const totals = useMemo(() => {
+    let costBasis = 0;
+    let currentValue = 0;
+    for (const h of holdings) {
+      const snap = snapshots.get(h.id);
+      const position = positionsById[h.id];
+      costBasis += position?.costBasisUSD ?? 0;
+      currentValue += snap?.currentValueUSD ?? 0;
+    }
+    for (const t of unassignedInvestments) {
+      costBasis += t.amountUSD;
+      currentValue += t.amountUSD;
+    }
+    return {
+      costBasis,
+      currentValue,
+      gain: currentValue - costBasis,
+      gainPct: costBasis > 0 ? (currentValue - costBasis) / costBasis : null,
+    };
+  }, [holdings, positionsById, snapshots, unassignedInvestments]);
 
-  async function handleCreateCategory(input: NewCategory) {
-    await addCategory(input);
-    setCreateCategoryOpen(false);
+  const openHolding = openHoldingId ? byId[openHoldingId] : undefined;
+
+  async function handleCreateHolding(input: NewHolding) {
+    await addHolding(input);
+    setCreateOpen(false);
   }
 
-  const hasCategories = investmentCategories.length > 0;
+  async function handleContribute(input: NewTransaction) {
+    await transactionStore.add(input);
+    emitDataChanged();
+  }
+
+  async function handleDeleteTransaction(id: string) {
+    await transactionStore.remove(id);
+    emitDataChanged();
+  }
+
+  async function handleAssignUnassigned(
+    transactionIds: string[],
+    holdingId: string,
+  ) {
+    const idSet = new Set(transactionIds);
+    const targets = unassignedInvestments.filter((t) => idSet.has(t.id));
+    await Promise.all(
+      targets.map((t) =>
+        transactionStore.update(t.id, {
+          type: t.type,
+          amount: t.amount,
+          currency: t.currency,
+          accountId: t.accountId,
+          categoryId: "",
+          description: t.description,
+          date: t.date,
+          holdingId,
+          unpriced: true,
+        }),
+      ),
+    );
+    emitDataChanged();
+    setMapperOpen(false);
+  }
+
+  async function handleDeleteHolding(holding: Holding) {
+    await removeHolding(holding.id);
+    setOpenHoldingId(null);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,162 +149,150 @@ export default function InvestmentsPage() {
         kicker="Portfolio"
         title="Investments"
         actions={
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setManageOpen(true)}
-          >
-            Manage
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            New position
           </Button>
         }
       />
 
       <section
         className="surface p-5 flex flex-col gap-1.5"
-        aria-label="Total invested"
+        aria-label="Portfolio summary"
       >
-        <span className="label-sm">Total invested</span>
+        <span className="label-sm">Current value</span>
         <span className="text-3xl font-semibold tracking-tight tabular-nums text-invest">
-          {formatCurrency(total, "USD")}
+          {formatCurrency(totals.currentValue, "USD")}
         </span>
-        <span className="text-xs text-fg-subtle">
-          Across {investments.length} transaction
-          {investments.length === 1 ? "" : "s"}
-        </span>
-      </section>
-
-      {hasContributions && (
-        <section className="surface p-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-fg">
-              Contribution rhythm
-            </h2>
-            <span className="text-xs text-fg-subtle">Last 6 months</span>
-          </div>
-          <SavingsLineChart data={contributionSeries} currency="USD" />
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3" aria-labelledby="by-category">
-        <div className="flex items-center justify-between">
-          <h2 id="by-category" className="heading-lg">
-            By category
-          </h2>
+        <div className="flex items-center justify-between text-xs text-fg-subtle mt-1">
+          <span>Cost basis {formatCurrency(totals.costBasis, "USD")}</span>
+          {totals.gainPct !== null && (
+            <span
+              className={
+                totals.gain > 0
+                  ? "text-income tabular-nums"
+                  : totals.gain < 0
+                    ? "text-expense tabular-nums"
+                    : "text-fg-muted tabular-nums"
+              }
+            >
+              {totals.gain >= 0 ? "+" : ""}
+              {formatCurrency(totals.gain, "USD")} (
+              {totals.gainPct >= 0 ? "+" : ""}
+              {(totals.gainPct * 100).toFixed(2)}%)
+            </span>
+          )}
         </div>
-
-        {!hasCategories ? (
-          <EmptyState
-            title="No investment categories yet"
-            description="Create at least one category (index funds, retirement, crypto…) so you can group and see the share of each."
-            actionLabel="New investment category"
-            actionOnClick={() => setCreateCategoryOpen(true)}
-          />
-        ) : (
-          <ul className="surface divide-y divide-border">
-            {breakdown.map((row) => (
-              <li key={row.id} className="flex flex-col gap-2 px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-fg truncate">{row.name}</span>
-                  <span className="text-sm tabular-nums text-fg">
-                    {formatCurrency(row.amount, "USD")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                    <div
-                      className="h-full bg-invest"
-                      style={{ width: `${Math.round(row.share * 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-fg-subtle tabular-nums w-10 text-right">
-                    {Math.round(row.share * 100)}%
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+        {quoteStatus === "unavailable" && marketSymbols.length > 0 && (
+          <p className="text-[11px] text-fg-subtle mt-1">
+            Live prices unavailable — showing cost basis. Set
+            TWELVEDATA_API_KEY to enable market data.
+          </p>
         )}
       </section>
 
-      <section className="flex flex-col gap-3" aria-labelledby="activity">
+      <section className="flex flex-col gap-3" aria-labelledby="positions">
         <div className="flex items-center justify-between">
-          <h2 id="activity" className="heading-lg">
-            Activity
+          <h2 id="positions" className="heading-lg">
+            Positions
           </h2>
         </div>
 
         {loading ? (
-          <RowSkeleton count={4} />
-        ) : (
-          <TransactionList
-            transactions={investments}
-            accountsById={accountsById}
-            categoriesById={categoriesById}
-            onSelect={setSelected}
-            groupByDate
-            emptyTitle={
-              hasCategories ? "No investments yet" : "Nothing logged yet"
-            }
-            emptyDescription={
-              hasCategories
-                ? "Log a contribution to a category from the Add tab to see it here."
-                : "Create an investment category first, then log a contribution from the Add tab."
-            }
-            emptyActionLabel={hasCategories ? "Add a contribution" : undefined}
-            emptyActionHref={hasCategories ? "/add" : undefined}
+          <RowSkeleton count={3} />
+        ) : holdings.length === 0 ? (
+          <EmptyState
+            title="No positions yet"
+            description="Add an ETF, stock, crypto, or a manual balance (e.g. a pension) to start tracking your portfolio."
+            actionLabel="New position"
+            actionOnClick={() => setCreateOpen(true)}
           />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {holdings.map((h) => {
+              const snap = snapshots.get(h.id);
+              if (!snap) return null;
+              const position = positionsById[h.id];
+              const quote = h.symbol ? quotes[h.symbol] : undefined;
+              return (
+                <HoldingCard
+                  key={h.id}
+                  holding={h}
+                  position={position}
+                  snapshot={snap}
+                  quote={quote}
+                  onOpen={(x) => setOpenHoldingId(x.id)}
+                />
+              );
+            })}
+          </ul>
+        )}
+
+        {unassignedInvestments.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setMapperOpen(true)}
+            className="surface p-4 text-left hover:bg-surface-2 transition-colors flex items-center justify-between gap-3"
+          >
+            <div>
+              <p className="text-sm font-medium text-fg">
+                Unassigned contributions
+              </p>
+              <p className="text-xs text-fg-subtle">
+                {unassignedInvestments.length} legacy entr
+                {unassignedInvestments.length === 1 ? "y" : "ies"} · move into a
+                holding
+              </p>
+            </div>
+            <span className="text-sm text-fg tabular-nums">
+              {formatCurrency(
+                unassignedInvestments.reduce(
+                  (sum, t) => sum + t.amountUSD,
+                  0,
+                ),
+                "USD",
+              )}
+            </span>
+          </button>
         )}
       </section>
 
-      <TransactionDetailsModal
-        transaction={selected}
-        account={selected ? accountsById[selected.accountId] : undefined}
-        category={selected ? categoriesById[selected.categoryId] : undefined}
-        linkedAccount={
-          selected?.linkedAccountId
-            ? accountsById[selected.linkedAccountId]
-            : undefined
-        }
-        onClose={() => setSelected(null)}
-        onEdit={(t) => {
-          setSelected(null);
-          setEditing(t);
-        }}
-        onDelete={remove}
-      />
+      {openHolding && (
+        <HoldingDetailPanel
+          holding={openHolding}
+          position={positionsById[openHolding.id]}
+          snapshot={snapshots.get(openHolding.id)!}
+          quote={openHolding.symbol ? quotes[openHolding.symbol] : undefined}
+          valuations={valuationsByHolding[openHolding.id] ?? []}
+          accountsById={accountsById}
+          onClose={() => setOpenHoldingId(null)}
+          onContribute={handleContribute}
+          onDeleteTransaction={handleDeleteTransaction}
+          onEditHolding={updateHolding}
+          onDeleteHolding={handleDeleteHolding}
+          onAddValuation={addValuation}
+          onDeleteValuation={removeValuation}
+        />
+      )}
 
       <Modal
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        title="Edit investment"
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Add a position"
       >
-        {editing && (
-          <TransactionForm
-            initial={editing}
-            onSubmit={async (input) => {
-              await update(editing.id, input);
-              setEditing(null);
-            }}
-          />
-        )}
-      </Modal>
-
-      <Modal
-        open={createCategoryOpen}
-        onClose={() => setCreateCategoryOpen(false)}
-        title="New investment category"
-      >
-        <CategoryForm
-          type="investment"
-          onSubmit={handleCreateCategory}
-          onCancel={() => setCreateCategoryOpen(false)}
+        <HoldingForm
+          onSubmit={handleCreateHolding}
+          onCancel={() => setCreateOpen(false)}
         />
       </Modal>
 
-      <CategoryManageModal
-        open={manageOpen}
-        onClose={() => setManageOpen(false)}
-        type="investment"
+      <UnassignedMapper
+        open={mapperOpen}
+        transactions={unassignedInvestments}
+        holdings={holdings}
+        accountsById={accountsById}
+        categoriesById={categoriesById}
+        onClose={() => setMapperOpen(false)}
+        onAssign={handleAssignUnassigned}
       />
     </div>
   );

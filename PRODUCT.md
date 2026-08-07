@@ -84,11 +84,21 @@ Functional capabilities already in the product:
   can span currencies; a details modal shows the original amount.
 - **Recurring transactions** with five frequencies — monthly, semi-monthly
   (two chosen days), weekly, biweekly, yearly — with start, optional end,
-  active flag, and materialization tracking.
+  active flag, and materialization tracking. Income and expense only —
+  investment recurrings were retired when contributions moved under
+  Holdings.
 - **Budgets** as monthly caps per category, with progress and status
   surfaced against actual spend.
 - **Saving goals** with target amount, optional target date, initial amount,
   contributions log, and a projected monthly rate.
+- **Investments as Holdings.** Each position is a first-class entity of
+  kind `market` (backed by a Twelve Data ticker — ETFs, indices, stocks,
+  crypto) or `manual` (no ticker, tracked via user-entered balance entries;
+  suits pensions, private funds, real estate). Investment transactions
+  still deduct from a selected account and now also carry `holdingId`,
+  `sharesDelta`, and `unitPriceUSD`, auto-priced from Twelve Data at
+  contribution time. All portfolio totals, cost basis, and P/L are
+  USD-normalized.
 - **Insights** on income, expense, net, and category-level breakdowns for
   the current month, shown on the dashboard.
 - **Categories** are user-editable, seeded with a default set on first
@@ -119,6 +129,8 @@ them in:
   today.
 - Whether a paid exchange-rate provider replaces `open.er-api.com` if
   reliability or SLA needs change.
+- Whether Twelve Data's free tier gets replaced by a paid feed if quota or
+  reliability needs change.
 
 ## Brand Commitments
 
@@ -146,6 +158,11 @@ decision that belongs in a new-work pass, not in a refinement.
 - The README at the project root describes the shipped feature set and setup.
 - Exchange-rate data source: `open.er-api.com` (free tier), cached
   in-memory for one hour by `lib/services/exchangeRates.ts`.
+- Market-data source (Investments tab): [Twelve Data](https://twelvedata.com)
+  free tier (800 req/day, 8/min), proxied server-side by
+  `lib/services/marketData.ts` and the `app/api/market/*` route handlers.
+  Gated behind `TWELVEDATA_API_KEY`; the Investments tab degrades to
+  cost-basis-only mode when unset.
 - Firebase project configuration lives in environment variables prefixed
   `NEXT_PUBLIC_FIREBASE_*`; access is gated by the Firestore rules
   documented in the README.

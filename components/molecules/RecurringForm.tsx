@@ -37,7 +37,9 @@ export default function RecurringForm({
   const { accounts, loading: accountsLoading } = useAccounts();
   const { filterByType, loading: categoriesLoading } = useCategories();
 
-  const [type, setType] = useState<EntryType>(initial?.type ?? "expense");
+  const initialType: EntryType =
+    initial && initial.type !== "investment" ? initial.type : "expense";
+  const [type, setType] = useState<EntryType>(initialType);
   const [amount, setAmount] = useState(
     initial ? String(initial.amount) : "",
   );
@@ -141,16 +143,13 @@ export default function RecurringForm({
       <div
         role="tablist"
         aria-label="Recurring type"
-        className="grid grid-cols-3 p-1 bg-surface-2 border border-border rounded-[12px]"
+        className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income", "investment"] as const).map((t) => {
+        {(["expense", "income"] as const).map((t) => {
           const activeClass =
             t === "income"
               ? "bg-income-soft text-income"
-              : t === "expense"
-                ? "bg-expense-soft text-expense"
-                : "bg-invest-soft text-invest";
-          const label = t === "investment" ? "Invest" : t;
+              : "bg-expense-soft text-expense";
           return (
             <button
               key={t}
@@ -163,7 +162,7 @@ export default function RecurringForm({
                 type === t ? activeClass : "text-fg-muted hover:text-fg",
               )}
             >
-              {label}
+              {t}
             </button>
           );
         })}
@@ -196,12 +195,6 @@ export default function RecurringForm({
         value={categoryId}
         onChange={setSelectedCategoryId}
       />
-
-      {type === "investment" && categoriesForType.length === 0 && (
-        <p className="text-xs text-invest">
-          Create at least one investment category to set up an investment rule.
-        </p>
-      )}
 
       <Input
         label="Description"

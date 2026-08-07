@@ -41,6 +41,11 @@ export interface Transaction {
   type: TransactionType;
   amount: number;
   amountUSD: number;
+  // Amount converted to the transaction's *account* currency at creation-time
+  // FX. Enables e.g. a CRC purchase on a USD card without corrupting the
+  // card's balance/statement math. Missing on legacy docs — fall back to
+  // `amount` (safe when the transaction currency matches the account).
+  accountAmount?: number;
   currency: string;
   accountId: string;
   categoryId: string;
@@ -53,9 +58,19 @@ export interface Transaction {
   recurringId?: string;
   // Set on both paired docs of a credit-card payment transfer.
   paymentForAccountId?: string;
+  // Investment-only. Set when the contribution is bound to a Holding.
+  holdingId?: string;
+  sharesDelta?: number;
+  unitPriceUSD?: number;
+  // True when the contribution predates auto-pricing (migrated from a legacy
+  // investment category) and has no shares/price on file yet.
+  unpriced?: boolean;
 }
 
-export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "amountUSD">;
+export type NewTransaction = Omit<
+  Transaction,
+  "id" | "createdAt" | "amountUSD" | "accountAmount"
+>;
 
 export type RecurrenceFrequency =
   | "monthly"
@@ -149,3 +164,30 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   cash: "Cash",
   savings: "Savings",
 };
+
+export type HoldingKind = "market" | "manual";
+
+export interface Holding {
+  id: string;
+  kind: HoldingKind;
+  name: string;
+  // Required when kind === "market". Twelve Data ticker (e.g. "SPY", "BTC/USD").
+  symbol?: string;
+  // Native quote currency of the instrument. USD for most; e.g. "EUR" for IWDA.AS.
+  quoteCurrency?: string;
+  provider?: "twelvedata";
+  createdAt: string;
+}
+
+export type NewHolding = Omit<Holding, "id" | "createdAt">;
+
+export interface HoldingValuation {
+  id: string;
+  holdingId: string;
+  valueUSD: number;
+  asOfDate: string;
+  note?: string;
+  createdAt: string;
+}
+
+export type NewHoldingValuation = Omit<HoldingValuation, "id" | "createdAt">;

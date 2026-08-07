@@ -138,7 +138,7 @@ export default function TransactionDetailsModal({
 
             {(onEdit || onDelete) && (
               <div className="flex flex-col gap-2">
-                {onEdit && !isTransfer && (
+                {onEdit && !isTransfer && !isInvestment && (
                   <Button
                     variant="secondary"
                     size="md"

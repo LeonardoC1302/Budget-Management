@@ -10,6 +10,7 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Transaction details modal** — Click any row on the `/transactions` page to view the full transaction with the amount in its original currency.
 - **Budgets** — Set monthly caps per category and see spend progress at a glance.
 - **Saving goals** — Create goals with target amounts and dates, log contributions, and track projected monthly rate.
+- **Investments** — Track ETFs, indices, stocks, and crypto as first-class holdings, plus manual positions (pensions, private funds, real estate) tracked via balance entries. Live quotes and 1M–5Y history come from Twelve Data through a server-side proxy. Contributions still leave your selected account, but each holding also shows shares, cost basis, current value, and unrealized P/L.
 - **Insights & analytics** — Monthly income/expense/net summary plus category-level insights on the home dashboard.
 - **Category management** — Add or remove income/expense categories via a dedicated modal; default categories are seeded per user on first sign-in.
 - **Google Sign-In** — Firebase Authentication with Google as the identity provider.
@@ -88,8 +89,31 @@ All variables are read at build time and must be prefixed with `NEXT_PUBLIC_` be
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Cloud Messaging sender ID. |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase App ID for the Web app. |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | (Optional) Google Analytics measurement ID. |
+| `TWELVEDATA_API_KEY` | (Optional) [Twelve Data](https://twelvedata.com) API key used by the Investments tab for live ETF/stock/crypto quotes and history. Free tier is fine (800 req/day, 8/min). When unset, the Investments tab still works — holdings simply show cost basis with no market data. This key is server-only and must NOT be prefixed with `NEXT_PUBLIC_`. |
 
 Never commit `.env.local` — it is already ignored by `.gitignore`. Use your hosting provider's secret manager (Vercel Environment Variables, etc.) in production.
+
+## Market data (Investments tab)
+
+Live quotes and history for holdings are proxied through Next.js route handlers under `app/api/market/*` so the API key never ships to the client. In-memory caching mirrors the FX rate cache:
+
+- Quotes: 60s TTL, batched by symbol
+- History: 10 min TTL per (symbol, range)
+- Dated close (for auto-pricing contributions): 24 h TTL
+
+Non-USD-quoted instruments (e.g. `IWDA.AS` in EUR) are converted to USD using the same live FX rate helper as the rest of the app. All portfolio totals, cost basis, and P/L are USD-normalized.
+
+### Behind a corporate proxy (Zscaler / MITM TLS)
+
+Node's built-in `fetch` ignores the Windows system proxy and Windows certificate store, so machines protected by Zscaler-style TLS interception can't reach Twelve Data server-side even though PowerShell and browsers work fine. If you see `ECONNRESET` from `/api/market/*`, set these in `.env.local` (adjust the URL to match your PAC file):
+
+```
+HTTPS_PROXY=http://127.0.0.1:9000
+HTTP_PROXY=http://127.0.0.1:9000
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+The proxy vars are read on first request and passed to `undici` as the global dispatcher; `NODE_TLS_REJECT_UNAUTHORIZED=0` bypasses cert validation because the corporate MITM cert isn't in Node's trust store. This is a dev-only workaround — do not set it in production. In production the app runs against a clean egress path and needs neither.
 
 ## Security rules
 
@@ -127,11 +151,14 @@ hooks/         Feature hooks (useAccounts, useTransactions, useBudgets, useGoals
 lib/
   firebase/    Firebase client, auth helpers, per-user seeding
   services/    exchangeRates.ts — live FX rates from open.er-api.com
+               marketData.ts    — Twelve Data proxy (quotes, history, search)
   storage/     Store interfaces + Firebase and local-storage implementations
   types.ts     Shared domain types
   utils/       Formatting, analytics, currency, cn helpers
 public/        Static assets
 ```
+
+The per-user Firestore tree now also stores `holdings` and `holdingValuations` — the security rule above already covers them because it matches `users/{userId}/{document=**}`.
 
 ## Switching to local storage
 
@@ -139,9 +166,10 @@ public/        Static assets
 
 ## Deployment
 
-The app deploys cleanly to [Vercel](https://vercel.com) — connect the repo, add the `NEXT_PUBLIC_FIREBASE_*` environment variables in the project settings, and deploy. Any host that supports Next.js 16 works; see the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying) for other targets.
+The app deploys cleanly to [Vercel](https://vercel.com) — connect the repo, add the `NEXT_PUBLIC_FIREBASE_*` environment variables (plus `TWELVEDATA_API_KEY` if you want the Investments tab's live prices) in the project settings, and deploy. Any host that supports Next.js 16 works; see the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying) for other targets.
 
 ## Notes
 
 - This project uses a customized Next.js 16 setup. Check `AGENTS.md` and `node_modules/next/dist/docs/` for framework specifics before making structural changes.
 - Exchange rates are fetched from open.er-api.com's free endpoint. If you expect heavy usage or need SLAs, swap `lib/services/exchangeRates.ts` for a paid provider.
+- Market data (Investments tab) uses Twelve Data's free tier via a Next.js route proxy. Free tier limits are 800 requests/day and 8/min — plenty for a private tool. Missing keys degrade the tab to cost-basis-only mode; nothing crashes.

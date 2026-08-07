@@ -18,12 +18,31 @@ import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
 
 const COL = "transactions";
+const ACCOUNTS_COL = "accounts";
 
 function hydrate(id: string, data: Omit<Transaction, "id">): Transaction {
   const currency = data.currency ?? BASE_CURRENCY;
   const amountUSD =
     typeof data.amountUSD === "number" ? data.amountUSD : data.amount;
-  return { ...data, id, currency, amountUSD };
+  const accountAmount =
+    typeof data.accountAmount === "number" ? data.accountAmount : data.amount;
+  return { ...data, id, currency, amountUSD, accountAmount };
+}
+
+async function fetchAccountCurrency(accountId: string): Promise<string> {
+  const snap = await getDoc(userDoc(ACCOUNTS_COL, accountId));
+  const data = snap.exists() ? (snap.data() as { currency?: string }) : null;
+  return data?.currency ?? BASE_CURRENCY;
+}
+
+async function convertToAccountCurrency(
+  amount: number,
+  txCurrency: string,
+  accountCurrency: string,
+): Promise<number> {
+  if (txCurrency === accountCurrency) return amount;
+  const rate = await getRate(txCurrency, accountCurrency);
+  return amount * rate;
 }
 
 function stripUndefined<T extends Record<string, unknown>>(input: T): T {
@@ -43,9 +62,22 @@ export const firebaseTransactionStore: TransactionStore = {
   },
   async add(input: NewTransaction) {
     const createdAt = new Date().toISOString();
-    const rate = await getRate(input.currency, BASE_CURRENCY);
+    const [rate, accountCurrency] = await Promise.all([
+      getRate(input.currency, BASE_CURRENCY),
+      fetchAccountCurrency(input.accountId),
+    ]);
     const amountUSD = input.amount * rate;
-    const transaction = stripUndefined({ ...input, amountUSD, createdAt });
+    const accountAmount = await convertToAccountCurrency(
+      input.amount,
+      input.currency,
+      accountCurrency,
+    );
+    const transaction = stripUndefined({
+      ...input,
+      amountUSD,
+      accountAmount,
+      createdAt,
+    });
     const ref = await addDoc(userCollection(COL), transaction);
     return { id: ref.id, ...transaction } as Transaction;
   },
@@ -54,10 +86,19 @@ export const firebaseTransactionStore: TransactionStore = {
     const createdAt = new Date().toISOString();
     const priced = await Promise.all(
       inputs.map(async (input) => {
-        const rate = await getRate(input.currency, BASE_CURRENCY);
+        const [rate, accountCurrency] = await Promise.all([
+          getRate(input.currency, BASE_CURRENCY),
+          fetchAccountCurrency(input.accountId),
+        ]);
+        const accountAmount = await convertToAccountCurrency(
+          input.amount,
+          input.currency,
+          accountCurrency,
+        );
         return stripUndefined({
           ...input,
           amountUSD: input.amount * rate,
+          accountAmount,
           createdAt,
         });
       }),
@@ -124,9 +165,17 @@ export const firebaseTransactionStore: TransactionStore = {
     await deleteDoc(userDoc(COL, id));
   },
   async update(id, input) {
-    const rate = await getRate(input.currency, BASE_CURRENCY);
+    const [rate, accountCurrency] = await Promise.all([
+      getRate(input.currency, BASE_CURRENCY),
+      fetchAccountCurrency(input.accountId),
+    ]);
     const amountUSD = input.amount * rate;
-    const payload = stripUndefined({ ...input, amountUSD });
+    const accountAmount = await convertToAccountCurrency(
+      input.amount,
+      input.currency,
+      accountCurrency,
+    );
+    const payload = stripUndefined({ ...input, amountUSD, accountAmount });
     const ref = userDoc(COL, id);
     await updateDoc(ref, payload);
     const snap = await getDoc(ref);

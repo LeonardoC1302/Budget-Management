@@ -114,9 +114,13 @@ function parseISODate(iso: string): Date {
 
 function accountDelta(t: Transaction, accountId: string): number {
   if (t.accountId !== accountId) return 0;
-  if (t.type === "income") return t.amount;
-  if (t.type === "expense" || t.type === "investment") return -t.amount;
-  if (t.type === "transfer") return t.transferDirection === "in" ? t.amount : -t.amount;
+  // Use amount in the card's currency so a CRC purchase on a USD card lands
+  // as the converted USD figure. Legacy docs without `accountAmount` fall
+  // back to `amount` (safe when tx currency matched account currency).
+  const amt = t.accountAmount ?? t.amount;
+  if (t.type === "income") return amt;
+  if (t.type === "expense" || t.type === "investment") return -amt;
+  if (t.type === "transfer") return t.transferDirection === "in" ? amt : -amt;
   return 0;
 }
 
@@ -148,12 +152,13 @@ export function computeCardTotals(
 
     const txDate = parseISODate(t.date);
     const beforeOrOnCut = txDate.getTime() <= lastCut.getTime();
+    const amtInCardCcy = t.accountAmount ?? t.amount;
     if (beforeOrOnCut) {
       balanceAtCut += delta;
     } else if (t.type === "transfer" && t.transferDirection === "in") {
-      paymentsSinceCut += t.amount;
+      paymentsSinceCut += amtInCardCcy;
     } else if (t.type === "expense" || t.type === "investment") {
-      unbilledPurchases += t.amount;
+      unbilledPurchases += amtInCardCcy;
     }
   }
 
@@ -321,7 +326,7 @@ export function computeCardHistory(
       dt.getTime() > lastCutMs
     ) {
       currentCycleByCategory[tx.categoryId] =
-        (currentCycleByCategory[tx.categoryId] ?? 0) + tx.amount;
+        (currentCycleByCategory[tx.categoryId] ?? 0) + (tx.accountAmount ?? tx.amount);
     }
   }
 
@@ -340,12 +345,12 @@ export function computeCardHistory(
       const t = dt.getTime();
       if (t > prev.getTime() && t <= cursor.getTime()) {
         if (tx.type === "expense" || tx.type === "investment") {
-          charges += tx.amount;
+          charges += tx.accountAmount ?? tx.amount;
         }
       }
       if (t > cursor.getTime() && t <= dueDate.getTime()) {
         if (tx.type === "transfer" && tx.transferDirection === "in") {
-          paidByDue += tx.amount;
+          paidByDue += tx.accountAmount ?? tx.amount;
         }
       }
     }
@@ -376,7 +381,7 @@ export function computeCardHistory(
         t <= ccursor.getTime() &&
         (tx.type === "expense" || tx.type === "investment")
       ) {
-        sum += tx.amount;
+        sum += tx.accountAmount ?? tx.amount;
       }
     }
     cycleCharges.push(sum);
