@@ -9,15 +9,38 @@ import type {
   RecurringTransaction,
 } from "@/lib/types";
 
+/**
+ * One-time soft-migration: legacy investment recurring templates are paused
+ * on first load after the Invest tab was removed from the recurring form.
+ * They remain visible under "Retired" so the user can delete them at will.
+ */
+async function retireLegacyInvestments(
+  templates: RecurringTransaction[],
+): Promise<RecurringTransaction[]> {
+  const changes = templates.filter(
+    (t) => t.type === "investment" && t.active,
+  );
+  if (changes.length === 0) return templates;
+  await Promise.all(
+    changes.map((t) => recurringTransactionStore.update(t.id, { active: false })),
+  );
+  return templates.map((t) =>
+    t.type === "investment" && t.active ? { ...t, active: false } : t,
+  );
+}
+
 export function useRecurringTransactions() {
   const [recurring, setRecurring] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    recurringTransactionStore.list().then((items) => {
-      setRecurring(items);
-      setLoading(false);
-    });
+    recurringTransactionStore
+      .list()
+      .then(retireLegacyInvestments)
+      .then((items) => {
+        setRecurring(items);
+        setLoading(false);
+      });
   }, []);
 
   const refresh = useCallback(async () => {

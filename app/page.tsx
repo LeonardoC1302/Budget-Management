@@ -32,7 +32,7 @@ export default function HomePage() {
   );
 
   const recent = transactions
-    .filter((t) => t.type !== "investment")
+    .filter((t) => t.type !== "investment" && t.type !== "transfer")
     .slice(0, 4);
   const previewGoals = goals.slice(0, 2);
   const previewBudgets = [...budgets]
@@ -76,7 +76,7 @@ export default function HomePage() {
         ) : !hasTransactions ? (
           <EmptyState
             title="No transactions yet"
-            description="Add your first entry — income, expense, or transfer — to start seeing the shape of the month."
+            description="Add your first entry — income or expense — to start seeing the shape of the month."
             actionLabel="Add a transaction"
             actionHref="/add"
           />

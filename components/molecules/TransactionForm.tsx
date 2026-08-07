@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/atoms/Button";
+import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
@@ -9,6 +10,7 @@ import CategoryPicker from "@/components/molecules/CategoryPicker";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
+import { getRate } from "@/lib/services/exchangeRates";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
@@ -30,7 +32,9 @@ export default function TransactionForm({
   const { byCategoryId: budgetsByCategoryId, wouldExceed } = useBudgets();
 
   const initialType: EntryType =
-    initial && initial.type !== "transfer" ? initial.type : "expense";
+    initial && initial.type !== "transfer" && initial.type !== "investment"
+      ? initial.type
+      : "expense";
   const isEditing = !!initial;
 
   const [type, setType] = useState<EntryType>(initialType);
@@ -46,6 +50,11 @@ export default function TransactionForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [date, setDate] = useState(initial?.date ?? todayISODate());
   const [submitting, setSubmitting] = useState(false);
+  // Explicit user override for the transaction currency. `null` means "track
+  // the account's currency", so switching accounts still auto-updates.
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(
+    initial ? initial.currency : null,
+  );
 
   const categoriesForType = filterByType(type);
 
@@ -59,10 +68,53 @@ export default function TransactionForm({
   const accountCurrency =
     accounts.find((a) => a.id === accountId)?.currency ?? BASE_CURRENCY;
 
+  const currency = currencyOverride ?? accountCurrency;
+  const hasCurrencyMismatch = currency !== accountCurrency;
+
   const categoryId =
     categoriesForType.some((c) => c.id === selectedCategoryId)
       ? selectedCategoryId
       : categoriesForType[0]?.id ?? "";
+
+  // Preview the account-currency equivalent so the user can sanity-check the
+  // rate before saving. Debounced by React batching + effect deps.
+  const [rateEntry, setRateEntry] = useState<{
+    key: string;
+    rate: number | null;
+    error: string | null;
+  }>({ key: "", rate: null, error: null });
+  const pairKey = `${currency}:${accountCurrency}`;
+  useEffect(() => {
+    if (!hasCurrencyMismatch) return;
+    let cancelled = false;
+    getRate(currency, accountCurrency)
+      .then((r) => {
+        if (!cancelled) setRateEntry({ key: pairKey, rate: r, error: null });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setRateEntry({
+            key: pairKey,
+            rate: null,
+            error: err instanceof Error ? err.message : "Rate unavailable",
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currency, accountCurrency, hasCurrencyMismatch, pairKey]);
+
+  const parsedAmount = parseFloat(amount);
+  const previewRate =
+    hasCurrencyMismatch && rateEntry.key === pairKey ? rateEntry.rate : null;
+  const convertedPreview =
+    hasCurrencyMismatch &&
+    previewRate !== null &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0
+      ? parsedAmount * previewRate
+      : null;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -74,7 +126,7 @@ export default function TransactionForm({
     await onSubmit({
       type,
       amount: parsed,
-      currency: accountCurrency,
+      currency,
       accountId,
       categoryId,
       description: description.trim(),
@@ -90,11 +142,11 @@ export default function TransactionForm({
 
   const loading = accountsLoading || categoriesLoading;
 
-  const parsedAmount = parseFloat(amount);
   const budget = budgetsByCategoryId[categoryId];
   const overBudgetWarning =
     type === "expense" &&
     accountCurrency === BASE_CURRENCY &&
+    !hasCurrencyMismatch &&
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0 &&
     !!budget &&
@@ -107,16 +159,13 @@ export default function TransactionForm({
       <div
         role="tablist"
         aria-label="Transaction type"
-        className="grid grid-cols-3 p-1 bg-surface-2 border border-border rounded-[12px]"
+        className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income", "investment"] as const).map((t) => {
+        {(["expense", "income"] as const).map((t) => {
           const activeClass =
             t === "income"
               ? "bg-income-soft text-income"
-              : t === "expense"
-                ? "bg-expense-soft text-expense"
-                : "bg-invest-soft text-invest";
-          const label = t === "investment" ? "Invest" : t;
+              : "bg-expense-soft text-expense";
           return (
             <button
               key={t}
@@ -129,7 +178,7 @@ export default function TransactionForm({
                 type === t ? activeClass : "text-fg-muted hover:text-fg",
               )}
             >
-              {label}
+              {t}
             </button>
           );
         })}
@@ -137,7 +186,7 @@ export default function TransactionForm({
 
       <div className="flex flex-col gap-1.5">
         <Input
-          label={`Amount (${accountCurrency})`}
+          label={`Amount (${currency})`}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -169,17 +218,31 @@ export default function TransactionForm({
         disabled={loading || accounts.length === 0}
       />
 
+      <div className="flex flex-col gap-1.5">
+        <CurrencyCombobox
+          label="Currency"
+          name="currency"
+          value={currency}
+          onChange={(next) =>
+            setCurrencyOverride(next === accountCurrency ? null : next)
+          }
+        />
+        {hasCurrencyMismatch && (
+          <p role="status" className="text-xs text-fg-subtle">
+            {convertedPreview !== null
+              ? `≈ ${formatCurrency(convertedPreview, accountCurrency)} on the ${accountCurrency} account`
+              : rateEntry.error
+                ? `Rate unavailable (${rateEntry.error}).`
+                : `Fetching ${currency} → ${accountCurrency} rate…`}
+          </p>
+        )}
+      </div>
+
       <CategoryPicker
         type={type}
         value={categoryId}
         onChange={setSelectedCategoryId}
       />
-
-      {type === "investment" && categoriesForType.length === 0 && (
-        <p className="text-xs text-invest">
-          Create at least one investment category to log an investment.
-        </p>
-      )}
 
       <Input
         label="Description"
