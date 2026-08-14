@@ -31,14 +31,14 @@ export default function BottomNav() {
         )}
         style={{ background: "color-mix(in oklab, var(--color-bg) 88%, transparent)" }}
       >
-        <div className="hidden md:flex max-w-3xl mx-auto items-stretch">
+        <div className="hidden md:flex max-w-4xl mx-auto items-stretch">
           <ul className="grid grid-cols-4 flex-1">
             {PRIMARY_ITEMS.map((item) => (
               <NavCell key={item.href} item={item} active={pathname === item.href} />
             ))}
           </ul>
           <div className="w-px my-3 bg-border" aria-hidden />
-          <ul className="grid grid-cols-5 flex-1">
+          <ul className="grid grid-cols-6 flex-1">
             {SECONDARY_ITEMS.map((item) => (
               <NavCell
                 key={item.href}

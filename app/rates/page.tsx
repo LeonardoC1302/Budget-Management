@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
+import EntityRateDetailsModal from "@/components/molecules/EntityRateDetailsModal";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import { useBccrRates } from "@/hooks/useBccrRates";
+import type { BccrEntityRate } from "@/lib/services/bccrRates";
 
 function fmtRate(value: number | null): string {
   if (value === null) return "—";
@@ -30,6 +32,7 @@ function fmtRelative(iso: string): string {
 
 export default function RatesPage() {
   const { snapshot, loading, error, refresh } = useBccrRates();
+  const [selected, setSelected] = useState<BccrEntityRate | null>(null);
 
   const summary = useMemo(() => {
     if (!snapshot) return null;
@@ -202,10 +205,21 @@ export default function RatesPage() {
                 sellRange={summary.sellRange}
                 bestBuy={summary.bestBuy}
                 bestSell={summary.bestSell}
+                onSelect={() => setSelected(entity)}
               />
             ))}
           </div>
         </>
+      )}
+
+      {snapshot && summary && (
+        <EntityRateDetailsModal
+          entity={selected}
+          bestBuy={summary.bestBuy}
+          bestSell={summary.bestSell}
+          fetchedAt={snapshot.fetchedAt}
+          onClose={() => setSelected(null)}
+        />
       )}
     </div>
   );
@@ -247,6 +261,7 @@ interface EntityRowProps {
   sellRange: { min: number; max: number };
   bestBuy: number;
   bestSell: number;
+  onSelect: () => void;
 }
 
 function EntityRow({
@@ -257,15 +272,21 @@ function EntityRow({
   sellRange,
   bestBuy,
   bestSell,
+  onSelect,
 }: EntityRowProps) {
   const isBestBuy = buy !== null && buy === bestBuy;
   const isBestSell = sell !== null && sell === bestSell;
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-4 py-4">
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-label={`View rate details for ${name}`}
+      className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_auto] sm:gap-4 sm:items-center px-4 py-4 w-full text-left hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-fg transition-colors"
+    >
       <div className="min-w-0">
         <p className="font-serif text-base text-fg truncate">{name}</p>
-        <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex items-center gap-1.5 mt-1 overflow-hidden">
           {isBestBuy && (
             <span
               className="chip"
@@ -291,27 +312,29 @@ function EntityRow({
             </span>
           )}
           {!isBestBuy && !isBestSell && (
-            <span className="text-[11px] text-fg-muted uppercase tracking-[0.14em]">
+            <span className="hidden sm:inline text-[11px] text-fg-muted uppercase tracking-[0.14em]">
               Bank window
             </span>
           )}
         </div>
       </div>
-      <RateCell
-        label="Buy"
-        value={buy}
-        range={buyRange}
-        isBest={isBestBuy}
-        goodDirection="higher"
-      />
-      <RateCell
-        label="Sell"
-        value={sell}
-        range={sellRange}
-        isBest={isBestSell}
-        goodDirection="lower"
-      />
-    </div>
+      <div className="grid grid-cols-2 gap-4 sm:contents">
+        <RateCell
+          label="Buy"
+          value={buy}
+          range={buyRange}
+          isBest={isBestBuy}
+          goodDirection="higher"
+        />
+        <RateCell
+          label="Sell"
+          value={sell}
+          range={sellRange}
+          isBest={isBestSell}
+          goodDirection="lower"
+        />
+      </div>
+    </button>
   );
 }
 
@@ -341,7 +364,7 @@ function RateCell({ label, value, range, isBest, goodDirection }: RateCellProps)
         ? "var(--color-expense)"
         : "var(--color-invest)";
   return (
-    <div className="flex flex-col gap-1 items-end w-24">
+    <div className="flex flex-col gap-1 items-end w-full sm:w-24">
       <span className="kicker">{label}</span>
       <span
         className="figure text-sm"
