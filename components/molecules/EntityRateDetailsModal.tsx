@@ -90,7 +90,7 @@ export default function EntityRateDetailsModal({
               )}
               {!isBestBuy && !isBestSell && (
                 <span className="text-[11px] text-fg-muted uppercase tracking-[0.14em]">
-                  Bank window
+                  {entity.category ?? "Bank window"}
                 </span>
               )}
             </div>
