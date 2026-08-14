@@ -8,6 +8,11 @@ interface ProgressBarProps {
   ariaLabel?: string;
 }
 
+/**
+ * Alcove progress rule — a thin hairline rail with a filled portion. The
+ * fill sits above the rule so it visually walks along the wall, not inside
+ * a bar. Same idea as the budget rule in the sandbox.
+ */
 export default function ProgressBar({
   value,
   tone = "accent",
@@ -16,12 +21,12 @@ export default function ProgressBar({
 }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(1, value));
   const pct = Math.round(clamped * 100);
-  const fillTone =
+  const fillColor =
     tone === "income"
-      ? "bg-income"
+      ? "var(--color-income)"
       : tone === "expense"
-        ? "bg-expense"
-        : "bg-accent";
+        ? "var(--color-expense)"
+        : "var(--color-celadon-strong)";
 
   return (
     <div
@@ -31,13 +36,17 @@ export default function ProgressBar({
       aria-valuenow={pct}
       aria-label={ariaLabel}
       className={cn(
-        "w-full h-2 rounded-full bg-surface-2 overflow-hidden border border-border",
+        "relative w-full h-px bg-border",
         className,
       )}
     >
       <div
-        className={cn("h-full rounded-full transition-[width]", fillTone)}
-        style={{ width: `${pct}%` }}
+        className="absolute inset-y-0 left-0 transition-[width]"
+        style={{
+          width: `${pct}%`,
+          height: tone === "expense" && clamped >= 1 ? 2 : 1,
+          background: fillColor,
+        }}
       />
     </div>
   );

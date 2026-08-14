@@ -15,7 +15,6 @@ interface AccountListProps {
   emptyActionLabel?: string;
   emptyActionOnClick?: () => void;
   emptyActionHref?: string;
-  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
 }
 
@@ -45,18 +44,17 @@ export default function AccountList({
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <div className="rooms" role="list">
       {accounts.map((account) => (
-        <li key={account.id}>
-          <AccountCard
-            account={account}
-            balance={balances[account.id] ?? account.initialBalance}
-            transactionCount={txCountByAccount[account.id] ?? 0}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </li>
+        <AccountCard
+          key={account.id}
+          account={account}
+          balance={balances[account.id] ?? account.initialBalance}
+          transactionCount={txCountByAccount[account.id] ?? 0}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
-    </ul>
+    </div>
   );
 }

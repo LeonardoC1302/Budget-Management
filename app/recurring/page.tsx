@@ -88,18 +88,15 @@ export default function RecurringPage() {
         <RowSkeleton count={4} />
       ) : (
         <>
-          <section className="flex flex-col gap-3" aria-labelledby="recurring-active">
-            <h2
-              id="recurring-active"
-              className="heading-lg flex items-baseline gap-2"
-            >
-              <span>Active</span>
-              {active.length > 0 && (
-                <span className="text-sm font-normal text-fg-subtle tabular-nums">
-                  {active.length}
-                </span>
-              )}
-            </h2>
+          <section className="flex flex-col" aria-labelledby="recurring-active">
+            <div className="section-head">
+              <span id="recurring-active" className="section-head-title">
+                Active
+              </span>
+              <span className="section-head-meta">
+                {active.length} rule{active.length === 1 ? "" : "s"}
+              </span>
+            </div>
             <RecurringList
               templates={active}
               accountsById={accountsById}
@@ -109,7 +106,7 @@ export default function RecurringPage() {
                 setPendingDelete(recurring.find((r) => r.id === id) ?? null)
               }
               onToggleActive={toggleActive}
-              emptyTitle="No recurring rules yet"
+              emptyTitle="No recurring rules yet."
               emptyDescription="Automate the shape of a normal month — salary, rent, subscriptions — so you only enter the surprises."
               emptyActionLabel="Add a recurring rule"
               emptyActionOnClick={() => setMode({ kind: "create" })}
@@ -118,18 +115,17 @@ export default function RecurringPage() {
 
           {paused.length > 0 && (
             <section
-              className="flex flex-col gap-3"
+              className="flex flex-col"
               aria-labelledby="recurring-paused"
             >
-              <h2
-                id="recurring-paused"
-                className="heading-lg flex items-baseline gap-2 text-fg-muted"
-              >
-                <span>Paused</span>
-                <span className="text-sm font-normal text-fg-subtle tabular-nums">
-                  {paused.length}
+              <div className="section-head">
+                <span id="recurring-paused" className="section-head-title">
+                  Paused
                 </span>
-              </h2>
+                <span className="section-head-meta">
+                  {paused.length} rule{paused.length === 1 ? "" : "s"}
+                </span>
+              </div>
               <RecurringList
                 templates={paused}
                 accountsById={accountsById}

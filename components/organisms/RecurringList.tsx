@@ -16,7 +16,6 @@ interface RecurringListProps {
   emptyActionLabel?: string;
   emptyActionOnClick?: () => void;
   emptyActionHref?: string;
-  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
 }
 
@@ -47,7 +46,7 @@ export default function RecurringList({
   }
 
   return (
-    <ul className="surface divide-y divide-border px-4">
+    <div className="rooms" role="list">
       {templates.map((t) => (
         <RecurringItem
           key={t.id}
@@ -59,6 +58,6 @@ export default function RecurringList({
           onToggleActive={onToggleActive}
         />
       ))}
-    </ul>
+    </div>
   );
 }

@@ -164,6 +164,7 @@ export default function CardsPage() {
           <PayCardForm
             card={payingCard}
             totals={payingTotals}
+            transactions={transactions}
             onSubmit={handlePay}
             onCancel={() => setPayingCard(null)}
           />

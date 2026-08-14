@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
-import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
+import CurrencySelect from "@/components/atoms/CurrencySelect";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -81,7 +81,7 @@ export default function AccountForm({
         onChange={(e) => setInitialBalance(e.target.value)}
       />
 
-      <CurrencyCombobox
+      <CurrencySelect
         label="Currency"
         name="currency"
         value={currency}

@@ -12,10 +12,10 @@ interface AmountProps {
 }
 
 const sizeClass = {
-  sm: "text-sm",
-  md: "text-base",
+  sm: "text-[13px]",
+  md: "text-[15px]",
   lg: "text-lg",
-  xl: "text-3xl font-semibold tracking-tight",
+  xl: "courtyard-fig",
 };
 
 const toneClass: Record<Tone, string> = {
@@ -39,11 +39,13 @@ export default function Amount({
   }).format(Math.abs(value));
 
   const sign = showSign ? (tone === "expense" ? "−" : tone === "income" ? "+" : "") : "";
+  const useSerif = size === "xl";
 
   return (
     <span
       className={cn(
         "tabular-nums whitespace-nowrap",
+        useSerif ? "" : "figure",
         sizeClass[size],
         toneClass[tone],
         className,

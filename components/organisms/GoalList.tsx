@@ -16,7 +16,6 @@ interface GoalListProps {
   emptyActionLabel?: string;
   emptyActionOnClick?: () => void;
   emptyActionHref?: string;
-  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
 }
 
@@ -47,19 +46,18 @@ export default function GoalList({
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <div className="rooms" role="list">
       {goals.map((goal) => (
-        <li key={goal.id}>
-          <GoalCard
-            goal={goal}
-            contributions={contributionsByGoal[goal.id] ?? []}
-            monthlyRate={monthlyRate}
-            onContribute={onContribute}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </li>
+        <GoalCard
+          key={goal.id}
+          goal={goal}
+          contributions={contributionsByGoal[goal.id] ?? []}
+          monthlyRate={monthlyRate}
+          onContribute={onContribute}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
-    </ul>
+    </div>
   );
 }

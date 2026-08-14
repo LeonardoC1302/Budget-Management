@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import PerchMark from "@/components/atoms/PerchMark";
+import ThemeToggle from "@/components/atoms/ThemeToggle";
 import { cn } from "@/lib/utils/cn";
 
 interface RouteMastheadProps {
@@ -16,9 +17,9 @@ interface RouteMastheadProps {
 }
 
 /**
- * Slim brand-anchor + title header used by every deep route.
- * Keeps the "Night Perch" identity present without stealing the
- * hero-Balance treatment that lives only on the home masthead.
+ * Alcove route header. A nameplate (brand + tools) sits on a hairline wall;
+ * below it, the route's kicker + title live in generous whitespace.
+ * The theme toggle rides in the tools cluster on every route.
  */
 export default function RouteMasthead({
   kicker,
@@ -27,28 +28,26 @@ export default function RouteMasthead({
   className,
 }: RouteMastheadProps) {
   return (
-    <header className={cn("flex flex-col gap-4", className)}>
-      <div className="flex items-center justify-between gap-3">
+    <header className={cn("flex flex-col", className)}>
+      <div className="nameplate">
         <Link
           href="/"
           aria-label="Home"
-          className={cn(
-            "inline-flex items-center gap-2 text-fg-subtle",
-            "hover:text-fg transition-colors rounded-md",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
-          )}
+          className="nameplate-brand hover:opacity-80 transition-opacity"
+          style={{ borderRadius: "var(--radius-control)" }}
         >
-          <PerchMark size={22} />
-          <span className="text-sm font-medium tracking-tight">Perch</span>
+          <PerchMark size={18} />
+          <span>Perch</span>
         </Link>
-        {actions && (
-          <div className="flex items-center gap-2 shrink-0">{actions}</div>
-        )}
+        <div className="nameplate-tools">
+          {actions}
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="label-sm">{kicker}</span>
-        <h1 className="heading-xl">{title}</h1>
+        <span className="kicker">{kicker}</span>
+        <h1 className="route-title">{title}</h1>
       </div>
     </header>
   );

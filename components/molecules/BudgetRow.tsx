@@ -1,8 +1,6 @@
 "use client";
 
 import Button from "@/components/atoms/Button";
-import CategoryChip from "@/components/atoms/CategoryChip";
-import ProgressBar from "@/components/atoms/ProgressBar";
 import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/format";
 import type { Budget, Category } from "@/lib/types";
@@ -31,6 +29,11 @@ function projectMonthEnd(spent: number): number | null {
   return spent / monthProgress;
 }
 
+/**
+ * Alcove budget row — a hairline-walled panel. Name and figure share the top
+ * line; a thin rule below fills as the cap does; a soft note underneath tells
+ * the story ("$32 left" / "Over cap by $12") without shouting.
+ */
 export default function BudgetRow({
   budget,
   category,
@@ -39,22 +42,10 @@ export default function BudgetRow({
   onDelete,
 }: BudgetRowProps) {
   const over = progress.status === "over";
-  const warning = progress.status === "warning";
   const categoryName = category?.name ?? "Unknown category";
-
-  const chipTone: "expense" | "invest" | "accent" = over
-    ? "expense"
-    : warning
-      ? "invest"
-      : "accent";
-  const barTone: "accent" | "expense" = over || warning ? "expense" : "accent";
-  const stripeClass = over
-    ? "bg-expense"
-    : warning
-      ? "bg-invest"
-      : "bg-accent/60";
-
+  const pct = Math.max(0, Math.min(100, progress.percent * 100));
   const projected = projectMonthEnd(progress.spent);
+
   const paceLine =
     !over && projected !== null
       ? projected <= budget.amount
@@ -68,77 +59,67 @@ export default function BudgetRow({
           )} over.`
       : null;
 
-  const primaryAmount = over
-    ? formatCurrency(-progress.remaining, budget.currency)
-    : formatCurrency(progress.remaining, budget.currency);
-  const primaryLabel = over ? "over cap" : "left this month";
+  const noteText = over
+    ? `Over cap by ${formatCurrency(-progress.remaining, budget.currency)}.`
+    : `${formatCurrency(progress.remaining, budget.currency)} left this month.`;
 
   return (
-    <article
-      className={cn(
-        "surface relative overflow-hidden p-5 flex flex-col gap-4",
-        over && "border-expense/40",
-      )}
-    >
-      <span
+    <article className="px-4 py-4 flex flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-serif text-base text-fg truncate">
+          {categoryName}
+        </span>
+        <span className="figure text-xs text-fg whitespace-nowrap">
+          <span className="text-fg">
+            {formatCurrency(progress.spent, budget.currency)}
+          </span>
+          <span className="text-fg-muted">
+            {" / "}
+            {formatCurrency(budget.amount, budget.currency)}
+          </span>
+        </span>
+      </div>
+
+      <div
+        className="relative h-px bg-border overflow-hidden"
         aria-hidden
-        className={cn("absolute left-0 top-0 bottom-0 w-1", stripeClass)}
-      />
-
-      <div className="flex items-center gap-4">
-        <CategoryChip name={categoryName} tone={chipTone} size="md" />
-        <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="text-base font-semibold text-fg truncate">
-              {categoryName}
-            </h3>
-            <p className="text-xs text-fg-subtle mt-0.5 tabular-nums">
-              {formatCurrency(progress.spent, budget.currency)} of{" "}
-              {formatCurrency(budget.amount, budget.currency)}
-            </p>
-          </div>
-          <div className="text-right shrink-0">
-            <p
-              className={cn(
-                "text-lg font-semibold tabular-nums leading-tight",
-                over ? "text-expense" : "text-fg",
-              )}
-            >
-              {primaryAmount}
-            </p>
-            <p className="text-[11px] text-fg-subtle uppercase tracking-wide mt-0.5">
-              {primaryLabel}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <ProgressBar
-          value={progress.percent}
-          tone={barTone}
-          ariaLabel={`${categoryName} progress`}
+      >
+        <div
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: `${pct}%`,
+            height: over ? 2 : 1,
+            top: over ? -1 : 0,
+            background: over
+              ? "var(--color-expense)"
+              : "var(--color-celadon-strong)",
+          }}
         />
-        <div className="flex items-center justify-between gap-3 text-xs text-fg-subtle tabular-nums">
-          <span>{Math.round(progress.percent * 100)}% used</span>
-          {paceLine && (
-            <span suppressHydrationWarning className="text-right">
-              {paceLine}
-            </span>
-          )}
-        </div>
       </div>
 
-      {over && (
-        <p className="text-xs text-fg-subtle">
-          Recorded. You can raise the cap or trim spending anytime in Budgets.
-        </p>
-      )}
+      <div className="flex items-baseline justify-between gap-3">
+        <span
+          className={cn(
+            "lede text-xs",
+            over && "text-expense",
+          )}
+        >
+          {noteText}
+        </span>
+        {paceLine && (
+          <span
+            suppressHydrationWarning
+            className="lede text-[11px] text-right"
+          >
+            {paceLine}
+          </span>
+        )}
+      </div>
 
       {(onEdit || onDelete) && (
-        <div className="flex gap-2 flex-wrap pt-3 border-t border-border">
+        <div className="flex gap-2 pt-2 border-t border-border">
           {onEdit && (
-            <Button variant="secondary" size="sm" onClick={() => onEdit(budget)}>
+            <Button variant="ghost" size="sm" onClick={() => onEdit(budget)}>
               Edit
             </Button>
           )}

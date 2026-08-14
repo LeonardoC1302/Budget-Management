@@ -365,7 +365,7 @@ export default function DatePicker({
                         !isSelected &&
                         "ring-1 ring-inset ring-border-strong text-fg",
                       isSelected &&
-                        "bg-accent text-white hover:bg-accent-hover",
+                        "bg-accent text-bg hover:bg-accent-hover",
                     )}
                   >
                     {cell.d}

@@ -123,7 +123,7 @@ export default function AccountsPage() {
       />
 
       {error && (
-        <div className="surface border-expense/40 p-4 text-sm text-expense">
+        <div className="surface p-4 text-sm text-expense" style={{ borderColor: "var(--color-expense)" }}>
           {error}
         </div>
       )}
@@ -134,58 +134,64 @@ export default function AccountsPage() {
         <>
           {nonCreditAccounts.length > 0 && (
             <section
-              className="surface p-5 flex flex-col gap-3"
+              className="flex flex-col"
               aria-label="Net across accounts"
             >
-              <div className="flex items-center justify-between">
-                <span className="label-sm">Net across accounts</span>
-                <span className="text-xs text-fg-subtle">
+              <div className="section-head">
+                <span className="section-head-title">Net across accounts</span>
+                <span className="section-head-meta">
                   {nonCreditAccounts.length} account
-                  {nonCreditAccounts.length === 1 ? "" : "s"} &middot;{" "}
-                  {balancesByCurrency.length} currenc
+                  {nonCreditAccounts.length === 1 ? "" : "s"} · {balancesByCurrency.length} currenc
                   {balancesByCurrency.length === 1 ? "y" : "ies"}
                 </span>
               </div>
-              <ul className="flex flex-col divide-y divide-border">
+              <div className="rooms">
                 {balancesByCurrency.map(([currency, sum]) => (
-                  <li
+                  <div
                     key={currency}
-                    className="flex items-center justify-between py-2.5"
+                    className="flex items-center justify-between px-4 py-3"
                   >
-                    <span className="text-sm text-fg-muted">{currency}</span>
+                    <span className="kicker">{currency}</span>
                     <Amount
                       value={sum}
                       tone={sum >= 0 ? "income" : "expense"}
-                      size="md"
+                      size="lg"
                       currency={currency}
+                      className="font-serif"
                     />
-                  </li>
+                  </div>
                 ))}
-              </ul>
-              <p className="text-xs text-fg-subtle">
+              </div>
+              <p className="lede text-xs mt-3">
                 Balances are shown in each account&apos;s own currency — no conversion.
               </p>
             </section>
           )}
 
-          <AccountList
-            accounts={nonCreditAccounts}
-            balances={balances}
-            txCountByAccount={txCountByAccount}
-            onEdit={openEdit}
-            onDelete={setPendingDelete}
-            emptyTitle="No accounts yet"
-            emptyDescription="Add your first account so transactions have somewhere to land."
-            emptyActionLabel="Add an account"
-            emptyActionOnClick={openCreate}
-          />
+          <section className="flex flex-col" aria-label="Accounts">
+            <div className="section-head">
+              <span className="section-head-title">All accounts</span>
+              <span className="section-head-meta">Managed by hand</span>
+            </div>
+            <AccountList
+              accounts={nonCreditAccounts}
+              balances={balances}
+              txCountByAccount={txCountByAccount}
+              onEdit={openEdit}
+              onDelete={setPendingDelete}
+              emptyTitle="No accounts yet."
+              emptyDescription="Add your first account so transactions have somewhere to land."
+              emptyActionLabel="Add an account"
+              emptyActionOnClick={openCreate}
+            />
+          </section>
 
           {creditCardCount > 0 && (
-            <p className="text-xs text-fg-subtle text-center">
+            <p className="lede text-xs text-center">
               {creditCardCount} credit card{creditCardCount === 1 ? "" : "s"} live on the{" "}
               <a
                 href="/cards"
-                className="text-fg-muted hover:text-fg underline decoration-dotted underline-offset-4"
+                className="text-fg hover:text-accent underline decoration-dotted underline-offset-4"
               >
                 Cards
               </a>{" "}

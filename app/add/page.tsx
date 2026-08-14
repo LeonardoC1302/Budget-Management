@@ -65,16 +65,20 @@ export default function AddTransactionPage() {
 
       {last && (
         <section
-          className="masthead-balance surface p-5 flex flex-col gap-3"
+          className="courtyard p-5 flex flex-col gap-3"
           aria-live="polite"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <span
                 aria-hidden
-                className="w-9 h-9 rounded-full bg-income-soft text-income flex items-center justify-center text-lg"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
+                style={{
+                  background: "var(--color-income-soft)",
+                  color: "var(--color-income)",
+                }}
               >
-                &#10003;
+                ✓
               </span>
               <div className="min-w-0">
                 <p className="text-sm text-fg">
@@ -82,23 +86,23 @@ export default function AddTransactionPage() {
                   <span className="font-medium">
                     {formatCurrency(last.amount, last.currency)}
                   </span>{" "}
-                  <span className="text-fg-subtle">
-                    &middot; {TYPE_LABEL[last.type]}
+                  <span className="text-fg-muted">
+                    · {TYPE_LABEL[last.type]}
                   </span>
                 </p>
                 {last.description && (
-                  <p className="text-xs text-fg-subtle truncate">
+                  <p className="lede text-xs mt-1 truncate">
                     {last.description}
                   </p>
                 )}
               </div>
             </div>
-            <span className="text-xs text-fg-subtle shrink-0">
+            <span className="kicker shrink-0">
               {session.length} this session
             </span>
           </div>
-          <p className="text-xs text-fg-subtle">
-            The form&apos;s ready for the next one. Tap <em>Done </em> when you&apos;re finished.
+          <p className="lede text-xs">
+            The form&apos;s ready for the next one. Tap <em>Done</em> when you&apos;re finished.
           </p>
         </section>
       )}

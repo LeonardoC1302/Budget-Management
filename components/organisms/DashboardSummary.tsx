@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Card from "@/components/atoms/Card";
-import SummaryCard from "@/components/molecules/SummaryCard";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { formatCurrency } from "@/lib/utils/format";
@@ -18,8 +16,8 @@ interface DashboardSummaryProps {
 }
 
 /**
- * Income + Expenses side-by-side, with a quiet Portfolio value tile that
- * shows only when the user has any holdings on file.
+ * Income / Expenses / (optional) Portfolio — presented as a joined three-up
+ * of rooms sharing hairline walls. Alcove's grouping pattern.
  */
 export default function DashboardSummary({
   income,
@@ -73,37 +71,65 @@ export default function DashboardSummary({
     unassignedInvestments,
   ]);
 
-  return (
-    <section className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <SummaryCard label="Income" amount={income} tone="income" />
-        <SummaryCard label="Expenses" amount={expense} tone="expense" />
-      </div>
+  const cols = portfolio ? "grid-cols-3" : "grid-cols-2";
+  const gainTone =
+    portfolio?.gain === undefined
+      ? "text-fg-muted"
+      : portfolio.gain > 0
+        ? "text-income"
+        : portfolio.gain < 0
+          ? "text-expense"
+          : "text-fg-muted";
 
+  return (
+    <section className={`rooms-h ${cols}`} aria-label="Month summary">
+      <Tile
+        label="Income"
+        value={formatCurrency(income, "USD")}
+        tone="text-income"
+      />
+      <Tile
+        label="Expenses"
+        value={formatCurrency(expense, "USD")}
+        tone="text-expense"
+      />
       {portfolio && (
-        <Card className="flex items-center justify-between gap-3">
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="label-sm">Portfolio value</span>
-            <span className="text-lg font-semibold tabular-nums text-invest">
-              {formatCurrency(portfolio.currentValue, "USD")}
-            </span>
-          </div>
-          {portfolio.gainPct !== null && (
-            <span
-              className={
-                portfolio.gain > 0
-                  ? "text-xs text-income tabular-nums"
-                  : portfolio.gain < 0
-                    ? "text-xs text-expense tabular-nums"
-                    : "text-xs text-fg-muted tabular-nums"
-              }
-            >
-              {portfolio.gain >= 0 ? "+" : ""}
-              {(portfolio.gainPct * 100).toFixed(2)}%
-            </span>
-          )}
-        </Card>
+        <Tile
+          label="Portfolio"
+          value={formatCurrency(portfolio.currentValue, "USD")}
+          tone="text-invest"
+          hint={
+            portfolio.gainPct !== null
+              ? `${portfolio.gain >= 0 ? "+" : ""}${(portfolio.gainPct * 100).toFixed(2)}%`
+              : undefined
+          }
+          hintTone={gainTone}
+        />
       )}
     </section>
+  );
+}
+
+interface TileProps {
+  label: string;
+  value: string;
+  tone: string;
+  hint?: string;
+  hintTone?: string;
+}
+
+function Tile({ label, value, tone, hint, hintTone }: TileProps) {
+  return (
+    <div className="p-4 flex flex-col gap-2 min-w-0">
+      <span className="kicker">{label}</span>
+      <span className={`font-serif text-xl tabular-nums leading-none ${tone}`}>
+        {value}
+      </span>
+      {hint && (
+        <span className={`text-[11px] tabular-nums ${hintTone ?? "text-fg-muted"}`}>
+          {hint}
+        </span>
+      )}
+    </div>
   );
 }

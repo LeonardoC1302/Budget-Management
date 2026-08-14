@@ -302,7 +302,7 @@ export default function HoldingDetailPanel({
               ? "Delete this position"
               : "Delete or move this position's contributions first"
           }
-          className="text-expense hover:text-white hover:bg-expense"
+          className="text-expense hover:text-bg hover:bg-expense"
         >
           <DeleteIcon aria-hidden />
           <span className="ml-1">Delete</span>

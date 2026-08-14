@@ -2,7 +2,6 @@
 
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
-import PhaseIndicator from "@/components/atoms/PhaseIndicator";
 import ProgressBar from "@/components/atoms/ProgressBar";
 import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import { cn } from "@/lib/utils/cn";
@@ -38,12 +37,12 @@ function EstimateLine({
 
   if (estimate.kind === "reached") {
     return (
-      <p className="text-sm text-income">Goal reached &mdash; nice work.</p>
+      <p className="lede text-income">Goal reached — nice work.</p>
     );
   }
   if (estimate.kind === "no-data") {
     return (
-      <p className="text-sm text-fg-muted">
+      <p className="lede">
         Add a few weeks of transactions and we&apos;ll estimate how long this
         goal will take.
       </p>
@@ -51,24 +50,24 @@ function EstimateLine({
   }
   if (estimate.kind === "negative") {
     return (
-      <p className="text-sm text-fg-muted">
+      <p className="lede">
         This month you&apos;re spending more than you earn, so the estimate
         pauses. It&apos;ll resume as soon as savings turn positive.
       </p>
     );
   }
   return (
-    <p className="text-sm text-fg-muted leading-snug">
-      If you keep saving{" "}
-      <span className="text-fg font-medium">
+    <p className="lede leading-snug">
+      At{" "}
+      <span className="text-fg font-medium not-italic figure">
         {formatCurrency(estimate.monthlyRate, BASE_CURRENCY)}
-      </span>{" "}
-      per month, you&apos;ll reach it in{" "}
-      <span className="text-fg font-medium">
+      </span>
+      {" "}per month, you&apos;ll reach it in{" "}
+      <span className="text-fg font-medium not-italic">
         {formatMonthsRough(estimate.months)}
-      </span>{" "}
-      &mdash; around{" "}
-      <span className="text-fg font-medium">
+      </span>
+      {" — around "}
+      <span className="text-fg font-medium not-italic">
         {formatTargetMonth(estimate.targetDate)}
       </span>
       .
@@ -76,6 +75,10 @@ function EstimateLine({
   );
 }
 
+/**
+ * Alcove goal card — a hairline room. Name + target sit on top, saved/remaining
+ * mono figures beside, a thin progress rule, then the estimate as a soft note.
+ */
 export default function GoalCard({
   goal,
   contributions,
@@ -90,42 +93,42 @@ export default function GoalCard({
   return (
     <article
       className={cn(
-        "surface relative overflow-hidden p-5 flex flex-col gap-4",
+        "p-5 flex flex-col gap-4",
         progress.reached && "goal-reached",
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute left-0 top-0 bottom-0 w-1",
-          progress.reached ? "bg-income" : "bg-accent/60",
-        )}
-      />
-
-      <div className="flex items-start gap-4">
-        <PhaseIndicator
-          progress={progress.percent}
-          reached={progress.reached}
-          tone={progress.reached ? "income" : "accent"}
-          size={48}
-          ariaLabel={`${goal.name}: ${Math.round(progress.percent * 100)}%`}
-        />
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-fg leading-tight truncate">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-serif text-lg text-fg leading-tight truncate">
             {goal.name}
           </h3>
           {goal.targetDate && (
-            <p className="text-xs text-fg-subtle mt-1">
-              Target {formatTargetMonth(new Date(goal.targetDate))}
+            <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
+              Target · {formatTargetMonth(new Date(goal.targetDate))}
             </p>
           )}
+        </div>
+        <div className="text-right shrink-0">
+          <div className="kicker mb-1">
+            {progress.reached ? "Complete" : "To go"}
+          </div>
+          <div
+            className={cn(
+              "font-serif text-xl tabular-nums leading-none",
+              progress.reached ? "text-income" : "text-fg",
+            )}
+          >
+            {progress.reached
+              ? "✓"
+              : formatCurrency(progress.remaining, goal.currency)}
+          </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0 flex flex-col gap-0.5">
-            <span className="label-sm">Saved</span>
+          <div className="min-w-0 flex flex-col gap-1">
+            <span className="kicker">Saved</span>
             <Amount
               value={progress.saved}
               size="lg"
@@ -133,31 +136,17 @@ export default function GoalCard({
               currency={goal.currency}
             />
           </div>
-          <div className="text-right shrink-0 flex flex-col gap-0.5">
-            <span className="label-sm">
-              {progress.reached ? "Complete" : "To go"}
-            </span>
-            <p
-              className={cn(
-                "text-base font-semibold tabular-nums",
-                progress.reached ? "text-income" : "text-fg",
-              )}
-            >
-              {progress.reached
-                ? "\u2713"
-                : formatCurrency(progress.remaining, goal.currency)}
-            </p>
-          </div>
+          <span className="figure text-xs text-fg-muted whitespace-nowrap">
+            of {formatCurrency(goal.targetAmount, goal.currency)}
+          </span>
         </div>
         <ProgressBar
           value={progress.percent}
           tone={progress.reached ? "income" : "accent"}
           ariaLabel={`${goal.name} progress`}
         />
-        <div className="flex items-center justify-between text-xs text-fg-subtle">
-          <span>
-            {formatCurrency(goal.targetAmount, goal.currency)} target
-          </span>
+        <div className="flex items-center justify-between text-[11px] text-fg-muted uppercase tracking-[0.14em]">
+          <span>{Math.round(progress.percent * 100)}% laid by</span>
           {contributionCount > 0 && (
             <span>
               {contributionCount} contribution

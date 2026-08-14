@@ -1,7 +1,6 @@
 "use client";
 
 import Amount from "@/components/atoms/Amount";
-import TransactionTypeIcon from "@/components/atoms/TransactionTypeIcon";
 import { RefreshIcon } from "@/lib/action/icons";
 import { cn } from "@/lib/utils/cn";
 import { formatDate } from "@/lib/utils/format";
@@ -15,8 +14,22 @@ interface TransactionItemProps {
   onSelect?: (transaction: Transaction) => void;
   /** Collapsed view for transfers: shows source → destination on a single row. */
   groupedTransfer?: boolean;
+  /** Hide the date column when the list already groups by day. */
+  hideDate?: boolean;
 }
 
+function shortDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    .toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/**
+ * Alcove entry — date | title + note | amount, three columns on a hairline.
+ * Semantic tone lives on the amount; the type is signaled by the small
+ * colored dot before the title.
+ */
 export default function TransactionItem({
   transaction,
   account,
@@ -24,17 +37,18 @@ export default function TransactionItem({
   linkedAccount,
   onSelect,
   groupedTransfer = false,
+  hideDate = false,
 }: TransactionItemProps) {
   const isTransfer = transaction.type === "transfer";
   const isIncome = transaction.type === "income";
   const isInvestment = transaction.type === "investment";
-  const isInflow = isIncome || (isTransfer && transaction.transferDirection === "in");
+  const isInflow =
+    isIncome || (isTransfer && transaction.transferDirection === "in");
 
   let title: string;
   let subtitle: string;
-  let iconVariant: "up" | "down" | "transfer" | "invest";
-  let iconClass: string;
   let tone: "income" | "expense" | "neutral";
+  let dotClass = "text-fg-subtle";
 
   if (isTransfer) {
     const other = linkedAccount?.name ?? "another account";
@@ -44,7 +58,6 @@ export default function TransactionItem({
         ? account?.name
         : linkedAccount?.name;
     if (groupedTransfer) {
-      // For the "out" side (kept when grouping), account = source, linkedAccount = destination.
       const source =
         transaction.transferDirection === "in"
           ? linkedAccount?.name
@@ -56,7 +69,7 @@ export default function TransactionItem({
       title =
         transaction.description ||
         (isCardPayment ? "Card payment" : "Transfer");
-      subtitle = `${source ?? "—"} → ${destination ?? "—"} · ${formatDate(transaction.date)}`;
+      subtitle = `${source ?? "—"} → ${destination ?? "—"}`;
     } else {
       const defaultTitle = isCardPayment
         ? `Card payment · ${cardName ?? other}`
@@ -64,61 +77,58 @@ export default function TransactionItem({
           ? `Transfer from ${other}`
           : `Transfer to ${other}`;
       title = transaction.description || defaultTitle;
-      subtitle = `${account?.name ?? "—"} · ${formatDate(transaction.date)}`;
+      subtitle = account?.name ?? "—";
     }
-    iconVariant = "transfer";
-    iconClass = "text-fg-muted";
     tone = "neutral";
+    dotClass = "text-fg-subtle";
   } else if (isInvestment) {
     title = transaction.description || category?.name || "Investment";
-    subtitle = `${category?.name ?? "—"}${
-      account ? ` · ${account.name}` : ""
-    } · ${formatDate(transaction.date)}`;
-    iconVariant = "invest";
-    iconClass = "text-invest";
+    subtitle = [category?.name, account?.name].filter(Boolean).join(" · ");
     tone = "neutral";
+    dotClass = "text-invest";
   } else {
-    title = transaction.description || category?.name || "Untitled transaction";
-    subtitle = `${category?.name ?? "—"}${
-      account ? ` · ${account.name}` : ""
-    } · ${formatDate(transaction.date)}`;
-    iconVariant = isIncome ? "up" : "down";
-    iconClass = isIncome ? "text-income" : "text-expense";
+    title = transaction.description || category?.name || "Untitled";
+    subtitle = [category?.name, account?.name].filter(Boolean).join(" · ");
     tone = isIncome ? "income" : "expense";
+    dotClass = isIncome ? "text-income" : "text-expense";
   }
 
   const body = (
     <>
-      <div
-        aria-hidden
-        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface-2 border border-border"
-      >
-        <TransactionTypeIcon variant={iconVariant} className={iconClass} />
+      {!hideDate && (
+        <div className="entry-date">{shortDate(transaction.date)}</div>
+      )}
+      <div className={cn("entry-body flex items-center gap-2", hideDate && "col-span-2")}>
+        <span
+          aria-hidden
+          className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotClass)}
+          style={{ background: "currentColor" }}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="entry-title flex items-center gap-1.5">
+            <span className="truncate">{title}</span>
+            {transaction.recurringId && (
+              <RefreshIcon
+                width={12}
+                height={12}
+                aria-label="From a recurring rule"
+                className="text-fg-subtle shrink-0"
+              />
+            )}
+          </div>
+          <div className="entry-note">
+            {subtitle} {!hideDate ? "" : `· ${formatDate(transaction.date)}`}
+          </div>
+        </div>
       </div>
-
-      <div className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-medium text-fg truncate flex items-center gap-1.5">
-          <span className="truncate">{title}</span>
-          {transaction.recurringId && (
-            <RefreshIcon
-              width={12}
-              height={12}
-              aria-label="From a recurring rule"
-              className="text-fg-subtle shrink-0"
-            />
-          )}
-        </p>
-        <p className="text-xs text-fg-subtle truncate">{subtitle}</p>
-      </div>
-
       <Amount
         value={isTransfer ? transaction.amount : transaction.amountUSD}
         tone={tone}
-        size="sm"
+        size="md"
         currency={isTransfer ? transaction.currency : "USD"}
         showSign={!isTransfer && !isInvestment}
         className={cn(
-          "shrink-0 text-right sm:text-base",
+          "entry-amt shrink-0",
           isTransfer &&
             !groupedTransfer &&
             (isInflow ? "text-income" : "text-expense"),
@@ -129,23 +139,22 @@ export default function TransactionItem({
     </>
   );
 
-  return (
-    <li className="flex items-center gap-3 py-3">
-      {onSelect ? (
-        <button
-          type="button"
-          onClick={() => onSelect(transaction)}
-          className={cn(
-            "flex flex-1 items-center gap-3 min-w-0 rounded-[10px]",
-            "-mx-2 px-2 py-1 transition-colors hover:bg-surface-2",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-          )}
-        >
-          {body}
-        </button>
-      ) : (
-        <div className="flex flex-1 items-center gap-3 min-w-0">{body}</div>
-      )}
-    </li>
-  );
+  const grid = hideDate ? "grid-cols-[1fr_auto]" : "grid-cols-[56px_1fr_auto]";
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(transaction)}
+        className={cn(
+          "entry text-left w-full transition-colors hover:bg-surface-2",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
+          grid,
+        )}
+      >
+        {body}
+      </button>
+    );
+  }
+  return <div className={cn("entry", grid)}>{body}</div>;
 }

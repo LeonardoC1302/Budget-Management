@@ -2,7 +2,6 @@
 
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
-import TransactionTypeIcon from "@/components/atoms/TransactionTypeIcon";
 import {
   DeleteIcon,
   EditIcon,
@@ -39,69 +38,64 @@ export default function RecurringItem({
 }: RecurringItemProps) {
   const isIncome = template.type === "income";
   const isInvestment = template.type === "investment";
-  const iconVariant: "up" | "down" | "invest" = isInvestment
-    ? "invest"
-    : isIncome
-      ? "up"
-      : "down";
-  const iconClass = isInvestment
-    ? "text-invest"
-    : isIncome
-      ? "text-income"
-      : "text-expense";
   const tone: "income" | "expense" | "neutral" = isInvestment
     ? "neutral"
     : isIncome
       ? "income"
       : "expense";
+  const dotClass = isInvestment
+    ? "text-invest"
+    : isIncome
+      ? "text-income"
+      : "text-expense";
 
-  const title =
-    template.description || category?.name || "Untitled recurring";
+  const title = template.description || category?.name || "Untitled recurring";
   const next = template.active
     ? nextOccurrenceAfter(toRule(template), todayISODate())
     : undefined;
   const cadence = RECURRENCE_FREQUENCY_LABELS[template.frequency];
   const nextLabel = template.active
     ? next
-      ? `Next: ${formatDate(next)}`
+      ? `Next · ${formatDate(next)}`
       : "No upcoming occurrences"
     : "Paused";
 
-  const subtitle = `${cadence} · ${category?.name ?? "—"}${
-    account ? ` · ${account.name}` : ""
-  }`;
+  const subtitle = [cadence, category?.name, account?.name]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <li className={cn("flex items-center gap-3 py-3", !template.active && "opacity-60")}>
-      <div
+    <article
+      className={cn("px-4 py-4 flex items-start gap-3", !template.active && "opacity-70")}
+    >
+      <span
         aria-hidden
-        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface-2 border border-border"
-      >
-        <TransactionTypeIcon variant={iconVariant} className={iconClass} />
-      </div>
-
-      <div className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-medium text-fg truncate flex items-center gap-1.5">
-          <span className="truncate">{title}</span>
+        className={cn("mt-2 w-1.5 h-1.5 rounded-full shrink-0", dotClass)}
+        style={{ background: "currentColor" }}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-serif text-base text-fg truncate">{title}</span>
           <RefreshIcon
             width={12}
             height={12}
             className="text-fg-subtle shrink-0"
             aria-hidden
           />
+        </div>
+        <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em] truncate">
+          {subtitle}
         </p>
-        <p className="text-xs text-fg-subtle truncate">{subtitle}</p>
-        <p className="text-xs text-fg-subtle truncate">{nextLabel}</p>
+        <p className="lede text-xs mt-1">{nextLabel}</p>
       </div>
-
       <div className="flex flex-col items-end gap-1 shrink-0">
         <Amount
           value={template.amount}
           tone={tone}
-          size="sm"
+          size="md"
           currency={template.currency}
           showSign={!isInvestment}
-          className={isInvestment ? "text-invest" : undefined}
+          className={cn("font-serif", isInvestment && "text-invest")}
         />
         <div className="flex gap-1">
           {onToggleActive && (
@@ -143,6 +137,6 @@ export default function RecurringItem({
           )}
         </div>
       </div>
-    </li>
+    </article>
   );
 }

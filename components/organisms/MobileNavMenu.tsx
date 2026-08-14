@@ -20,7 +20,7 @@ export default function MobileNavMenu({ open, onClose }: MobileNavMenuProps) {
 
   return (
     <Modal open={open} onClose={onClose} title="Navigate">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         <NavGroup
           heading="Everyday"
           items={PRIMARY_ITEMS}
@@ -32,7 +32,6 @@ export default function MobileNavMenu({ open, onClose }: MobileNavMenuProps) {
           items={SECONDARY_ITEMS}
           pathname={pathname}
           onClose={onClose}
-          muted
         />
       </div>
     </Modal>
@@ -44,37 +43,42 @@ interface NavGroupProps {
   items: NavItem[];
   pathname: string;
   onClose: () => void;
-  muted?: boolean;
 }
 
-function NavGroup({ heading, items, pathname, onClose, muted }: NavGroupProps) {
+function NavGroup({ heading, items, pathname, onClose }: NavGroupProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="label-sm px-1">{heading}</span>
-      <div className="grid grid-cols-2 gap-3">
-        {items.map((item, idx) => {
+    <div className="flex flex-col gap-3">
+      <span className="kicker">{heading}</span>
+      <div
+        className="rooms"
+        style={{ background: "var(--color-surface-2)" }}
+      >
+        {items.map((item) => {
           const active = pathname === item.href;
           const Icon = item.Icon;
-          const isLastOdd = idx === items.length - 1 && items.length % 2 === 1;
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 h-24 rounded-[14px]",
-                "border transition-colors",
+                "flex items-center gap-3 px-4 py-3.5 transition-colors min-h-11",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
-                isLastOdd && "col-span-2",
                 active
-                  ? "border-accent bg-accent/10 text-accent"
-                  : muted
-                    ? "border-border bg-surface-2 text-fg-subtle hover:text-fg hover:border-border-strong"
-                    : "border-border bg-surface-2 text-fg-muted hover:text-fg hover:border-border-strong",
+                  ? "text-fg"
+                  : "text-fg-muted hover:text-fg hover:bg-surface",
               )}
             >
-              <Icon width={22} height={22} aria-hidden />
-              <span className="text-xs font-medium">{item.label}</span>
+              {active && (
+                <span
+                  aria-hidden
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: "var(--color-celadon)" }}
+                />
+              )}
+              <Icon width={20} height={20} aria-hidden />
+              <span className="text-sm">{item.label}</span>
             </Link>
           );
         })}
