@@ -11,10 +11,39 @@ const BCCR_TTL_MS = 30 * 60 * 1000;
 export interface BccrEntityRate {
   id: string;
   name: string;
+  // Translated "Tipo de Entidad" section this entity belongs to on the BCCR
+  // page (e.g. "Public banks"). Null only if the upstream section is unknown.
+  category: string | null;
   // Bank buys USD from the customer (compra). USD → CRC direction.
   buy: number | null;
   // Bank sells USD to the customer (venta). CRC → USD direction.
   sell: number | null;
+}
+
+// BCCR groups entities under Spanish "Tipo de Entidad" sections. We surface
+// these to the UI translated. Any section not in this map falls back to its
+// original Spanish label rather than being dropped.
+const CATEGORY_LABELS: Record<string, string> = {
+  "bancos publicos": "Public banks",
+  "bancos privados": "Private banks",
+  financieras: "Finance companies",
+  "mutuales de vivienda": "Housing mutuals",
+  cooperativas: "Cooperatives",
+  "casas de cambio": "Exchange houses",
+  "puestos de bolsa": "Brokerages",
+};
+
+function normalizeCategoryKey(raw: string): string {
+  return raw
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function translateCategory(raw: string): string {
+  return CATEGORY_LABELS[normalizeCategoryKey(raw)] ?? raw;
 }
 
 export interface BccrSnapshot {
@@ -73,10 +102,11 @@ function parseNumber(raw: string): number | null {
 }
 
 /**
- * Extract entity rows from the ventanilla HTML. The page renders a single
- * table where each entity is a row with an entity name and two numeric
- * columns (Compra, Venta). We locate the header row by looking for the
- * "Compra" and "Venta" labels, then walk every following `<tr>`.
+ * Extract entity rows from the ventanilla HTML. The upstream table has six
+ * columns: [Tipo de Entidad, Entidad Autorizada, Compra, Venta, Diferencial,
+ * Última Actualización]. The first column only renders text on the first row
+ * of each section — subsequent rows leave it as `&nbsp;` — so we track the
+ * "current section" as we walk rows and stamp every entity with it.
  */
 function parseVentanillaHtml(html: string): BccrEntityRate[] {
   const rows: BccrEntityRate[] = [];
@@ -84,6 +114,7 @@ function parseVentanillaHtml(html: string): BccrEntityRate[] {
   const tdRegex = /<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi;
 
   const seen = new Set<string>();
+  let currentCategory: string | null = null;
   let match: RegExpExecArray | null;
   while ((match = trRegex.exec(html)) !== null) {
     const cellsRaw = match[1];
@@ -93,38 +124,28 @@ function parseVentanillaHtml(html: string): BccrEntityRate[] {
     while ((cellMatch = tdRegex.exec(cellsRaw)) !== null) {
       cells.push(stripTags(cellMatch[1]));
     }
-    if (cells.length < 3) continue;
+    // A data row is [category?, entity, compra, venta, diferencial, updated].
+    // Anything narrower is a layout row (title, notes) — skip it.
+    if (cells.length < 4) continue;
 
-    // Header rows contain the words Entidad/Compra/Venta — skip them.
-    const joined = cells.join(" ").toLowerCase();
-    if (
-      joined.includes("compra") &&
-      joined.includes("venta") &&
-      !cells.some((c) => /\d/.test(c))
-    ) {
-      continue;
-    }
+    const buy = parseNumber(cells[2]);
+    const sell = parseNumber(cells[3]);
+    // Header row ("Compra"/"Venta" text) has no numbers in these slots and
+    // gets filtered here without a separate check.
+    if (buy === null && sell === null) continue;
 
-    // A data row looks like [entityName, buyStr, sellStr, ...extras?].
-    // Find the first cell with text and the first two subsequent cells that
-    // parse as positive numbers.
-    const nameIdx = cells.findIndex((c) => c && !/^\d[\d.,]*$/.test(c));
-    if (nameIdx < 0) continue;
-    const name = cells[nameIdx];
+    const name = cells[1];
     if (!name || name.length < 2) continue;
 
-    const numeric: (number | null)[] = [];
-    for (let i = nameIdx + 1; i < cells.length && numeric.length < 2; i++) {
-      const parsed = parseNumber(cells[i]);
-      if (parsed !== null || numeric.length > 0) numeric.push(parsed);
-    }
-    const [buy = null, sell = null] = numeric;
-    if (buy === null && sell === null) continue;
+    // First cell either declares a new section or is blank ("&nbsp;", which
+    // stripTags collapses to "") for continuation rows within the section.
+    const rawCategory = cells[0];
+    if (rawCategory) currentCategory = translateCategory(rawCategory);
 
     const id = slugify(name);
     if (!id || seen.has(id)) continue;
     seen.add(id);
-    rows.push({ id, name, buy, sell });
+    rows.push({ id, name, category: currentCategory, buy, sell });
   }
 
   return rows;

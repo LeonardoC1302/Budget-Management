@@ -64,6 +64,24 @@ export default function RatesPage() {
     };
   }, [snapshot]);
 
+  const groupedEntities = useMemo(() => {
+    if (!snapshot) return [];
+    const order: string[] = [];
+    const groups = new Map<string, BccrEntityRate[]>();
+    for (const entity of snapshot.entities) {
+      const key = entity.category ?? "Other";
+      if (!groups.has(key)) {
+        order.push(key);
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(entity);
+    }
+    return order.map((category) => ({
+      category,
+      entities: groups.get(category)!,
+    }));
+  }, [snapshot]);
+
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
@@ -187,28 +205,31 @@ export default function RatesPage() {
 
       {snapshot && summary && (
         <>
-          <div className="section-head">
-            <span className="section-head-title">By entity</span>
-            <span className="section-head-meta">
-              {snapshot.entities.length} banks · CRC per 1 USD
-            </span>
-          </div>
-
-          <div className="rooms" role="list">
-            {snapshot.entities.map((entity) => (
-              <EntityRow
-                key={entity.id}
-                name={entity.name}
-                buy={entity.buy}
-                sell={entity.sell}
-                buyRange={summary.buyRange}
-                sellRange={summary.sellRange}
-                bestBuy={summary.bestBuy}
-                bestSell={summary.bestSell}
-                onSelect={() => setSelected(entity)}
-              />
-            ))}
-          </div>
+          {groupedEntities.map(({ category, entities }) => (
+            <div key={category} className="flex flex-col">
+              <div className="section-head">
+                <span className="section-head-title">{category}</span>
+                <span className="section-head-meta">
+                  {entities.length} · CRC per 1 USD
+                </span>
+              </div>
+              <div className="rooms" role="list">
+                {entities.map((entity) => (
+                  <EntityRow
+                    key={entity.id}
+                    name={entity.name}
+                    buy={entity.buy}
+                    sell={entity.sell}
+                    buyRange={summary.buyRange}
+                    sellRange={summary.sellRange}
+                    bestBuy={summary.bestBuy}
+                    bestSell={summary.bestSell}
+                    onSelect={() => setSelected(entity)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </>
       )}
 
