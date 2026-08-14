@@ -6,8 +6,6 @@ interface OpenErApiResponse {
 
 import type { RateSource } from "@/lib/types";
 
-import type { RateSource } from "@/lib/types";
-
 let usdRatesCache: { rates: Record<string, number>; fetchedAt: number } | null =
   null;
 const USD_RATES_TTL_MS = 60 * 60 * 1000;
