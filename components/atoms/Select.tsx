@@ -177,7 +177,7 @@ export default function Select({
       ? createPortal(
           <div
             ref={menuRef}
-            className="fixed z-[60] surface p-1 shadow-2xl flex flex-col"
+            className="fixed z-[60] surface p-1 flex flex-col"
             style={{
               top: rect.placement === "above" ? undefined : rect.top,
               bottom:
@@ -208,12 +208,13 @@ export default function Select({
                     onMouseEnter={() => setActiveIndex(i)}
                     onClick={() => commit(opt.value)}
                     className={cn(
-                      "w-full text-left px-3 py-2 rounded-[8px] text-sm transition-colors flex items-center justify-between gap-3",
+                      "w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between gap-3",
                       isActive
                         ? "bg-surface-2 text-fg"
                         : "text-fg-muted hover:bg-surface-2 hover:text-fg",
                       isSelected && "text-fg",
                     )}
+                    style={{ borderRadius: "var(--radius-control)" }}
                   >
                     <span className="truncate">{opt.label}</span>
                     {isSelected && (
@@ -237,9 +238,9 @@ export default function Select({
       : null;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="field">
       {label && (
-        <label htmlFor={controlId} className="label-sm">
+        <label htmlFor={controlId} className="field-label">
           {label}
         </label>
       )}
@@ -253,10 +254,7 @@ export default function Select({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          "h-11 pl-3.5 pr-10 w-full bg-surface-2 text-fg text-left text-sm",
-          "border border-border rounded-[10px] relative",
-          "focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30",
-          "transition-colors cursor-pointer",
+          "input text-left flex items-center relative pr-10",
           "disabled:cursor-not-allowed disabled:opacity-60",
           className,
         )}
@@ -269,7 +267,7 @@ export default function Select({
           viewBox="0 0 20 20"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.75"
+          strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           className={cn(

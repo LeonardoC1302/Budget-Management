@@ -154,7 +154,7 @@ export default function TransactionDetailsModal({
                     size="md"
                     fullWidth
                     onClick={() => setConfirmOpen(true)}
-                    className="text-expense hover:text-white hover:bg-expense"
+                    className="text-expense hover:text-bg hover:bg-expense"
                   >
                     Delete
                   </Button>

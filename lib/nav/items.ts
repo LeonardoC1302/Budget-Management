@@ -8,6 +8,7 @@ import {
   GoalsIcon,
   HomeIcon,
   InvestIcon,
+  RatesIcon,
   RecurringIcon,
 } from "@/lib/nav/icons";
 
@@ -35,6 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/accounts", label: "Accounts", Icon: AccountsIcon, group: "secondary" },
   { href: "/investments", label: "Invest", Icon: InvestIcon, group: "secondary" },
   { href: "/cards", label: "Cards", Icon: CardsIcon, group: "secondary" },
+  { href: "/rates", label: "Rates", Icon: RatesIcon, group: "secondary" },
 ];
 
 export const PRIMARY_ITEMS = NAV_ITEMS.filter((i) => i.group === "primary");

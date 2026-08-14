@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-14T15:48:18.076Z",
+  "title": "Design System: Perch",
+  "extensions": {
+    "colorMeta": {
+      "bg":             { "role": "neutral", "displayName": "Night",           "canonical": "#0a0a0b", "tonalRamp": ["#050506","#0a0a0b","#111114","#17171b","#1c1c22","#22222a","#26262c","#35353d"] },
+      "surface":        { "role": "neutral", "displayName": "Roost",           "canonical": "#111114", "tonalRamp": ["#050506","#0a0a0b","#111114","#17171b","#1c1c22","#22222a","#26262c","#35353d"] },
+      "surface-2":      { "role": "neutral", "displayName": "Nest",            "canonical": "#17171b", "tonalRamp": ["#0a0a0b","#111114","#17171b","#1c1c22","#22222a","#26262c","#35353d","#4a4a55"] },
+      "border":         { "role": "neutral", "displayName": "Hairline",        "canonical": "#26262c", "tonalRamp": ["#111114","#17171b","#1c1c22","#22222a","#26262c","#35353d","#4a4a55","#6c6c78"] },
+      "border-strong":  { "role": "neutral", "displayName": "Hairline Strong", "canonical": "#35353d", "tonalRamp": ["#17171b","#22222a","#26262c","#35353d","#4a4a55","#6c6c78","#8a8a94","#a1a1aa"] },
+      "fg":             { "role": "neutral", "displayName": "Feather White",   "canonical": "#f4f4f5", "tonalRamp": ["#26262c","#4a4a55","#71717a","#a1a1aa","#c8c8ce","#dedee2","#eaeaec","#f4f4f5"] },
+      "fg-muted":       { "role": "neutral", "displayName": "Feather Muted",   "canonical": "#a1a1aa", "tonalRamp": ["#26262c","#35353d","#4a4a55","#71717a","#a1a1aa","#c8c8ce","#dedee2","#f4f4f5"] },
+      "fg-subtle":      { "role": "neutral", "displayName": "Feather Subtle",  "canonical": "#71717a", "tonalRamp": ["#17171b","#26262c","#35353d","#4a4a55","#71717a","#a1a1aa","#c8c8ce","#dedee2"] },
+      "accent":         { "role": "primary", "displayName": "Perch Indigo",    "canonical": "#6366f1", "tonalRamp": ["#1e1f4a","#2d2f6b","#3e40a0","#4f52c9","#6366f1","#7c7ff5","#a0a2f8","#c8caff"] },
+      "accent-hover":   { "role": "primary", "displayName": "Perch Indigo Bright", "canonical": "#7c7ff5", "tonalRamp": ["#2d2f6b","#3e40a0","#4f52c9","#6366f1","#7c7ff5","#a0a2f8","#c8caff","#e6e7ff"] },
+      "income":         { "role": "success", "displayName": "Ledger Green",    "canonical": "#10b981", "tonalRamp": ["#052e21","#083f2e","#0b5e46","#0e8663","#10b981","#34d399","#6ee7b7","#a7f3d0"] },
+      "income-soft":    { "role": "success", "displayName": "Ledger Green Whisper", "canonical": "rgba(16,185,129,0.094)", "tonalRamp": [] },
+      "expense":        { "role": "danger",  "displayName": "Ledger Rose",     "canonical": "#f43f5e", "tonalRamp": ["#4a0d1a","#6b1226","#9c1a37","#c92548","#f43f5e","#fb7185","#fda4af","#fecdd3"] },
+      "expense-soft":   { "role": "danger",  "displayName": "Ledger Rose Whisper", "canonical": "rgba(244,63,94,0.094)", "tonalRamp": [] },
+      "invest":         { "role": "warning", "displayName": "Ledger Amber",    "canonical": "#f59e0b", "tonalRamp": ["#4a2f05","#6b4408","#9c630b","#c98010","#f59e0b","#fbbf24","#fcd34d","#fde68a"] },
+      "invest-soft":    { "role": "warning", "displayName": "Ledger Amber Whisper", "canonical": "rgba(245,158,11,0.094)", "tonalRamp": [] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display",  "purpose": "Masthead Balance and largest monetary figures. Always tabular-nums." },
+      "headline": { "displayName": "Headline", "purpose": "Route mastheads and full-page section titles (.heading-xl)." },
+      "title":    { "displayName": "Title",    "purpose": "Modal titles and card titles (.heading-lg)." },
+      "body":     { "displayName": "Body",     "purpose": "Primary reading size on lists and forms." },
+      "label":    { "displayName": "Label",    "purpose": "UPPERCASE small-caps captions on Feather Subtle (.label-sm)." },
+      "mono":     { "displayName": "Mono",     "purpose": "Reserved for code-like fragments; monetary figures use tabular-nums body/display, not mono." }
+    },
+    "shadows": [
+      { "name": "surface-ambient",  "value": "inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 32px -22px rgba(0,0,0,0.8)", "purpose": "Default surface depth. Hairline top-highlight + offset downward shadow. No halo." },
+      { "name": "goal-reached-ring","value": "inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0 1px rgba(16,185,129,0.28), 0 14px 32px -22px rgba(0,0,0,0.8)", "purpose": "Applied to a saving goal card once its target is reached. Same footprint, celebrated with a green hairline ring." },
+      { "name": "modal",            "value": "0 25px 50px -12px rgba(0,0,0,0.6)", "purpose": "Lifts the modal panel off the canvas because it interrupts the room." },
+      { "name": "nav-capsule",      "value": "0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.5)", "purpose": "The one visible elevation on a control — the mobile bottom-nav capsule." }
+    ],
+    "motion": [
+      { "name": "ease-perch",       "value": "cubic-bezier(0.2, 0.6, 0.2, 1)", "purpose": "The single authored easing across all bespoke motion (masthead-settle, roost-draw)." },
+      { "name": "duration-settle",  "value": "220ms", "purpose": "Masthead balance mount-settle duration." },
+      { "name": "duration-draw",    "value": "360ms", "purpose": "Roost-line draw-in duration, delayed 220ms so it follows the balance." },
+      { "name": "duration-hover",   "value": "150ms", "purpose": "Standard transition for hover color/background changes on controls." }
+    ],
+    "breakpoints": [
+      { "name": "no-zoom", "value": "640px" },
+      { "name": "md",      "value": "768px" },
+      { "name": "content", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single indigo action per surface. Steady, thumb-sized.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Save transaction</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 16px; background: #6366f1; color: #ffffff; border: none; border-radius: 10px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: normal; cursor: pointer; transition: background 150ms cubic-bezier(0.2, 0.6, 0.2, 1); } .ds-btn-primary:hover { background: #7c7ff5; } .ds-btn-primary:active { opacity: 0.9; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet second choice. Nest fill with a hairline border.",
+      "html": "<button class=\"ds-btn-secondary\" type=\"button\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 16px; background: #17171b; color: #f4f4f5; border: 1px solid #26262c; border-radius: 10px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color 150ms cubic-bezier(0.2, 0.6, 0.2, 1); } .ds-btn-secondary:hover { border-color: #35353d; } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Fill-less. Reveals a Nest fill on hover.",
+      "html": "<button class=\"ds-btn-ghost\" type=\"button\">Skip</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 16px; background: transparent; color: #a1a1aa; border: none; border-radius: 10px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 150ms cubic-bezier(0.2, 0.6, 0.2, 1), color 150ms cubic-bezier(0.2, 0.6, 0.2, 1); } .ds-btn-ghost:hover { background: #17171b; color: #f4f4f5; } .ds-btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Inset field. iOS-zoom-safe on small screens via 16px on small viewports.",
+      "html": "<div class=\"ds-input\"><label class=\"ds-input-label\" for=\"ds-i-1\">Amount</label><input id=\"ds-i-1\" class=\"ds-input-control\" type=\"text\" placeholder=\"0.00\" /></div>",
+      "css": ".ds-input { display: flex; flex-direction: column; gap: 6px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-input-label { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; color: #71717a; } .ds-input-control { height: 44px; padding: 0 14px; background: #17171b; color: #f4f4f5; border: 1px solid #26262c; border-radius: 10px; font-size: 14px; transition: border-color 150ms cubic-bezier(0.2, 0.6, 0.2, 1), box-shadow 150ms cubic-bezier(0.2, 0.6, 0.2, 1); } .ds-input-control::placeholder { color: #71717a; } .ds-input-control:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The primary container. Roost fill, Hairline border, ambient depth.",
+      "html": "<article class=\"ds-card\"><span class=\"ds-card-label\">Balance</span><span class=\"ds-card-amount\">$12,480.55</span></article>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 8px; padding: 20px; background: #111114; color: #f4f4f5; border: 1px solid #26262c; border-radius: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 32px -22px rgba(0,0,0,0.8); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-card-label { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; color: #71717a; } .ds-card-amount { font-size: 30px; font-weight: 600; line-height: 36px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; color: #10b981; }"
+    },
+    {
+      "name": "Masthead Balance",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Signature. The moon-on-the-perch surface: radial indigo glow + dashed roost line under the amount.",
+      "html": "<section class=\"ds-masthead\"><span class=\"ds-masthead-label\">Balance</span><span class=\"ds-masthead-amount\">$12,480.55</span><span class=\"ds-masthead-roost\" aria-hidden=\"true\"></span></section>",
+      "css": ".ds-masthead { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 24px; background: radial-gradient(140% 110% at 100% 0%, rgba(99,102,241,0.10) 0%, rgba(99,102,241,0.03) 34%, transparent 62%), #111114; color: #f4f4f5; border: 1px solid #26262c; border-radius: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 32px -22px rgba(0,0,0,0.8); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; animation: ds-masthead-settle 220ms cubic-bezier(0.2, 0.6, 0.2, 1) both; } .ds-masthead-label { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; color: #71717a; } .ds-masthead-amount { font-size: 30px; font-weight: 600; line-height: 36px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; color: #10b981; } .ds-masthead-roost { display: block; height: 1px; margin-top: 6px; width: 40px; opacity: 0.55; background: repeating-linear-gradient(to right, #6366f1 0, #6366f1 4px, transparent 4px, transparent 8px); animation: ds-roost-draw 360ms 220ms cubic-bezier(0.2, 0.6, 0.2, 1) both; } @keyframes ds-masthead-settle { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } } @keyframes ds-roost-draw { from { width: 0; opacity: 0; } to { width: 40px; opacity: 0.55; } } @media (prefers-reduced-motion: reduce) { .ds-masthead, .ds-masthead-roost { animation: none; } }"
+    },
+    {
+      "name": "Delta Pill",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Micro-card showing month-over-month movement. Semantic tone rides the direction.",
+      "html": "<div class=\"ds-delta\"><span class=\"ds-delta-label\">Income</span><span class=\"ds-delta-value ds-delta-up\">↑ 12%</span><span class=\"ds-delta-caption\">vs last month</span></div>",
+      "css": ".ds-delta { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: #111114; color: #f4f4f5; border: 1px solid #26262c; border-radius: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 32px -22px rgba(0,0,0,0.8); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; min-width: 0; } .ds-delta-label { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; color: #71717a; } .ds-delta-value { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; } .ds-delta-up { color: #10b981; } .ds-delta-down { color: #f43f5e; } .ds-delta-flat { color: #a1a1aa; } .ds-delta-caption { font-size: 10px; color: #71717a; }"
+    },
+    {
+      "name": "Semantic Chip — Income",
+      "kind": "chip",
+      "refersTo": "chip-income",
+      "description": "Soft-tone pill. One per money kind. Never used for non-monetary status.",
+      "html": "<span class=\"ds-chip ds-chip-income\">Income</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; } .ds-chip-income { background: rgba(16,185,129,0.094); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }"
+    },
+    {
+      "name": "Category Well",
+      "kind": "chip",
+      "refersTo": "chip-neutral",
+      "description": "A round tinted well with 1–2 uppercase category initials.",
+      "html": "<div class=\"ds-well ds-well-md ds-well-invest\" aria-hidden=\"true\">RE</div>",
+      "css": ".ds-well { display: inline-flex; align-items: center; justify-content: center; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-weight: 600; letter-spacing: -0.01em; border-radius: 999px; border: 1px solid; user-select: none; } .ds-well-sm { width: 32px; height: 32px; font-size: 12px; } .ds-well-md { width: 44px; height: 44px; font-size: 14px; } .ds-well-lg { width: 56px; height: 56px; font-size: 16px; } .ds-well-neutral { background: #17171b; border-color: #26262c; color: #f4f4f5; } .ds-well-income { background: rgba(16,185,129,0.094); border-color: rgba(16,185,129,0.3); color: #10b981; } .ds-well-expense { background: rgba(244,63,94,0.094); border-color: rgba(244,63,94,0.3); color: #f43f5e; } .ds-well-invest { background: rgba(245,158,11,0.094); border-color: rgba(245,158,11,0.3); color: #f59e0b; } .ds-well-accent { background: rgba(99,102,241,0.10); border-color: rgba(99,102,241,0.3); color: #6366f1; }"
+    },
+    {
+      "name": "Bottom Nav (Mobile Capsule)",
+      "kind": "nav",
+      "refersTo": "button-primary",
+      "description": "Signature. The mobile primary nav collapses to one indigo capsule at the thumb.",
+      "html": "<nav class=\"ds-navbar\" aria-label=\"Primary\"><button class=\"ds-nav-capsule\" type=\"button\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M3 12l9-9 9 9M5 10v10h14V10\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Home</span></button></nav>",
+      "css": ".ds-navbar { position: relative; display: flex; align-items: center; justify-content: center; padding: 12px 0; background: rgba(10,10,11,0.9); backdrop-filter: blur(12px); border-top: 1px solid #26262c; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-nav-capsule { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; background: #6366f1; color: #ffffff; border: none; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.5); transition: opacity 150ms cubic-bezier(0.2, 0.6, 0.2, 1); } .ds-nav-capsule:active { opacity: 0.9; } .ds-nav-capsule:focus-visible { outline: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.5), 0 0 0 2px rgba(99, 102, 241, 0.6); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Nightbird's Perch — a moonlit ledger.",
+    "overview": "Perch is a dark, quiet room where money can be looked at without being shouted about. The whole system is built to feel like sitting in a low-lit study after hours: near-black surfaces, hairline borders, and a single indigo light that behaves like the moon on the perch — one authored glow at the top-right of the masthead balance, one dashed accent stroke (\"the roost line\") that grows in on mount, and then stillness. Semantic income / expense / investment tones are the only colored voices allowed onto the canvas, and they only speak when a number needs to mean something. Nothing performs importance; the figures themselves are the point.\n\nDensity is calm, not sparse: money surfaces cluster into fielded cards with generous internal padding, list rows use ample vertical rhythm, and the primary action lives at the thumb on mobile via the bottom-anchored capsule. Motion is authored, brief, and always respectful of prefers-reduced-motion. The aesthetic anti-references are the two forms of dashboard cliché this product exists to reject — the bright-fintech \"confetti + candy palette\" and the enterprise-BI \"metric wall\". Perch declines both.",
+    "keyCharacteristics": [
+      "Dark-only, near-black canvas with hairline muted borders",
+      "One accent (indigo) used sparingly; three semantic tones (income, expense, investment) reserved for money meaning",
+      "Signature 'moon on the perch' masthead glow + dashed 'roost line'",
+      "Tabular-nums monetary display, always USD-normalized",
+      "Mobile-first PWA rhythm: bottom nav, safe-area aware, tap-friendly"
+    ],
+    "rules": [
+      { "name": "The One Voice Rule",              "body": "Indigo appears on at most one non-semantic element per viewport at a time (the primary action, or the active pip, or one moon glow — not several). Its rarity is what makes it read as light, not decoration.", "section": "colors" },
+      { "name": "The Money-Only Color Rule",       "body": "Ledger Green, Rose, and Amber never appear on non-monetary UI. They are reserved for numbers, transaction kinds, and the direct visual signal of a money movement. Do not use them for status, tags, or emphasis unless the emphasis is about money.", "section": "colors" },
+      { "name": "The Tabular-Nums Rule",           "body": "Every monetary figure uses tabular-nums whitespace-nowrap. Money columns must align on the decimal without shimmering as digits change.", "section": "typography" },
+      { "name": "The Uppercase-Only-For-Labels Rule", "body": "UPPERCASE is reserved for label-sm captions. Headings, buttons, and body copy stay in normal case.", "section": "typography" },
+      { "name": "The No-Halo Rule",                "body": "No zero-offset glow shadows on cards, buttons, or containers. Depth is authored with offset shadows, not halos, so the room stays quiet.", "section": "elevation" },
+      { "name": "The One-Glow-Per-Surface Rule",   "body": "The masthead balance owns the single radial indigo glow ('moon on the perch'). Do not repeat that device on other cards; it is a hallmark, not a pattern.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do treat Perch Indigo as light. Use it for the primary action, focus rings, the active nav pip, the PerchMark's eye, and the masthead's radial glow — and mostly nothing else.",
+      "Do reserve Ledger Green / Rose / Amber for money meaning. If a color is on the screen, a viewer should be able to point at it and say 'that's about a number'.",
+      "Do use tabular-nums whitespace-nowrap on every currency value.",
+      "Do describe cards with a 1px Hairline border + the Surface ambient shadow. Fill alone is not enough.",
+      "Do honor prefers-reduced-motion: mask, don't merely shorten, the masthead settle and roost draw.",
+      "Do keep the Perch identity (name, tagline 'A quiet place for your money to rest.', PerchMark glyph) intact across surfaces."
+    ],
+    "donts": [
+      "Don't introduce halo shadows (0 0 X rgba(...)) on cards, buttons, or containers. Depth is offset, not glow.",
+      "Don't paint large surfaces in Perch Indigo (banners, hero fills, backgrounds). It is a spotlight, not a wall.",
+      "Don't use semantic money colors for non-monetary status (avoid Ledger Green 'success' toasts, Ledger Rose 'error' banners, etc. — use neutral surfaces with Feather Subtle copy instead).",
+      "Don't add a light theme without a product-level decision. Perch is committed dark; color-scheme: dark is set on the root.",
+      "Don't stack multiple radial glows on a single viewport. The masthead owns the moon.",
+      "Don't repeat capital-letter text outside the label-sm role. Uppercase buttons or uppercase body copy break the calm.",
+      "Don't add 'dashboard' chrome: KPI walls, big colored gauges, confetti, streak fires, notification counters. The product's anti-reference is the metric wall."
+    ]
+  }
+}

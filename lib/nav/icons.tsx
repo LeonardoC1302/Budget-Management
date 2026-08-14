@@ -89,6 +89,15 @@ export const GoalsIcon: ComponentType<IconProps> = (props) => (
   </svg>
 );
 
+export const RatesIcon: ComponentType<IconProps> = (props) => (
+  <svg {...base(props)}>
+    <path d="M4 8h12" />
+    <path d="M16 5l3 3-3 3" />
+    <path d="M20 16H8" />
+    <path d="M8 19l-3-3 3-3" />
+  </svg>
+);
+
 export const MoreIcon: ComponentType<IconProps> = (props) => (
   <svg {...base(props)}>
     <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />

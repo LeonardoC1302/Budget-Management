@@ -16,7 +16,6 @@ interface BudgetListProps {
   emptyActionLabel?: string;
   emptyActionOnClick?: () => void;
   emptyActionHref?: string;
-  /** @deprecated Use `emptyTitle` instead. Kept for backwards compat. */
   emptyMessage?: string;
 }
 
@@ -46,25 +45,24 @@ export default function BudgetList({
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <div className="rooms" role="list">
       {budgets.map((budget) => (
-        <li key={budget.id}>
-          <BudgetRow
-            budget={budget}
-            category={categoriesById[budget.categoryId]}
-            progress={
-              progressByCategory[budget.categoryId] ?? {
-                spent: 0,
-                remaining: budget.amount,
-                percent: 0,
-                status: "on-track",
-              }
+        <BudgetRow
+          key={budget.id}
+          budget={budget}
+          category={categoriesById[budget.categoryId]}
+          progress={
+            progressByCategory[budget.categoryId] ?? {
+              spent: 0,
+              remaining: budget.amount,
+              percent: 0,
+              status: "on-track",
             }
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </li>
+          }
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
-    </ul>
+    </div>
   );
 }

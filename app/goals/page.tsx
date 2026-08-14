@@ -112,33 +112,33 @@ export default function GoalsPage() {
         <>
           {goals.length > 0 && (
             <section
-              className="surface p-5 flex flex-col gap-3"
+              className="flex flex-col"
               aria-label="Total saved across goals"
             >
-              <div className="flex items-center justify-between">
-                <span className="label-sm">Total saved</span>
-                <span className="text-xs text-fg-subtle">
-                  {goals.length} goal{goals.length === 1 ? "" : "s"} &middot;{" "}
-                  {totalsByCurrency.length} currenc
+              <div className="section-head">
+                <span className="section-head-title">Total saved</span>
+                <span className="section-head-meta">
+                  {goals.length} goal{goals.length === 1 ? "" : "s"} · {totalsByCurrency.length} currenc
                   {totalsByCurrency.length === 1 ? "y" : "ies"}
                 </span>
               </div>
-              <ul className="flex flex-col gap-3">
+              <div className="rooms">
                 {totalsByCurrency.map((row) => (
-                  <li key={row.currency} className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
+                  <div key={row.currency} className="px-4 py-3 flex flex-col gap-2">
+                    <div className="flex items-baseline justify-between gap-3">
                       <div className="flex items-baseline gap-2 min-w-0">
                         <Amount
                           value={row.saved}
                           tone="neutral"
-                          size="md"
+                          size="lg"
                           currency={row.currency}
+                          className="font-serif"
                         />
-                        <span className="text-xs text-fg-subtle truncate">
+                        <span className="text-[11px] text-fg-muted uppercase tracking-[0.14em]">
                           of {row.target.toLocaleString("en-US")} {row.currency}
                         </span>
                       </div>
-                      <span className="text-xs text-fg-subtle tabular-nums">
+                      <span className="figure text-xs text-fg-muted">
                         {Math.round(row.percent * 100)}%
                       </span>
                     </div>
@@ -147,24 +147,30 @@ export default function GoalsPage() {
                       tone="accent"
                       ariaLabel={`${row.currency} saved progress`}
                     />
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </section>
           )}
 
-          <GoalList
-          goals={goals}
-          contributionsByGoal={contributionsByGoal}
-          monthlyRate={monthlyRate}
-          onContribute={(goal) => setMode({ kind: "contribute", goal })}
-          onEdit={(goal) => setMode({ kind: "edit", goal })}
-          onDelete={(goal) => setPendingDelete(goal)}
-          emptyTitle="No goals yet"
-          emptyDescription="Name something you're saving for and Perch will track your monthly pace toward it."
-          emptyActionLabel="Create a goal"
-          emptyActionOnClick={() => setMode({ kind: "create" })}
-        />
+          <section className="flex flex-col" aria-label="Goals">
+            <div className="section-head">
+              <span className="section-head-title">Goals</span>
+              <span className="section-head-meta">Saving toward</span>
+            </div>
+            <GoalList
+              goals={goals}
+              contributionsByGoal={contributionsByGoal}
+              monthlyRate={monthlyRate}
+              onContribute={(goal) => setMode({ kind: "contribute", goal })}
+              onEdit={(goal) => setMode({ kind: "edit", goal })}
+              onDelete={(goal) => setPendingDelete(goal)}
+              emptyTitle="No goals yet."
+              emptyDescription="Name something you're saving for and Perch will track your monthly pace toward it."
+              emptyActionLabel="Create a goal"
+              emptyActionOnClick={() => setMode({ kind: "create" })}
+            />
+          </section>
         </>
       )}
 

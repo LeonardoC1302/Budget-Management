@@ -42,31 +42,30 @@ export default function InsightsSection({
 
   const breakdown = useMemo(
     () =>
-      getCategoryBreakdown(
-        transactions,
-        categoriesById,
-        monthKeyOffset(0),
-      ),
+      getCategoryBreakdown(transactions, categoriesById, monthKeyOffset(0)),
     [transactions, categoriesById],
   );
 
   const hasData = transactions.length > 0;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="heading-lg">Insights</h2>
+    <section className="flex flex-col" aria-labelledby="insights-heading">
+      <div className="section-head">
+        <span className="section-head-title">Insights</span>
+        <span className="section-head-meta">This month, in figures</span>
+      </div>
 
       {!hasData ? (
         <EmptyState
-          title="Trends need a few entries"
+          title="Trends need a few entries."
           description="Add a handful of transactions and this space will fill in with monthly changes and category breakdowns."
           actionLabel="Add a transaction"
           actionHref="/add"
         />
       ) : (
-        <>
+        <div className="flex flex-col gap-4">
           {deltas && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="rooms-h grid-cols-3" aria-label="Change vs last month">
               <DeltaPill label="Income" delta={deltas.income} goodWhen="up" />
               <DeltaPill
                 label="Expenses"
@@ -77,31 +76,23 @@ export default function InsightsSection({
                 label="Savings"
                 delta={deltas.net}
                 goodWhen="up"
-                reassuranceWhenBad="Some months ebb — check a longer window before adjusting."
+                reassuranceWhenBad="Some months ebb — a longer window before adjusting."
               />
             </div>
           )}
 
-          <div className="surface p-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-fg">
-                Monthly savings
-              </h3>
-              <span className="text-xs text-fg-subtle">Last 6 months</span>
-            </div>
+          <div className="chart-card">
+            <div className="chart-title">Six-month savings</div>
+            <div className="chart-lede">Net, month by month.</div>
             <SavingsLineChart data={series} currency={currency} />
           </div>
 
-          <div className="surface p-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-fg">
-                Spending by category
-              </h3>
-              <span className="text-xs text-fg-subtle">This month</span>
-            </div>
+          <div className="chart-card">
+            <div className="chart-title">Spending by category</div>
+            <div className="chart-lede">Where the month went.</div>
             <CategoryDonut breakdown={breakdown} currency={currency} />
           </div>
-        </>
+        </div>
       )}
     </section>
   );

@@ -33,7 +33,7 @@ export default function HomePage() {
 
   const recent = transactions
     .filter((t) => t.type !== "investment" && t.type !== "transfer")
-    .slice(0, 4);
+    .slice(0, 5);
   const previewGoals = goals.slice(0, 2);
   const previewBudgets = [...budgets]
     .sort(
@@ -46,7 +46,7 @@ export default function HomePage() {
   const hasTransactions = transactions.length > 0;
 
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-8">
       <Masthead balance={monthTotals.net} />
 
       <CreditCardNudge />
@@ -56,18 +56,17 @@ export default function HomePage() {
         expense={monthTotals.expense}
       />
 
-      <section className="flex flex-col gap-3" aria-labelledby="recent-heading">
-        <div className="flex items-center justify-between">
-          <h2 id="recent-heading" className="heading-lg">
+      <section className="flex flex-col" aria-labelledby="recent-heading">
+        <div className="section-head">
+          <span id="recent-heading" className="section-head-title">
             Recent activity
-          </h2>
-          {hasTransactions && (
-            <Link
-              href="/transactions"
-              className="text-sm text-fg-muted hover:text-fg"
-            >
-              View all &rarr;
+          </span>
+          {hasTransactions ? (
+            <Link href="/transactions" className="section-head-link">
+              See the ledger →
             </Link>
+          ) : (
+            <span className="section-head-meta">Once you begin logging</span>
           )}
         </div>
 
@@ -75,7 +74,7 @@ export default function HomePage() {
           <RowSkeleton count={3} />
         ) : !hasTransactions ? (
           <EmptyState
-            title="No transactions yet"
+            title="No transactions yet."
             description="Add your first entry — income or expense — to start seeing the shape of the month."
             actionLabel="Add a transaction"
             actionHref="/add"
@@ -89,77 +88,72 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3" aria-labelledby="budgets-heading">
-        <div className="flex items-center justify-between">
-          <h2 id="budgets-heading" className="heading-lg">
-            Budgets
-          </h2>
-          <Link
-            href="/budgets"
-            className="text-sm text-fg-muted hover:text-fg"
-          >
-            View all &rarr;
+      <section className="flex flex-col" aria-labelledby="budgets-heading">
+        <div className="section-head">
+          <span id="budgets-heading" className="section-head-title">
+            Under caps
+          </span>
+          <Link href="/budgets" className="section-head-link">
+            All budgets →
           </Link>
         </div>
 
         {previewBudgets.length === 0 ? (
           <EmptyState
-            title="No budgets yet"
+            title="No caps set."
             description="Set a monthly cap on a category so you can catch trends before the end of the month."
             actionLabel="Add a budget"
             actionHref="/budgets"
           />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <div className="rooms" role="list">
             {previewBudgets.map((budget) => (
-              <li key={budget.id}>
-                <BudgetRow
-                  budget={budget}
-                  category={categoriesById[budget.categoryId]}
-                  progress={
-                    progressByCategory[budget.categoryId] ?? {
-                      spent: 0,
-                      remaining: budget.amount,
-                      percent: 0,
-                      status: "on-track",
-                    }
+              <BudgetRow
+                key={budget.id}
+                budget={budget}
+                category={categoriesById[budget.categoryId]}
+                progress={
+                  progressByCategory[budget.categoryId] ?? {
+                    spent: 0,
+                    remaining: budget.amount,
+                    percent: 0,
+                    status: "on-track",
                   }
-                />
-              </li>
+                }
+              />
             ))}
-          </ul>
+          </div>
         )}
       </section>
 
-      <section className="flex flex-col gap-3" aria-labelledby="goals-heading">
-        <div className="flex items-center justify-between">
-          <h2 id="goals-heading" className="heading-lg">
-            Saving goals
-          </h2>
-          <Link href="/goals" className="text-sm text-fg-muted hover:text-fg">
-            View all &rarr;
+      <section className="flex flex-col" aria-labelledby="goals-heading">
+        <div className="section-head">
+          <span id="goals-heading" className="section-head-title">
+            Saving toward
+          </span>
+          <Link href="/goals" className="section-head-link">
+            All goals →
           </Link>
         </div>
 
         {previewGoals.length === 0 ? (
           <EmptyState
-            title="No goals yet"
-            description="Name something you're saving for and Perch will track your monthly pace toward it."
+            title="Nothing being saved for."
+            description="Name something you're saving for and we'll track your pace toward it."
             actionLabel="Create a goal"
             actionHref="/goals"
           />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <div className="rooms" role="list">
             {previewGoals.map((goal) => (
-              <li key={goal.id}>
-                <GoalCard
-                  goal={goal}
-                  contributions={contributionsByGoal[goal.id] ?? []}
-                  monthlyRate={monthlyRate}
-                />
-              </li>
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                contributions={contributionsByGoal[goal.id] ?? []}
+                monthlyRate={monthlyRate}
+              />
             ))}
-          </ul>
+          </div>
         )}
       </section>
 

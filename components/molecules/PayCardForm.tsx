@@ -2,18 +2,25 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
+import Checkbox from "@/components/atoms/Checkbox";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import { useAccounts } from "@/hooks/useAccounts";
-import { effectiveDue, type CardTotals } from "@/lib/credit/statement";
+import { useCategories } from "@/hooks/useCategories";
+import {
+  effectiveDue,
+  getUnbilledCharges,
+  type CardTotals,
+} from "@/lib/credit/statement";
 import { getRate } from "@/lib/services/exchangeRates";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
-import type { Account, NewTransfer } from "@/lib/types";
+import type { Account, NewTransfer, Transaction } from "@/lib/types";
 
 interface PayCardFormProps {
   card: Account;
   totals: CardTotals;
+  transactions: Transaction[];
   onSubmit: (input: NewTransfer) => void | Promise<void>;
   onCancel?: () => void;
 }
@@ -25,17 +32,42 @@ function roundMoney(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+function formatISOShort(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  return new Date(
+    Number(m[1]),
+    Number(m[2]) - 1,
+    Number(m[3]),
+  ).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export default function PayCardForm({
   card,
   totals,
+  transactions,
   onSubmit,
   onCancel,
 }: PayCardFormProps) {
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { byId: categoriesById } = useCategories();
 
   const sourceCandidates = useMemo(
     () => accounts.filter((a) => a.type !== "credit" && a.id !== card.id),
     [accounts, card.id],
+  );
+
+  const unbilledCharges = useMemo(
+    () => getUnbilledCharges(card, transactions),
+    [card, transactions],
+  );
+
+  const due = effectiveDue(totals);
+  const statementDueInCard = totals.statementDue;
+  const fullBalanceInCard = totals.owed;
+  const unbilledInCard = Math.max(
+    0,
+    totals.unbilledPurchases - totals.paymentsBeforeCutBacklog,
   );
 
   const [fromId, setFromId] = useState<string>("");
@@ -52,6 +84,14 @@ export default function PayCardForm({
     rate: number | null;
     error: string | null;
   }>({ key: "", rate: null, error: null });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() =>
+    statementDueInCard > 0
+      ? new Set()
+      : new Set(unbilledCharges.map((c) => c.id)),
+  );
+  const [includeStatementDue, setIncludeStatementDue] = useState(
+    statementDueInCard > 0,
+  );
 
   const source = sourceCandidates.find((a) => a.id === fromId) ?? sourceCandidates[0];
   const effectiveFromId = source?.id ?? "";
@@ -88,16 +128,21 @@ export default function PayCardForm({
     : 1;
   const rateError = differentCurrencies && rateEntry.key === pairKey ? rateEntry.error : null;
 
-  const due = effectiveDue(totals);
-  const statementDueInCard = totals.statementDue;
-  const fullBalanceInCard = totals.owed;
-  const unbilledInCard = Math.max(0, totals.unbilledPurchases - totals.paymentsBeforeCutBacklog);
+  const selectionTotalInCard = useMemo(() => {
+    let sum = 0;
+    for (const c of unbilledCharges) {
+      if (selectedIds.has(c.id)) sum += c.amountInCard;
+    }
+    return sum;
+  }, [unbilledCharges, selectedIds]);
 
-  const preferredCardAmount = statementDueInCard > 0 ? statementDueInCard : fullBalanceInCard;
+  const derivedCardAmount =
+    (includeStatementDue ? statementDueInCard : 0) + selectionTotalInCard;
+
   const cardAmountDisplay = cardTouched
     ? cardAmountRaw
-    : preferredCardAmount > 0
-      ? String(roundMoney(preferredCardAmount))
+    : derivedCardAmount > 0
+      ? String(roundMoney(derivedCardAmount))
       : "";
   const parsedCardAmount = parseFloat(cardAmountDisplay);
   const hasCardAmount = Number.isFinite(parsedCardAmount) && parsedCardAmount > 0;
@@ -109,6 +154,11 @@ export default function PayCardForm({
       : "";
   const parsedSourceAmount = parseFloat(sourceAmountDisplay);
   const hasSourceAmount = Number.isFinite(parsedSourceAmount) && parsedSourceAmount > 0;
+
+  const hasSelectionUI =
+    statementDueInCard > 0 || unbilledCharges.length > 0;
+  const allChargesSelected =
+    unbilledCharges.length > 0 && selectedIds.size === unbilledCharges.length;
 
   function handleCardAmountChange(next: string) {
     setCardTouched(true);
@@ -125,6 +175,32 @@ export default function PayCardForm({
     if (cardAmount <= 0) return;
     setCardTouched(true);
     setCardAmountRaw(String(roundMoney(cardAmount)));
+    setSourceManual(false);
+  }
+
+  function toggleCharge(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setCardTouched(false);
+    setSourceManual(false);
+  }
+
+  function toggleAllCharges() {
+    setSelectedIds((prev) => {
+      if (prev.size === unbilledCharges.length) return new Set();
+      return new Set(unbilledCharges.map((c) => c.id));
+    });
+    setCardTouched(false);
+    setSourceManual(false);
+  }
+
+  function toggleIncludeStatementDue() {
+    setIncludeStatementDue((v) => !v);
+    setCardTouched(false);
     setSourceManual(false);
   }
 
@@ -232,6 +308,80 @@ export default function PayCardForm({
         disabled={accountsLoading}
       />
 
+      {hasSelectionUI && (
+        <section
+          aria-label="Charges to pay"
+          className="rounded-[12px] border border-border bg-surface-2 p-3 flex flex-col gap-2"
+        >
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-medium text-fg-muted uppercase tracking-wide">
+              Charges to pay
+            </span>
+            {unbilledCharges.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleAllCharges}
+                className="text-[11px] text-fg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded"
+              >
+                {allChargesSelected ? "Clear all" : "Select all"}
+              </button>
+            )}
+          </div>
+
+          {statementDueInCard > 0 && (
+            <SelectableRow
+              checked={includeStatementDue}
+              onToggle={toggleIncludeStatementDue}
+              title="Statement due"
+              subtitle="This month's statement"
+              amount={formatCurrency(statementDueInCard, cardCurrency)}
+              strong
+            />
+          )}
+
+          {unbilledCharges.length > 0 && (
+            <ul className="flex flex-col">
+              {unbilledCharges.map((c) => {
+                const label =
+                  c.description ||
+                  categoriesById[c.categoryId]?.name ||
+                  "Charge";
+                const subtitle = `${categoriesById[c.categoryId]?.name ?? "—"} · ${formatISOShort(c.date)}`;
+                const amount =
+                  c.currency === cardCurrency
+                    ? formatCurrency(c.amountInCard, cardCurrency)
+                    : `${formatCurrency(c.amount, c.currency)} · ${formatCurrency(c.amountInCard, cardCurrency)}`;
+                return (
+                  <SelectableRow
+                    key={c.id}
+                    checked={selectedIds.has(c.id)}
+                    onToggle={() => toggleCharge(c.id)}
+                    title={label}
+                    subtitle={subtitle}
+                    amount={amount}
+                  />
+                );
+              })}
+            </ul>
+          )}
+
+          {unbilledCharges.length === 0 && statementDueInCard === 0 && (
+            <p className="px-1 py-2 text-xs text-fg-subtle">
+              No pending charges. Enter an amount below to pay down the balance.
+            </p>
+          )}
+
+          {(includeStatementDue || selectedIds.size > 0) && (
+            <div className="flex items-center justify-between border-t border-border pt-2 px-1">
+              <span className="text-xs text-fg-muted">Selection total</span>
+              <span className="text-sm font-medium text-fg tabular-nums">
+                {formatCurrency(derivedCardAmount, cardCurrency)}
+              </span>
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="flex flex-col gap-2">
         <Input
           label={`Applied to card (${cardCurrency})`}
@@ -245,20 +395,19 @@ export default function PayCardForm({
           value={cardAmountDisplay}
           onChange={(e) => handleCardAmountChange(e.target.value)}
         />
-        <div className="flex gap-2 flex-wrap">
-          {statementDueInCard > 0 && (
-            <QuickChip
-              label={`Statement due · ${formatCurrency(statementDueInCard, cardCurrency)}`}
-              onClick={() => fillWithCardTarget(statementDueInCard)}
-            />
-          )}
-          {fullBalanceInCard > 0 && fullBalanceInCard !== statementDueInCard && (
+        {cardTouched && derivedCardAmount > 0 && (
+          <p className="text-[11px] text-fg-subtle px-1">
+            Manual amount — clear it to pay from the selection above.
+          </p>
+        )}
+        {fullBalanceInCard > 0 && (
+          <div className="flex gap-2 flex-wrap">
             <QuickChip
               label={`Full balance · ${formatCurrency(fullBalanceInCard, cardCurrency)}`}
               onClick={() => fillWithCardTarget(fullBalanceInCard)}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -346,6 +495,49 @@ function PreviewRow({
         {value}
       </span>
     </div>
+  );
+}
+
+function SelectableRow({
+  checked,
+  onToggle,
+  title,
+  subtitle,
+  amount,
+  strong,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  title: string;
+  subtitle: string;
+  amount: string;
+  strong?: boolean;
+}) {
+  return (
+    <label className="flex items-center gap-3 py-2 px-1 rounded cursor-pointer hover:bg-surface-2 -mx-1">
+      <Checkbox checked={checked} onChange={onToggle} />
+      <div className="flex-1 min-w-0">
+        <p
+          className={
+            strong
+              ? "text-sm text-fg font-medium truncate"
+              : "text-sm text-fg truncate"
+          }
+        >
+          {title}
+        </p>
+        <p className="text-xs text-fg-subtle truncate">{subtitle}</p>
+      </div>
+      <span
+        className={
+          strong
+            ? "text-sm text-fg font-medium tabular-nums shrink-0"
+            : "text-sm text-fg-muted tabular-nums shrink-0"
+        }
+      >
+        {amount}
+      </span>
+    </label>
   );
 }
 

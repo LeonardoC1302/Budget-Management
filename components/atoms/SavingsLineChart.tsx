@@ -9,11 +9,16 @@ interface SavingsLineChartProps {
 }
 
 const WIDTH = 320;
-const HEIGHT = 240;
+const HEIGHT = 220;
 const PAD_X = 16;
 const PAD_TOP = 20;
 const AXIS_H = 28;
 
+/**
+ * Six-month savings line, Alcove-styled.
+ * A quiet celadon trace over a hairline zero-baseline, points marked with
+ * the semantic income/expense tones so the story reads at a glance.
+ */
 export default function SavingsLineChart({
   data,
   currency = "USD",
@@ -52,14 +57,14 @@ export default function SavingsLineChart({
     <div className="flex flex-col gap-2">
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="w-full h-[240px]"
+        className="w-full h-[220px]"
         role="img"
         aria-label="Monthly savings for the last 6 months"
       >
         <defs>
           <linearGradient id="savings-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--color-celadon-strong)" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="var(--color-celadon-strong)" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -78,18 +83,26 @@ export default function SavingsLineChart({
         <path
           d={path}
           fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth={2}
+          stroke="var(--color-celadon-strong)"
+          strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
 
-        {points.map(({ x, y, point }) => {
+        {points.map(({ x, y, point }, i) => {
+          const isCurrent = i === points.length - 1;
           const fill =
             point.net >= 0 ? "var(--color-income)" : "var(--color-expense)";
           return (
             <g key={point.monthKey}>
-              <circle cx={x} cy={y} r={4} fill={fill}>
+              <circle
+                cx={x}
+                cy={y}
+                r={isCurrent ? 4 : 3}
+                fill={isCurrent ? fill : "var(--color-surface)"}
+                stroke={fill}
+                strokeWidth={1.5}
+              >
                 <title>
                   {`${point.label}: ${formatCurrency(point.net, currency)}`}
                 </title>
@@ -98,8 +111,9 @@ export default function SavingsLineChart({
                 x={x}
                 y={HEIGHT - 8}
                 textAnchor="middle"
-                fontSize={11}
+                fontSize={10.5}
                 fill="var(--color-fg-subtle)"
+                style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}
               >
                 {point.label}
               </text>
@@ -110,11 +124,11 @@ export default function SavingsLineChart({
 
       <div className="flex items-center gap-4 text-xs text-fg-subtle">
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="w-2.5 h-2.5 rounded-full bg-income" />
+          <span aria-hidden className="w-2 h-2 rounded-full bg-income" />
           Saved
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="w-2.5 h-2.5 rounded-full bg-expense" />
+          <span aria-hidden className="w-2 h-2 rounded-full bg-expense" />
           Shortfall
         </span>
       </div>

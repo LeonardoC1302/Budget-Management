@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
-import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
+import CurrencySelect from "@/components/atoms/CurrencySelect";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import { useCategories } from "@/hooks/useCategories";
@@ -94,7 +94,7 @@ export default function BudgetForm({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <CurrencyCombobox
+        <CurrencySelect
           label="Currency"
           value={currency}
           onChange={setCurrency}

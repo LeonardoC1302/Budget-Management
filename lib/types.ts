@@ -1,5 +1,21 @@
 export type TransactionType = "income" | "expense" | "transfer" | "investment";
 
+// FX rate applied to a transaction or transfer. `bccr` means the user picked a
+// Costa Rican bank's window rate (compra when the bank is buying USD, venta
+// when it's selling). `fallback` means BCCR was unreachable and the app used
+// the generic open.er-api.com mid-market rate — the transaction still records
+// which source was used so history is traceable.
+export type RateSource =
+  | {
+      provider: "bccr";
+      entityId: string;
+      entityName: string;
+      rate: number;
+      side: "compra" | "venta";
+      snapshotAt: string;
+    }
+  | { provider: "fallback"; rate: number };
+
 export type EntryType = Exclude<TransactionType, "transfer">;
 
 export type TransferDirection = "out" | "in";
@@ -65,6 +81,7 @@ export interface Transaction {
   // True when the contribution predates auto-pricing (migrated from a legacy
   // investment category) and has no shares/price on file yet.
   unpriced?: boolean;
+  rateSource?: RateSource;
 }
 
 export type NewTransaction = Omit<
@@ -122,6 +139,7 @@ export interface NewTransfer {
   // bank charges the source account more than what actually pays down the card
   // (e.g. FX spread or fees). Falls back to `amount * fx(fromCurrency,toCurrency)`.
   toAmount?: number;
+  rateSource?: RateSource;
 }
 
 export interface Goal {

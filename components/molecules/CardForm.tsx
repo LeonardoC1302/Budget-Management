@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
-import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
+import CurrencySelect from "@/components/atoms/CurrencySelect";
 import Input from "@/components/atoms/Input";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type { Account, NewAccount } from "@/lib/types";
@@ -83,7 +83,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
         onChange={(e) => setName(e.target.value)}
       />
 
-      <CurrencyCombobox
+      <CurrencySelect
         label="Currency"
         name="currency"
         value={currency}

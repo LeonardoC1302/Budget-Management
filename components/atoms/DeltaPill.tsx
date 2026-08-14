@@ -11,6 +11,11 @@ interface DeltaPillProps {
   className?: string;
 }
 
+/**
+ * Alcove delta pill — the label, an arrow + percentage in a semantic tone,
+ * and a small caption. Sits inside a `.rooms-h` container so the three-up
+ * grouping on the dashboard reads as a single joined surface.
+ */
 export default function DeltaPill({
   label,
   delta,
@@ -21,7 +26,13 @@ export default function DeltaPill({
   const { direction, percent } = delta;
 
   const arrow =
-    direction === "up" ? "↑" : direction === "down" ? "↓" : direction === "flat" ? "→" : "–";
+    direction === "up"
+      ? "↑"
+      : direction === "down"
+        ? "↓"
+        : direction === "flat"
+          ? "—"
+          : "–";
   const pct =
     direction === "up" || direction === "down"
       ? `${Math.round(percent * 100)}%`
@@ -31,28 +42,41 @@ export default function DeltaPill({
 
   const isBad =
     (direction === "up" || direction === "down") && direction !== goodWhen;
+  const isGood =
+    (direction === "up" || direction === "down") && direction === goodWhen;
 
-  const tone =
-    direction === "flat" || direction === "na"
-      ? "text-fg-muted"
-      : direction === goodWhen
-        ? "text-income"
-        : "text-expense";
+  const arrowColor = isGood
+    ? "text-income"
+    : isBad
+      ? "text-expense"
+      : "text-fg-muted";
 
   return (
     <div
       className={cn(
-        "surface px-3 py-2.5 flex flex-col gap-0.5 min-w-0",
+        "flex flex-col justify-between gap-2 p-4 min-h-24",
         className,
       )}
     >
-      <span className="label-sm truncate">{label}</span>
-      <span className={cn("text-sm font-medium tabular-nums", tone)}>
-        {arrow} {pct}
+      <span className="kicker">{label}</span>
+      <div className="flex items-baseline gap-2">
+        <span className={cn("font-serif text-2xl leading-none", arrowColor)}>
+          {arrow}
+        </span>
+        <span
+          className={cn(
+            "font-mono text-sm tabular-nums",
+            arrowColor,
+          )}
+        >
+          {pct}
+        </span>
+      </div>
+      <span className="text-[10px] text-fg-subtle leading-tight uppercase tracking-[0.14em]">
+        vs last month
       </span>
-      <span className="text-[10px] text-fg-subtle">vs last month</span>
       {isBad && reassuranceWhenBad && (
-        <span className="text-[10px] text-fg-subtle leading-snug mt-0.5">
+        <span className="lede text-[11px] leading-snug">
           {reassuranceWhenBad}
         </span>
       )}

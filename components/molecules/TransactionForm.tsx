@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
-import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
+import CurrencySelect from "@/components/atoms/CurrencySelect";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import CategoryPicker from "@/components/molecules/CategoryPicker";
+import EntityRatePicker, {
+  type FxDirection,
+  type ResolvedRate,
+} from "@/components/molecules/EntityRatePicker";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
@@ -14,7 +18,12 @@ import { getRate } from "@/lib/services/exchangeRates";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
-import type { EntryType, NewTransaction, Transaction } from "@/lib/types";
+import type {
+  EntryType,
+  NewTransaction,
+  RateSource,
+  Transaction,
+} from "@/lib/types";
 
 interface TransactionFormProps {
   onSubmit: (input: NewTransaction) => void | Promise<void>;
@@ -78,14 +87,33 @@ export default function TransactionForm({
 
   // Preview the account-currency equivalent so the user can sanity-check the
   // rate before saving. Debounced by React batching + effect deps.
+  const direction = useMemo<FxDirection | null>(() => {
+    if (!hasCurrencyMismatch) return null;
+    if (currency === "USD" && accountCurrency === "CRC") return "USD_TO_CRC";
+    if (currency === "CRC" && accountCurrency === "USD") return "CRC_TO_USD";
+    return null;
+  }, [currency, accountCurrency, hasCurrencyMismatch]);
+
+  const [entityId, setEntityId] = useState<string | null>(null);
+  const [bccrResolved, setBccrResolved] = useState<ResolvedRate | null>(null);
+  const [bccrFallback, setBccrFallback] = useState(false);
+  const onResolved = useCallback(
+    (result: { resolved: ResolvedRate | null; fallback: boolean }) => {
+      setBccrResolved(result.resolved);
+      setBccrFallback(result.fallback);
+    },
+    [],
+  );
+
   const [rateEntry, setRateEntry] = useState<{
     key: string;
     rate: number | null;
     error: string | null;
   }>({ key: "", rate: null, error: null });
   const pairKey = `${currency}:${accountCurrency}`;
+  const needsFallback = hasCurrencyMismatch && (!direction || bccrFallback);
   useEffect(() => {
-    if (!hasCurrencyMismatch) return;
+    if (!needsFallback) return;
     let cancelled = false;
     getRate(currency, accountCurrency)
       .then((r) => {
@@ -103,11 +131,16 @@ export default function TransactionForm({
     return () => {
       cancelled = true;
     };
-  }, [currency, accountCurrency, hasCurrencyMismatch, pairKey]);
+  }, [needsFallback, currency, accountCurrency, pairKey]);
 
   const parsedAmount = parseFloat(amount);
-  const previewRate =
-    hasCurrencyMismatch && rateEntry.key === pairKey ? rateEntry.rate : null;
+  const previewRate: number | null = !hasCurrencyMismatch
+    ? 1
+    : direction && bccrResolved
+      ? bccrResolved.rate
+      : rateEntry.key === pairKey
+        ? rateEntry.rate
+        : null;
   const convertedPreview =
     hasCurrencyMismatch &&
     previewRate !== null &&
@@ -122,6 +155,22 @@ export default function TransactionForm({
     if (!Number.isFinite(parsed) || parsed <= 0) return;
     if (!accountId || !categoryId) return;
 
+    let rateSource: RateSource | undefined;
+    if (hasCurrencyMismatch) {
+      if (direction && bccrResolved && !bccrFallback) {
+        rateSource = {
+          provider: "bccr",
+          entityId: bccrResolved.entity.id,
+          entityName: bccrResolved.entity.name,
+          rate: bccrResolved.rate,
+          side: bccrResolved.side,
+          snapshotAt: bccrResolved.snapshotAt,
+        };
+      } else if (previewRate !== null) {
+        rateSource = { provider: "fallback", rate: previewRate };
+      }
+    }
+
     setSubmitting(true);
     await onSubmit({
       type,
@@ -132,6 +181,7 @@ export default function TransactionForm({
       description: description.trim(),
       date,
       ...(initial?.recurringId ? { recurringId: initial.recurringId } : {}),
+      ...(rateSource ? { rateSource } : {}),
     });
     if (!isEditing) {
       setAmount("");
@@ -219,7 +269,7 @@ export default function TransactionForm({
       />
 
       <div className="flex flex-col gap-1.5">
-        <CurrencyCombobox
+        <CurrencySelect
           label="Currency"
           name="currency"
           value={currency}
@@ -227,6 +277,14 @@ export default function TransactionForm({
             setCurrencyOverride(next === accountCurrency ? null : next)
           }
         />
+        {hasCurrencyMismatch && direction && (
+          <EntityRatePicker
+            direction={direction}
+            value={entityId}
+            onChange={setEntityId}
+            onResolved={onResolved}
+          />
+        )}
         {hasCurrencyMismatch && (
           <p role="status" className="text-xs text-fg-subtle">
             {convertedPreview !== null

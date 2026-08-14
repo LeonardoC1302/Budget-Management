@@ -156,23 +156,23 @@ export default function InvestmentsPage() {
       />
 
       <section
-        className="surface p-5 flex flex-col gap-1.5"
+        className="courtyard p-6 flex flex-col gap-2"
         aria-label="Portfolio summary"
       >
-        <span className="label-sm">Current value</span>
-        <span className="text-3xl font-semibold tracking-tight tabular-nums text-invest">
+        <span className="kicker">Current value</span>
+        <span className="courtyard-fig text-invest" style={{ fontSize: "clamp(2.5rem, 10vw, 4.5rem)" }}>
           {formatCurrency(totals.currentValue, "USD")}
         </span>
-        <div className="flex items-center justify-between text-xs text-fg-subtle mt-1">
-          <span>Cost basis {formatCurrency(totals.costBasis, "USD")}</span>
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-fg-muted mt-2">
+          <span>Cost basis · {formatCurrency(totals.costBasis, "USD")}</span>
           {totals.gainPct !== null && (
             <span
               className={
                 totals.gain > 0
-                  ? "text-income tabular-nums"
+                  ? "text-income figure normal-case tracking-normal"
                   : totals.gain < 0
-                    ? "text-expense tabular-nums"
-                    : "text-fg-muted tabular-nums"
+                    ? "text-expense figure normal-case tracking-normal"
+                    : "text-fg-muted figure normal-case tracking-normal"
               }
             >
               {totals.gain >= 0 ? "+" : ""}
@@ -183,31 +183,34 @@ export default function InvestmentsPage() {
           )}
         </div>
         {quoteStatus === "unavailable" && marketSymbols.length > 0 && (
-          <p className="text-[11px] text-fg-subtle mt-1">
+          <p className="lede text-xs mt-2">
             Live prices unavailable — showing cost basis. Set
             TWELVEDATA_API_KEY to enable market data.
           </p>
         )}
       </section>
 
-      <section className="flex flex-col gap-3" aria-labelledby="positions">
-        <div className="flex items-center justify-between">
-          <h2 id="positions" className="heading-lg">
+      <section className="flex flex-col" aria-labelledby="positions">
+        <div className="section-head">
+          <span id="positions" className="section-head-title">
             Positions
-          </h2>
+          </span>
+          <span className="section-head-meta">
+            {holdings.length} position{holdings.length === 1 ? "" : "s"}
+          </span>
         </div>
 
         {loading ? (
           <RowSkeleton count={3} />
         ) : holdings.length === 0 ? (
           <EmptyState
-            title="No positions yet"
+            title="No positions yet."
             description="Add an ETF, stock, crypto, or a manual balance (e.g. a pension) to start tracking your portfolio."
             actionLabel="New position"
             actionOnClick={() => setCreateOpen(true)}
           />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <div className="rooms" role="list">
             {holdings.map((h) => {
               const snap = snapshots.get(h.id);
               if (!snap) return null;
@@ -224,26 +227,26 @@ export default function InvestmentsPage() {
                 />
               );
             })}
-          </ul>
+          </div>
         )}
 
         {unassignedInvestments.length > 0 && (
           <button
             type="button"
             onClick={() => setMapperOpen(true)}
-            className="surface p-4 text-left hover:bg-surface-2 transition-colors flex items-center justify-between gap-3"
+            className="surface mt-3 p-4 text-left hover:bg-surface-2 transition-colors flex items-center justify-between gap-3"
           >
             <div>
-              <p className="text-sm font-medium text-fg">
+              <p className="font-serif text-sm text-fg">
                 Unassigned contributions
               </p>
-              <p className="text-xs text-fg-subtle">
+              <p className="lede text-xs mt-1">
                 {unassignedInvestments.length} legacy entr
                 {unassignedInvestments.length === 1 ? "y" : "ies"} · move into a
                 holding
               </p>
             </div>
-            <span className="text-sm text-fg tabular-nums">
+            <span className="figure text-fg">
               {formatCurrency(
                 unassignedInvestments.reduce(
                   (sum, t) => sum + t.amountUSD,

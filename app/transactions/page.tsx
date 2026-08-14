@@ -47,8 +47,6 @@ export default function TransactionsPage() {
     return nonInvestment.filter((t) => t.categoryId === categoryFilter);
   }, [nonInvestment, categoryFilter]);
 
-  // Redirect vertical wheel to horizontal scroll on the filter row so desktop
-  // users (who lack touch scrolling) can navigate the overflowing pills.
   useEffect(() => {
     const el = filtersRef.current;
     if (!el) return;
@@ -64,13 +62,15 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <RouteMasthead kicker="History" title="All transactions" />
+      <RouteMasthead kicker="History" title="The ledger" />
 
       {usedCategories.length > 0 && (
         <div className="relative -mx-1">
           <div
             ref={filtersRef}
-            className="scrollbar-hide flex gap-2 overflow-x-auto px-1 pb-1"
+            className="scrollbar-hide flex gap-1 overflow-x-auto px-1 pb-1"
+            role="tablist"
+            aria-label="Filter by category"
           >
             <FilterPill
               label="All"
@@ -109,8 +109,8 @@ export default function TransactionsPage() {
           groupTransfers
           emptyTitle={
             categoryFilter === ALL_FILTER
-              ? "No transactions yet"
-              : "Nothing in this category yet"
+              ? "No entries have been set down yet."
+              : "Nothing in this category yet."
           }
           emptyDescription={
             categoryFilter === ALL_FILTER
@@ -171,13 +171,8 @@ function FilterPill({ label, active, onClick }: FilterPillProps) {
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "shrink-0 h-8 px-3 rounded-full text-xs font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
-        active
-          ? "bg-accent text-white"
-          : "bg-surface-2 text-fg-muted border border-border hover:text-fg hover:border-border-strong",
-      )}
+      className={cn("filter shrink-0")}
+      aria-pressed={active}
     >
       {label}
     </button>

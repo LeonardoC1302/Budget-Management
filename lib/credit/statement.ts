@@ -187,6 +187,50 @@ export function computeCardTotals(
   return totals;
 }
 
+export interface UnbilledCharge {
+  id: string;
+  date: string;
+  description: string;
+  categoryId: string;
+  type: "expense" | "investment";
+  amount: number;
+  currency: string;
+  amountInCard: number;
+}
+
+export function getUnbilledCharges(
+  account: Account,
+  transactions: Transaction[],
+  today: Date = new Date(),
+): UnbilledCharge[] {
+  if (
+    typeof account.cutDay !== "number" ||
+    typeof account.paymentDay !== "number"
+  ) {
+    return [];
+  }
+  const cycle = computeCardCycle(account.cutDay, account.paymentDay, today);
+  const lastCutMs = cycle.lastCutDate.getTime();
+  return transactions
+    .filter(
+      (t) =>
+        t.accountId === account.id &&
+        (t.type === "expense" || t.type === "investment") &&
+        parseISODate(t.date).getTime() > lastCutMs,
+    )
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .map((t) => ({
+      id: t.id,
+      date: t.date,
+      description: t.description,
+      categoryId: t.categoryId,
+      type: t.type as "expense" | "investment",
+      amount: t.amount,
+      currency: t.currency,
+      amountInCard: t.accountAmount ?? t.amount,
+    }));
+}
+
 export type EffectiveDue =
   | { kind: "due"; date: Date; amount: number; daysUntil: number }
   | { kind: "next"; date: Date; amount: number; daysUntil: number }

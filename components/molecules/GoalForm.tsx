@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
-import CurrencyCombobox from "@/components/atoms/CurrencyCombobox";
+import CurrencySelect from "@/components/atoms/CurrencySelect";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -68,7 +68,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
           value={targetAmount}
           onChange={(e) => setTargetAmount(e.target.value)}
         />
-        <CurrencyCombobox
+        <CurrencySelect
           label="Currency"
           value={currency}
           onChange={setCurrency}

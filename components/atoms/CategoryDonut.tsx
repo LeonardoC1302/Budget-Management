@@ -8,18 +8,19 @@ interface CategoryDonutProps {
   currency?: string;
 }
 
-// Palette tuned for the dark surface. Cycles if there are more slices.
+// Alcove palette — celadon, cypress, rust, bronze, and quiet neutrals.
+// Ordered so the largest slice takes the most-saturated tone.
 const PALETTE = [
-  "#6366f1", // indigo (accent)
-  "#f43f5e", // rose (expense)
-  "#10b981", // emerald (income)
-  "#f59e0b", // amber
-  "#8b5cf6", // violet
-  "#38bdf8", // sky
+  "var(--color-celadon-strong)",
+  "var(--color-expense)",
+  "var(--color-invest)",
+  "var(--color-income)",
+  "var(--color-celadon)",
+  "var(--color-fg-muted)",
 ];
 
 const SIZE = 160;
-const STROKE = 22;
+const STROKE = 18;
 const R = (SIZE - STROKE) / 2;
 const CIRCUM = 2 * Math.PI * R;
 
@@ -81,14 +82,14 @@ export default function CategoryDonut({
             cy={SIZE / 2}
             r={R}
             fill="none"
-            stroke="var(--color-surface-2)"
+            stroke="var(--color-border)"
             strokeWidth={STROKE}
           />
           {segments}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-xs text-fg-subtle">Total</span>
-          <span className="text-base font-semibold text-fg tabular-nums">
+          <span className="label-sm">Total</span>
+          <span className="mt-1 text-base font-medium text-fg tabular-nums font-serif">
             {formatCurrency(total, currency)}
           </span>
         </div>
@@ -103,7 +104,7 @@ export default function CategoryDonut({
             <div className="flex items-center gap-2 min-w-0">
               <span
                 aria-hidden
-                className="w-2.5 h-2.5 rounded-sm shrink-0"
+                className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
               />
               <span className="text-fg truncate">{slice.name}</span>

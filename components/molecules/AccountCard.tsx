@@ -21,11 +21,11 @@ export default function AccountCard({
   const canDelete = transactionCount === 0;
 
   return (
-    <div className="surface p-4 flex items-center gap-4">
+    <div className="px-4 py-4 flex items-center gap-4">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-fg truncate">{account.name}</p>
-        <p className="text-xs text-fg-subtle">
-          {ACCOUNT_TYPE_LABELS[account.type]} &middot; {transactionCount} tx
+        <p className="font-serif text-base text-fg truncate">{account.name}</p>
+        <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
+          {ACCOUNT_TYPE_LABELS[account.type]} · {transactionCount} tx
         </p>
       </div>
 
@@ -34,6 +34,7 @@ export default function AccountCard({
         tone={balance >= 0 ? "income" : "expense"}
         size="lg"
         currency={account.currency}
+        className="font-serif"
       />
 
       {(onEdit || onDelete) && (

@@ -1,6 +1,9 @@
 import type { Account, NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
-import { getRate } from "@/lib/services/exchangeRates";
+import {
+  amountInUsd,
+  convertUsingRateSource,
+} from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 
 // Schema v2: transactions now reference `accountId` and `categoryId`.
@@ -18,16 +21,6 @@ function readAccountCurrency(accountId: string): string {
   } catch {
     return BASE_CURRENCY;
   }
-}
-
-async function convertToAccountCurrency(
-  amount: number,
-  txCurrency: string,
-  accountCurrency: string,
-): Promise<number> {
-  if (txCurrency === accountCurrency) return amount;
-  const rate = await getRate(txCurrency, accountCurrency);
-  return amount * rate;
 }
 
 function read(): Transaction[] {
@@ -69,16 +62,19 @@ export const localTransactionStore: TransactionStore = {
       .sort((a, b) => b.date.localeCompare(a.date));
   },
   async add(input) {
-    const rate = await getRate(input.currency, BASE_CURRENCY);
     const accountCurrency = readAccountCurrency(input.accountId);
-    const accountAmount = await convertToAccountCurrency(
-      input.amount,
-      input.currency,
-      accountCurrency,
-    );
+    const [amountUSD, accountAmount] = await Promise.all([
+      amountInUsd(input.amount, input.currency, input.rateSource),
+      convertUsingRateSource(
+        input.amount,
+        input.currency,
+        accountCurrency,
+        input.rateSource,
+      ),
+    ]);
     const transaction: Transaction = {
       ...input,
-      amountUSD: input.amount * rate,
+      amountUSD,
       accountAmount,
       id: makeId(),
       createdAt: new Date().toISOString(),
@@ -91,16 +87,19 @@ export const localTransactionStore: TransactionStore = {
     const createdAt = new Date().toISOString();
     const priced: Transaction[] = await Promise.all(
       inputs.map(async (input) => {
-        const rate = await getRate(input.currency, BASE_CURRENCY);
         const accountCurrency = readAccountCurrency(input.accountId);
-        const accountAmount = await convertToAccountCurrency(
-          input.amount,
-          input.currency,
-          accountCurrency,
-        );
+        const [amountUSD, accountAmount] = await Promise.all([
+          amountInUsd(input.amount, input.currency, input.rateSource),
+          convertUsingRateSource(
+            input.amount,
+            input.currency,
+            accountCurrency,
+            input.rateSource,
+          ),
+        ]);
         return {
           ...input,
-          amountUSD: input.amount * rate,
+          amountUSD,
           accountAmount,
           id: makeId(),
           createdAt,
@@ -111,16 +110,20 @@ export const localTransactionStore: TransactionStore = {
   },
   async addTransfer(input: NewTransfer) {
     const createdAt = new Date().toISOString();
-    const conversionRate =
-      input.fromCurrency === input.toCurrency
-        ? 1
-        : await getRate(input.fromCurrency, input.toCurrency);
     const toAmount =
       typeof input.toAmount === "number" && input.toAmount > 0
         ? input.toAmount
-        : input.amount * conversionRate;
-    const usdRate = await getRate(input.fromCurrency, BASE_CURRENCY);
-    const amountUSD = input.amount * usdRate;
+        : await convertUsingRateSource(
+            input.amount,
+            input.fromCurrency,
+            input.toCurrency,
+            input.rateSource,
+          );
+    const amountUSD = await amountInUsd(
+      input.amount,
+      input.fromCurrency,
+      input.rateSource,
+    );
 
     const outId = makeId();
     const inId = makeId();
@@ -143,6 +146,7 @@ export const localTransactionStore: TransactionStore = {
       ...(input.paymentForAccountId
         ? { paymentForAccountId: input.paymentForAccountId }
         : {}),
+      ...(input.rateSource ? { rateSource: input.rateSource } : {}),
     };
     const inDoc: Transaction = {
       id: inId,
@@ -161,6 +165,7 @@ export const localTransactionStore: TransactionStore = {
       ...(input.paymentForAccountId
         ? { paymentForAccountId: input.paymentForAccountId }
         : {}),
+      ...(input.rateSource ? { rateSource: input.rateSource } : {}),
     };
     write([outDoc, inDoc, ...read()]);
   },
@@ -168,17 +173,19 @@ export const localTransactionStore: TransactionStore = {
     write(read().filter((t) => t.id !== id));
   },
   async update(id, input) {
-    const rate = await getRate(input.currency, BASE_CURRENCY);
-    const amountUSD = input.amount * rate;
     const items = read();
     const existing = items.find((t) => t.id === id);
     if (!existing) throw new Error(`Transaction ${id} not found`);
     const accountCurrency = readAccountCurrency(input.accountId);
-    const accountAmount = await convertToAccountCurrency(
-      input.amount,
-      input.currency,
-      accountCurrency,
-    );
+    const [amountUSD, accountAmount] = await Promise.all([
+      amountInUsd(input.amount, input.currency, input.rateSource),
+      convertUsingRateSource(
+        input.amount,
+        input.currency,
+        accountCurrency,
+        input.rateSource,
+      ),
+    ]);
     const updated: Transaction = {
       ...existing,
       ...input,

@@ -1,5 +1,6 @@
 "use client";
 
+import Button from "@/components/atoms/Button";
 import Modal from "@/components/atoms/Modal";
 import PayCardForm from "@/components/molecules/PayCardForm";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -25,7 +26,7 @@ function daysCopy(days: number): string {
 
 export default function CreditCardNudge() {
   const { accounts, creditTotalsByAccount, refresh } = useAccounts();
-  const { addTransfer } = useTransactions();
+  const { transactions, addTransfer } = useTransactions();
   const [payingCard, setPayingCard] = useState<Account | null>(null);
 
   const rows = useMemo(() => {
@@ -63,47 +64,47 @@ export default function CreditCardNudge() {
         className="surface p-4 flex flex-col gap-3"
         aria-labelledby="card-nudge-heading"
       >
-        <div className="flex items-center justify-between">
-          <h2 id="card-nudge-heading" className="label-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="card-nudge-heading" className="kicker">
             Cards to settle
           </h2>
-          <span className="text-[11px] text-fg-subtle">
+          <span className="text-[11px] text-fg-subtle uppercase tracking-[0.14em]">
             {rows.length} due within {NUDGE_WINDOW_DAYS} days
           </span>
         </div>
-        <ul className="flex flex-col divide-y divide-border">
+        <div className="rooms" role="list">
           {rows.map(({ card, amount, date, days }) => {
             const urgent = days <= 3;
             return (
-              <li
+              <div
                 key={card.id}
-                className="flex items-center justify-between gap-3 py-2.5"
+                className="flex items-center justify-between gap-3 px-4 py-3"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-fg truncate">
+                  <p className="font-serif text-sm text-fg truncate">
                     {card.name}
                   </p>
                   <p
                     className={
                       urgent
-                        ? "text-xs text-expense"
-                        : "text-xs text-fg-muted"
+                        ? "text-[11px] text-expense mt-1 uppercase tracking-[0.14em]"
+                        : "text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]"
                     }
                   >
                     {formatCurrency(amount, card.currency)} · {formatDueDate(date)} · {daysCopy(days)}
                   </p>
                 </div>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setPayingCard(card)}
-                  className="shrink-0 h-9 px-3 rounded-[10px] text-sm font-medium bg-accent text-white hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                 >
                   Pay
-                </button>
-              </li>
+                </Button>
+              </div>
             );
           })}
-        </ul>
+        </div>
       </section>
 
       <Modal
@@ -115,6 +116,7 @@ export default function CreditCardNudge() {
           <PayCardForm
             card={payingCard}
             totals={payingTotals}
+            transactions={transactions}
             onSubmit={handlePay}
             onCancel={() => setPayingCard(null)}
           />

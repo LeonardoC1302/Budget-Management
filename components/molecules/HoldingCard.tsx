@@ -52,70 +52,71 @@ export default function HoldingCard({
       ? holding.symbol
       : isMarket
         ? "?"
-        : "MANUAL";
+        : "MAN";
   const shares = position?.shares ?? 0;
   const showShares = isMarket && shares > 0;
 
   return (
-    <li>
-      <button
-        type="button"
-        onClick={() => onOpen(holding)}
-        className="w-full text-left surface p-4 flex items-center gap-3 hover:bg-surface-2 transition-colors"
-      >
-        <div className="w-10 h-10 shrink-0 rounded-full bg-surface-2 border border-border flex items-center justify-center">
-          <span
-            className={cn(
-              "text-[10px] font-semibold tracking-tight",
-              holding.symbol && holding.symbol.trim()
-                ? "text-invest"
-                : "text-fg-muted",
-            )}
-          >
-            {label.length > 5 ? label.slice(0, 5) : label}
-          </span>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-fg truncate">
-            {holding.name}
-          </p>
-          <p className="text-xs text-fg-subtle truncate">
-            {isMarket ? (
-              <>
-                {showShares ? `${formatShares(shares)} sh` : "No shares yet"}
-                {quote?.priceUSD ? (
-                  <>
-                    {" · "}
-                    <Amount
-                      value={quote.priceUSD}
-                      size="sm"
-                      className="text-fg-subtle"
-                    />
-                  </>
-                ) : null}
-              </>
-            ) : snapshot.asOf ? (
-              <>as of {snapshot.asOf}</>
-            ) : (
-              <>No valuation yet</>
-            )}
-          </p>
-        </div>
-
-        {isMarket && sparklinePoints && sparklinePoints.length > 1 && (
-          <Sparkline values={sparklinePoints} className="hidden xs:block" />
-        )}
-
-        <div className="flex flex-col items-end gap-0.5 shrink-0">
-          <Amount value={snapshot.currentValueUSD} size="md" />
-          {gainPct !== null && (
-            <span className={cn("text-xs tabular-nums", gainTone)}>
-              {formatSignedPct(gainPct)}
-            </span>
+    <button
+      type="button"
+      onClick={() => onOpen(holding)}
+      className="w-full text-left px-4 py-4 flex items-center gap-3 hover:bg-surface-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+    >
+      <div className="w-9 h-9 shrink-0 flex items-center justify-center border border-border" style={{ borderRadius: "var(--radius-control)" }}>
+        <span
+          className={cn(
+            "text-[10px] font-medium tracking-[0.1em] uppercase",
+            holding.symbol && holding.symbol.trim()
+              ? "text-invest"
+              : "text-fg-muted",
           )}
-        </div>
-      </button>
-    </li>
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          {label.length > 5 ? label.slice(0, 5) : label}
+        </span>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="font-serif text-base text-fg truncate">{holding.name}</p>
+        <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em] truncate">
+          {isMarket ? (
+            <>
+              {showShares ? `${formatShares(shares)} sh` : "No shares yet"}
+              {quote?.priceUSD ? (
+                <>
+                  {" · "}
+                  <Amount
+                    value={quote.priceUSD}
+                    size="sm"
+                    className="text-fg-muted normal-case tracking-normal"
+                  />
+                </>
+              ) : null}
+            </>
+          ) : snapshot.asOf ? (
+            <>as of {snapshot.asOf}</>
+          ) : (
+            <>No valuation yet</>
+          )}
+        </p>
+      </div>
+
+      {isMarket && sparklinePoints && sparklinePoints.length > 1 && (
+        <Sparkline values={sparklinePoints} className="hidden xs:block" />
+      )}
+
+      <div className="flex flex-col items-end gap-1 shrink-0">
+        <Amount
+          value={snapshot.currentValueUSD}
+          size="md"
+          className="font-serif"
+        />
+        {gainPct !== null && (
+          <span className={cn("figure text-xs", gainTone)}>
+            {formatSignedPct(gainPct)}
+          </span>
+        )}
+      </div>
+    </button>
   );
 }
