@@ -146,6 +146,9 @@ export const localTransactionStore: TransactionStore = {
       ...(input.paymentForAccountId
         ? { paymentForAccountId: input.paymentForAccountId }
         : {}),
+      ...(input.paidChargeIds && input.paidChargeIds.length > 0
+        ? { paidChargeIds: input.paidChargeIds }
+        : {}),
       ...(input.rateSource ? { rateSource: input.rateSource } : {}),
     };
     const inDoc: Transaction = {
@@ -164,6 +167,9 @@ export const localTransactionStore: TransactionStore = {
       linkedAccountId: input.fromAccountId,
       ...(input.paymentForAccountId
         ? { paymentForAccountId: input.paymentForAccountId }
+        : {}),
+      ...(input.paidChargeIds && input.paidChargeIds.length > 0
+        ? { paidChargeIds: input.paidChargeIds }
         : {}),
       ...(input.rateSource ? { rateSource: input.rateSource } : {}),
     };

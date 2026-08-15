@@ -211,12 +211,24 @@ export function getUnbilledCharges(
   }
   const cycle = computeCardCycle(account.cutDay, account.paymentDay, today);
   const lastCutMs = cycle.lastCutDate.getTime();
+  const paidChargeIds = new Set<string>();
+  for (const t of transactions) {
+    if (
+      t.type === "transfer" &&
+      t.transferDirection === "in" &&
+      t.accountId === account.id &&
+      t.paidChargeIds
+    ) {
+      for (const id of t.paidChargeIds) paidChargeIds.add(id);
+    }
+  }
   return transactions
     .filter(
       (t) =>
         t.accountId === account.id &&
         (t.type === "expense" || t.type === "investment") &&
-        parseISODate(t.date).getTime() > lastCutMs,
+        parseISODate(t.date).getTime() > lastCutMs &&
+        !paidChargeIds.has(t.id),
     )
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map((t) => ({

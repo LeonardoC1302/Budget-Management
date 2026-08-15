@@ -135,6 +135,10 @@ export const firebaseTransactionStore: TransactionStore = {
       amountUSD,
       transferId,
       paymentForAccountId: input.paymentForAccountId,
+      paidChargeIds:
+        input.paidChargeIds && input.paidChargeIds.length > 0
+          ? input.paidChargeIds
+          : undefined,
       rateSource: input.rateSource,
     });
 

@@ -222,6 +222,9 @@ export default function PayCardForm({
         description: description.trim() || `Payment · ${card.name}`,
         date,
         paymentForAccountId: card.id,
+        ...(selectedIds.size > 0
+          ? { paidChargeIds: Array.from(selectedIds) }
+          : {}),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
