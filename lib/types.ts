@@ -74,6 +74,9 @@ export interface Transaction {
   recurringId?: string;
   // Set on both paired docs of a credit-card payment transfer.
   paymentForAccountId?: string;
+  // Card-payment only. IDs of the specific card charges this payment covered,
+  // so the pay-card form can exclude them from the selectable list next time.
+  paidChargeIds?: string[];
   // Investment-only. Set when the contribution is bound to a Holding.
   holdingId?: string;
   sharesDelta?: number;
@@ -135,6 +138,7 @@ export interface NewTransfer {
   description: string;
   date: string;
   paymentForAccountId?: string;
+  paidChargeIds?: string[];
   // Overrides the destination-side amount. Used for card payments where the
   // bank charges the source account more than what actually pays down the card
   // (e.g. FX spread or fees). Falls back to `amount * fx(fromCurrency,toCurrency)`.

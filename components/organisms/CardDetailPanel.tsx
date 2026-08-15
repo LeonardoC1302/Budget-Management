@@ -131,7 +131,7 @@ export default function CardDetailPanel({
 
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.08em] text-fg-subtle">
+          <p className="text-[10px] uppercase tracking-[0.08em] text-fg-subtle mb-1.5">
             You owe
           </p>
           <Amount
