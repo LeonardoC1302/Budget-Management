@@ -35,6 +35,11 @@ export default function HoldingForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [symbol, setSymbol] = useState(initial?.symbol ?? "");
   const [quoteCurrency, setQuoteCurrency] = useState(initial?.quoteCurrency ?? "USD");
+  const [initialCost, setInitialCost] = useState(
+    initial?.initialCostUSD && initial.initialCostUSD > 0
+      ? String(initial.initialCostUSD)
+      : "",
+  );
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
@@ -104,6 +109,7 @@ export default function HoldingForm({
               ...(symbol.trim()
                 ? { symbol: symbol.trim().toUpperCase() }
                 : {}),
+              initialCostUSD: Math.max(0, Number(initialCost) || 0),
             };
       await onSubmit(payload);
     } finally {
@@ -240,6 +246,21 @@ export default function HoldingForm({
             Up to 6 characters. Shown on the position tile instead of “MANUAL”.
           </p>
         </div>
+      )}
+
+      {kind === "manual" && (
+        <Input
+          label="Already invested (USD, optional)"
+          name="initial-cost"
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="0.01"
+          placeholder="0.00"
+          value={initialCost}
+          onChange={(e) => setInitialCost(e.target.value)}
+          hint="Seed cost basis for money invested before you started tracking. Doesn’t debit any account or count as a valuation."
+        />
       )}
 
       <div className="flex gap-2 pt-2">

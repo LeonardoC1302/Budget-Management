@@ -197,6 +197,11 @@ export interface Holding {
   // Native quote currency of the instrument. USD for most; e.g. "EUR" for IWDA.AS.
   quoteCurrency?: string;
   provider?: "twelvedata";
+  // Manual-only. Seed cost basis for money invested before tracking began.
+  // Not a transaction — never debits a cash account — and not a valuation —
+  // never counted as current value. Just widens the denominator so later
+  // contributions and valuations compute gain against the real total invested.
+  initialCostUSD?: number;
   createdAt: string;
 }
 

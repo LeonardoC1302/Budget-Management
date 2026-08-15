@@ -12,18 +12,26 @@ export interface HoldingPosition {
 
 export function computePositions(
   investments: Transaction[],
+  holdings: Holding[] = [],
 ): Record<string, HoldingPosition> {
   const map: Record<string, HoldingPosition> = {};
-  for (const t of investments) {
-    if (t.type !== "investment" || !t.holdingId) continue;
-    const pos = (map[t.holdingId] ??= {
-      holdingId: t.holdingId,
+  const seed = (holdingId: string) =>
+    (map[holdingId] ??= {
+      holdingId,
       contributions: [],
       costBasisUSD: 0,
       shares: 0,
       avgCostUSD: 0,
       hasUnpriced: false,
     });
+  for (const h of holdings) {
+    if (h.kind === "manual" && h.initialCostUSD && h.initialCostUSD > 0) {
+      seed(h.id).costBasisUSD += h.initialCostUSD;
+    }
+  }
+  for (const t of investments) {
+    if (t.type !== "investment" || !t.holdingId) continue;
+    const pos = seed(t.holdingId);
     pos.contributions.push(t);
     pos.costBasisUSD += t.amountUSD;
     if (typeof t.sharesDelta === "number") pos.shares += t.sharesDelta;

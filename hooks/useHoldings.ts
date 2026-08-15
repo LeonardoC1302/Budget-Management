@@ -108,8 +108,8 @@ export function useHoldings() {
   }, [holdings]);
 
   const positionsById = useMemo(
-    () => computePositions(investments),
-    [investments],
+    () => computePositions(investments, holdings),
+    [investments, holdings],
   );
 
   const valuationsByHolding = useMemo(() => {
