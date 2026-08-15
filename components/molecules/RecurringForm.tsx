@@ -221,7 +221,7 @@ export default function RecurringForm({
             If a month has fewer days, the rule falls on the last day of the
             month. Choose two different days.
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 items-end">
             <Select
               label="First day"
               name="dayA"

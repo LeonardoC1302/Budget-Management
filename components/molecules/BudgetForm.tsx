@@ -81,7 +81,7 @@ export default function BudgetForm({
         </p>
       )}
 
-      <div className="grid grid-cols-[1fr_9rem] gap-3">
+      <div className="grid grid-cols-[1fr_9rem] gap-3 items-end">
         <Input
           label={`Monthly cap (${currency})`}
           name="amount"

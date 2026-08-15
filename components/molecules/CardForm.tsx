@@ -90,7 +90,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
         onChange={setCurrency}
       />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 items-end">
         <Input
           label="Cut day"
           name="cutDay"

@@ -156,8 +156,8 @@ export default function HoldingDetailPanel({
 
   return (
     <section className="surface p-5 flex flex-col gap-5">
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0 flex-1">
           <p className="label-sm">
             {isMarket
               ? `${holding.symbol ?? ""}${holding.quoteCurrency && holding.quoteCurrency !== "USD" ? ` · quoted in ${holding.quoteCurrency}` : ""}`
@@ -172,7 +172,7 @@ export default function HoldingDetailPanel({
             </p>
           )}
         </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
+        <div className="flex flex-col items-start sm:items-end gap-1 min-w-0">
           <Amount value={snapshot.currentValueUSD} size="xl" />
           {snapshot.gainPct !== null && (
             <span className={cn("text-sm tabular-nums", gainTone)}>

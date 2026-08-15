@@ -129,8 +129,8 @@ export default function CardDetailPanel({
         />
       </header>
 
-      <div className="flex items-end justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3">
+        <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-[0.08em] text-fg-subtle">
             You owe
           </p>
@@ -181,7 +181,7 @@ export default function CardDetailPanel({
             tone={utilization >= 0.9 ? "expense" : "accent"}
             ariaLabel={`${Math.round(utilization * 100)}% of credit limit used`}
           />
-          <p className="text-xs text-fg-subtle flex items-center justify-between">
+          <p className="text-xs text-fg-subtle flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <span>{Math.round(utilization * 100)}% of limit used</span>
             <span>
               {formatCurrency(

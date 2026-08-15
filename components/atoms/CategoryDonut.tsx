@@ -8,15 +8,15 @@ interface CategoryDonutProps {
   currency?: string;
 }
 
-// Alcove palette — celadon, cypress, rust, bronze, and quiet neutrals.
-// Ordered so the largest slice takes the most-saturated tone.
+// Categorical palette from globals.css — six hue-distinct tones, adapted for
+// light/dark. Ordered so the largest slice takes the most-emphasized tone.
 const PALETTE = [
-  "var(--color-celadon-strong)",
-  "var(--color-expense)",
-  "var(--color-invest)",
-  "var(--color-income)",
-  "var(--color-celadon)",
-  "var(--color-fg-muted)",
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
+  "var(--color-chart-6)",
 ];
 
 const SIZE = 160;

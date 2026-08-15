@@ -88,16 +88,16 @@ export default function RecurringItem({
         </p>
         <p className="lede text-xs mt-1">{nextLabel}</p>
       </div>
-      <div className="flex flex-col items-end gap-1 shrink-0">
+      <div className="flex flex-col items-end gap-1 shrink-0 min-w-0 max-w-[45%]">
         <Amount
           value={template.amount}
           tone={tone}
           size="md"
           currency={template.currency}
           showSign={!isInvestment}
-          className={cn("font-serif", isInvestment && "text-invest")}
+          className={cn("font-serif truncate max-w-full", isInvestment && "text-invest")}
         />
-        <div className="flex gap-1">
+        <div className="flex flex-wrap justify-end gap-1">
           {onToggleActive && (
             <Button
               variant="ghost"
