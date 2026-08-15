@@ -243,7 +243,7 @@ export default function HoldingContributionForm({
       )}
 
       {isMarket && manualMode ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 items-end">
           <Input
             label="Shares"
             name="shares"

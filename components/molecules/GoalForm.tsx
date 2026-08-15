@@ -55,7 +55,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
         onChange={(e) => setName(e.target.value)}
       />
 
-      <div className="grid grid-cols-[1fr_9rem] gap-3">
+      <div className="grid grid-cols-[1fr_9rem] gap-3 items-end">
         <Input
           label={`Target amount (${currency})`}
           name="targetAmount"

@@ -65,7 +65,7 @@ export default function BudgetRow({
 
   return (
     <article className="px-4 py-4 flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span className="font-serif text-base text-fg truncate">
           {categoryName}
         </span>
@@ -97,7 +97,7 @@ export default function BudgetRow({
         />
       </div>
 
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span
           className={cn(
             "lede text-xs",
@@ -109,7 +109,7 @@ export default function BudgetRow({
         {paceLine && (
           <span
             suppressHydrationWarning
-            className="lede text-[11px] text-right"
+            className="lede text-[11px] sm:text-right"
           >
             {paceLine}
           </span>

@@ -36,6 +36,16 @@
   --color-celadon: #7a9e93;
   --color-celadon-strong: #4d6d63;
 
+  /* Categorical palette for charts: distinct hues at similar lightness/chroma.
+     Ordered from most to least emphasized. Used by CategoryDonut and any
+     future chart that plots N categories where semantic tones don't apply. */
+  --color-chart-1: #4d6d63; /* celadon deep — brand */
+  --color-chart-2: #a65235; /* rust */
+  --color-chart-3: #8f6a2a; /* bronze */
+  --color-chart-4: #3f5f78; /* slate blue */
+  --color-chart-5: #6b4870; /* muted plum */
+  --color-chart-6: #7d6d2a; /* olive ochre */
+
   --radius-card: 0px;
   --radius-control: 4px;
   --radius-pill: 999px;
@@ -84,6 +94,16 @@
 
   --color-celadon: #a3d1c1;
   --color-celadon-strong: #c0e0d4;
+
+  /* Dark-mode categorical palette. Pastels at ~72% lightness / ~30 chroma —
+     distinct hues so a viewer can tell six wedges apart at a glance without
+     any one wedge shouting. */
+  --color-chart-1: #a3d1c1; /* celadon mint — brand */
+  --color-chart-2: #eb9aa4; /* coral rose */
+  --color-chart-3: #dbb07f; /* warm amber */
+  --color-chart-4: #9dc2d9; /* sky steel */
+  --color-chart-5: #c1a8d9; /* lavender */
+  --color-chart-6: #d9cf8a; /* muted ochre */
 
   --color-skylight-start: rgba(255, 218, 175, 0.16);
   --color-skylight-mid: rgba(255, 218, 175, 0.06);
@@ -239,7 +259,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 6px 12px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--color-border);
     margin: 28px 0 14px;
@@ -276,7 +297,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     gap: 12px;
+    row-gap: 10px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--color-border);
     margin-bottom: 20px;
@@ -285,6 +308,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
     color: var(--color-fg);
     font-family: var(--font-sans);
     font-size: 0.6875rem;
@@ -292,7 +316,13 @@ body {
     text-transform: uppercase;
     font-weight: 500;
   }
-  .nameplate-tools { display: flex; align-items: center; gap: 6px; }
+  .nameplate-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
   .nameplate-meta {
     font-family: var(--font-sans);
     font-size: 0.65rem;
@@ -375,7 +405,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 4px 12px;
   }
   .day-head-title {
     font-family: var(--font-serif);
@@ -600,7 +631,7 @@ body {
     font-family: var(--font-serif);
     font-optical-sizing: auto;
     font-weight: 400;
-    font-size: clamp(2.75rem, 12vw, 5.5rem);
+    font-size: clamp(1.875rem, 10vw, 5.5rem);
     line-height: 0.94;
     letter-spacing: -0.035em;
     color: var(--color-fg);

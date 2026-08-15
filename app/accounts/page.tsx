@@ -101,25 +101,9 @@ export default function AccountsPage() {
         kicker="Manage"
         title="Accounts"
         actions={
-          <>
-            <Button
-              size="md"
-              variant="secondary"
-              onClick={() => setTransferOpen(true)}
-              disabled={!canTransfer}
-              title={
-                canTransfer
-                  ? undefined
-                  : "Add at least two accounts to enable transfers"
-              }
-            >
-              <TransferIcon aria-hidden />
-              <span>Transfer</span>
-            </Button>
-            <Button size="md" onClick={openCreate}>
-              + Add
-            </Button>
-          </>
+          <Button size="md" onClick={openCreate}>
+            + Add
+          </Button>
         }
       />
 
@@ -150,15 +134,15 @@ export default function AccountsPage() {
                 {balancesByCurrency.map(([currency, sum]) => (
                   <div
                     key={currency}
-                    className="flex items-center justify-between px-4 py-3"
+                    className="flex items-center justify-between gap-3 px-4 py-3"
                   >
-                    <span className="kicker">{currency}</span>
+                    <span className="kicker shrink-0">{currency}</span>
                     <Amount
                       value={sum}
                       tone={sum >= 0 ? "income" : "expense"}
                       size="lg"
                       currency={currency}
-                      className="font-serif"
+                      className="font-serif min-w-0 truncate"
                     />
                   </div>
                 ))}
@@ -172,7 +156,18 @@ export default function AccountsPage() {
           <section className="flex flex-col" aria-label="Accounts">
             <div className="section-head">
               <span className="section-head-title">All accounts</span>
-              <span className="section-head-meta">Managed by hand</span>
+              {canTransfer ? (
+                <button
+                  type="button"
+                  onClick={() => setTransferOpen(true)}
+                  className="section-head-link inline-flex items-center gap-1.5"
+                >
+                  <TransferIcon aria-hidden />
+                  <span>Move money</span>
+                </button>
+              ) : (
+                <span className="section-head-meta">Managed by hand</span>
+              )}
             </div>
             <AccountList
               accounts={nonCreditAccounts}

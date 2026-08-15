@@ -71,7 +71,7 @@ export default function DashboardSummary({
     unassignedInvestments,
   ]);
 
-  const cols = portfolio ? "grid-cols-3" : "grid-cols-2";
+  const showPortfolio = !!portfolio && portfolio.currentValue !== 0;
   const gainTone =
     portfolio?.gain === undefined
       ? "text-fg-muted"
@@ -82,7 +82,10 @@ export default function DashboardSummary({
           : "text-fg-muted";
 
   return (
-    <section className={`rooms-h ${cols}`} aria-label="Month summary">
+    <section
+      className="surface grid grid-cols-2 sm:grid-cols-3"
+      aria-label="Month summary"
+    >
       <Tile
         label="Income"
         value={formatCurrency(income, "USD")}
@@ -92,8 +95,9 @@ export default function DashboardSummary({
         label="Expenses"
         value={formatCurrency(expense, "USD")}
         tone="text-expense"
+        className="border-l border-border"
       />
-      {portfolio && (
+      {showPortfolio && portfolio && (
         <Tile
           label="Portfolio"
           value={formatCurrency(portfolio.currentValue, "USD")}
@@ -104,6 +108,7 @@ export default function DashboardSummary({
               : undefined
           }
           hintTone={gainTone}
+          className="col-span-2 border-t border-border sm:col-span-1 sm:border-t-0 sm:border-l"
         />
       )}
     </section>
@@ -116,13 +121,16 @@ interface TileProps {
   tone: string;
   hint?: string;
   hintTone?: string;
+  className?: string;
 }
 
-function Tile({ label, value, tone, hint, hintTone }: TileProps) {
+function Tile({ label, value, tone, hint, hintTone, className }: TileProps) {
   return (
-    <div className="p-4 flex flex-col gap-2 min-w-0">
+    <div className={`p-4 flex flex-col gap-2 min-w-0 ${className ?? ""}`}>
       <span className="kicker">{label}</span>
-      <span className={`font-serif text-xl tabular-nums leading-none ${tone}`}>
+      <span
+        className={`font-serif text-lg sm:text-xl tabular-nums leading-none truncate ${tone}`}
+      >
         {value}
       </span>
       {hint && (

@@ -160,10 +160,13 @@ export default function InvestmentsPage() {
         aria-label="Portfolio summary"
       >
         <span className="kicker">Current value</span>
-        <span className="courtyard-fig text-invest" style={{ fontSize: "clamp(2.5rem, 10vw, 4.5rem)" }}>
+        <span
+          className="courtyard-fig text-invest"
+          style={{ fontSize: "clamp(1.875rem, 9vw, 4.5rem)" }}
+        >
           {formatCurrency(totals.currentValue, "USD")}
         </span>
-        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-fg-muted mt-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-fg-muted mt-2">
           <span>Cost basis · {formatCurrency(totals.costBasis, "USD")}</span>
           {totals.gainPct !== null && (
             <span

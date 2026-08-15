@@ -22,7 +22,7 @@ export default function BudgetSummary({
 
   return (
     <section className="masthead-balance surface p-6 flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0 flex flex-col gap-1">
           <span className="label-sm">Spent this month</span>
           <Amount
@@ -35,7 +35,7 @@ export default function BudgetSummary({
             of {formatCurrency(totalCap, currency)} capped
           </p>
         </div>
-        <div className="text-right shrink-0 flex flex-col gap-1">
+        <div className="sm:text-right flex flex-col gap-1 min-w-0">
           <span className="label-sm">{over ? "Over" : "Left"}</span>
           <p
             className={cn(
