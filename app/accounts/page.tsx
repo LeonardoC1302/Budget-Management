@@ -20,6 +20,7 @@ export default function AccountsPage() {
     accounts,
     balances,
     txCountByAccount,
+    reservationsByAccount,
     loading,
     add,
     update,
@@ -177,6 +178,7 @@ export default function AccountsPage() {
               accounts={nonCreditAccounts}
               balances={balances}
               txCountByAccount={txCountByAccount}
+              reservationsByAccount={reservationsByAccount}
               onEdit={openEdit}
               onDelete={setPendingDelete}
               emptyTitle="No accounts yet."

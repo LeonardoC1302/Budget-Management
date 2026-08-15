@@ -11,6 +11,7 @@ import ContributionForm from "@/components/molecules/ContributionForm";
 import GoalForm from "@/components/molecules/GoalForm";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import GoalList from "@/components/organisms/GoalList";
+import { useAccounts } from "@/hooks/useAccounts";
 import { useGoals } from "@/hooks/useGoals";
 import type { Goal, NewGoal, NewGoalContribution } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export default function GoalsPage() {
     removeGoal,
     addContribution,
   } = useGoals();
+  const { accounts, balances, reservationsByAccount } = useAccounts();
 
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [pendingDelete, setPendingDelete] = useState<Goal | null>(null);
@@ -178,6 +180,10 @@ export default function GoalsPage() {
         {mode.kind === "contribute" ? (
           <ContributionForm
             goalId={mode.goal.id}
+            goalCurrency={mode.goal.currency}
+            accounts={accounts}
+            balances={balances}
+            reservationsByAccount={reservationsByAccount}
             onSubmit={handleContributionSubmit}
             onCancel={close}
           />

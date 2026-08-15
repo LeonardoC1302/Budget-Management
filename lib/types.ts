@@ -161,6 +161,9 @@ export interface GoalContribution {
   note?: string;
   date: string;
   createdAt: string;
+  // Optional to preserve legacy contributions written before goals earmarked
+  // money from a specific account. New contributions require it.
+  accountId?: string;
 }
 
 export type NewGoalContribution = Omit<GoalContribution, "id" | "createdAt">;

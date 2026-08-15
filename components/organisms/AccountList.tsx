@@ -2,12 +2,14 @@
 
 import EmptyState from "@/components/atoms/EmptyState";
 import AccountCard from "@/components/molecules/AccountCard";
+import type { GoalReservation } from "@/hooks/useAccounts";
 import type { Account } from "@/lib/types";
 
 interface AccountListProps {
   accounts: Account[];
   balances: Record<string, number>;
   txCountByAccount: Record<string, number>;
+  reservationsByAccount?: Record<string, GoalReservation[]>;
   onEdit?: (account: Account) => void;
   onDelete?: (account: Account) => void;
   emptyTitle?: string;
@@ -22,6 +24,7 @@ export default function AccountList({
   accounts,
   balances,
   txCountByAccount,
+  reservationsByAccount,
   onEdit,
   onDelete,
   emptyTitle,
@@ -51,6 +54,7 @@ export default function AccountList({
           account={account}
           balance={balances[account.id] ?? account.initialBalance}
           transactionCount={txCountByAccount[account.id] ?? 0}
+          reservations={reservationsByAccount?.[account.id]}
           onEdit={onEdit}
           onDelete={onDelete}
         />

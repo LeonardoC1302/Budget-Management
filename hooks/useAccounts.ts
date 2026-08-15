@@ -2,9 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
-import { accountStore, transactionStore } from "@/lib/storage";
+import { accountStore, goalStore, transactionStore } from "@/lib/storage";
 import { computeCardTotals, type CardTotals } from "@/lib/credit/statement";
-import type { Account, NewAccount, Transaction } from "@/lib/types";
+import type {
+  Account,
+  Goal,
+  GoalContribution,
+  NewAccount,
+  Transaction,
+} from "@/lib/types";
 
 function computeDerived(accounts: Account[], transactions: Transaction[]) {
   const balances: Record<string, number> = {};
@@ -44,9 +50,48 @@ function computeCreditTotals(
   return out;
 }
 
+export interface GoalReservation {
+  goalId: string;
+  goalName: string;
+  amount: number;
+}
+
+function computeReservations(
+  goals: Goal[],
+  contributions: GoalContribution[],
+): Record<string, GoalReservation[]> {
+  const goalsById: Record<string, Goal> = {};
+  for (const g of goals) goalsById[g.id] = g;
+
+  // { accountId: { goalId: amount } }
+  const sums: Record<string, Record<string, number>> = {};
+  for (const c of contributions) {
+    if (!c.accountId) continue; // legacy contributions without an account
+    const goal = goalsById[c.goalId];
+    if (!goal) continue;
+    const perAccount = (sums[c.accountId] ??= {});
+    perAccount[c.goalId] = (perAccount[c.goalId] ?? 0) + c.amount;
+  }
+
+  const out: Record<string, GoalReservation[]> = {};
+  for (const [accountId, perGoal] of Object.entries(sums)) {
+    out[accountId] = Object.entries(perGoal)
+      .map(([goalId, amount]) => ({
+        goalId,
+        goalName: goalsById[goalId]?.name ?? "Goal",
+        amount,
+      }))
+      .filter((r) => r.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+  }
+  return out;
+}
+
 export function useAccounts() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [contributions, setContributions] = useState<GoalContribution[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [txCountByAccount, setTxCountByAccount] = useState<
     Record<string, number>
@@ -54,28 +99,38 @@ export function useAccounts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([accountStore.list(), transactionStore.list()]).then(
-      ([nextAccounts, nextTransactions]) => {
-        const derived = computeDerived(nextAccounts, nextTransactions);
-        setAccounts(nextAccounts);
-        setTransactions(nextTransactions);
-        setBalances(derived.balances);
-        setTxCountByAccount(derived.counts);
-        setLoading(false);
-      },
-    );
+    Promise.all([
+      accountStore.list(),
+      transactionStore.list(),
+      goalStore.listGoals(),
+      goalStore.listContributions(),
+    ]).then(([nextAccounts, nextTransactions, nextGoals, nextContribs]) => {
+      const derived = computeDerived(nextAccounts, nextTransactions);
+      setAccounts(nextAccounts);
+      setTransactions(nextTransactions);
+      setGoals(nextGoals);
+      setContributions(nextContribs);
+      setBalances(derived.balances);
+      setTxCountByAccount(derived.counts);
+      setLoading(false);
+    });
   }, []);
 
   const refresh = useCallback(() => {
-    return Promise.all([accountStore.list(), transactionStore.list()]).then(
-      ([nextAccounts, nextTransactions]) => {
-        const derived = computeDerived(nextAccounts, nextTransactions);
-        setAccounts(nextAccounts);
-        setTransactions(nextTransactions);
-        setBalances(derived.balances);
-        setTxCountByAccount(derived.counts);
-      },
-    );
+    return Promise.all([
+      accountStore.list(),
+      transactionStore.list(),
+      goalStore.listGoals(),
+      goalStore.listContributions(),
+    ]).then(([nextAccounts, nextTransactions, nextGoals, nextContribs]) => {
+      const derived = computeDerived(nextAccounts, nextTransactions);
+      setAccounts(nextAccounts);
+      setTransactions(nextTransactions);
+      setGoals(nextGoals);
+      setContributions(nextContribs);
+      setBalances(derived.balances);
+      setTxCountByAccount(derived.counts);
+    });
   }, []);
 
   useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
@@ -123,12 +178,18 @@ export function useAccounts() {
     [accounts, transactions],
   );
 
+  const reservationsByAccount = useMemo(
+    () => computeReservations(goals, contributions),
+    [goals, contributions],
+  );
+
   return {
     accounts,
     balances,
     txCountByAccount,
     byId,
     creditTotalsByAccount,
+    reservationsByAccount,
     loading,
     add,
     update,
