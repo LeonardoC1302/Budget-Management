@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/atoms/Button";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
@@ -58,10 +58,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
   const hasAmount = Number.isFinite(parsedAmount) && parsedAmount > 0;
   const differentCurrencies = fromCurrency !== toCurrency;
 
-  const direction = useMemo(
-    () => bccrDirection(fromCurrency, toCurrency),
-    [fromCurrency, toCurrency],
-  );
+  const direction = bccrDirection(fromCurrency, toCurrency);
 
   const [entityId, setEntityId] = useState<string | null>(null);
   const [bccrResolved, setBccrResolved] = useState<ResolvedRate | null>(null);
@@ -107,8 +104,12 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
 
   const rate: number | null = !differentCurrencies
     ? 1
-    : direction && bccrResolved
-      ? bccrResolved.rate
+    : direction && bccrResolved && !bccrFallback
+      ? direction === "USD_TO_CRC"
+        ? bccrResolved.rate
+        : bccrResolved.rate === 0
+          ? null
+          : 1 / bccrResolved.rate
       : fallbackRate.key === pairKey
         ? fallbackRate.rate
         : null;

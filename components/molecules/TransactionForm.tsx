@@ -136,8 +136,12 @@ export default function TransactionForm({
   const parsedAmount = parseFloat(amount);
   const previewRate: number | null = !hasCurrencyMismatch
     ? 1
-    : direction && bccrResolved
-      ? bccrResolved.rate
+    : direction && bccrResolved && !bccrFallback
+      ? direction === "USD_TO_CRC"
+        ? bccrResolved.rate
+        : bccrResolved.rate === 0
+          ? null
+          : 1 / bccrResolved.rate
       : rateEntry.key === pairKey
         ? rateEntry.rate
         : null;
@@ -166,8 +170,8 @@ export default function TransactionForm({
           side: bccrResolved.side,
           snapshotAt: bccrResolved.snapshotAt,
         };
-      } else if (previewRate !== null) {
-        rateSource = { provider: "fallback", rate: previewRate };
+      } else if (rateEntry.key === pairKey && rateEntry.rate !== null) {
+        rateSource = { provider: "fallback", rate: rateEntry.rate };
       }
     }
 
