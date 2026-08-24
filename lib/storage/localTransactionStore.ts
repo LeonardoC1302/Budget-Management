@@ -110,8 +110,12 @@ export const localTransactionStore: TransactionStore = {
   },
   async addTransfer(input: NewTransfer) {
     const createdAt = new Date().toISOString();
-    const toAmount =
-      typeof input.toAmount === "number" && input.toAmount > 0
+    const sameCurrency = input.fromCurrency === input.toCurrency;
+    const hasFee =
+      sameCurrency && typeof input.fee === "number" && input.fee > 0;
+    const toAmount = hasFee
+      ? input.amount - (input.fee as number)
+      : typeof input.toAmount === "number" && input.toAmount > 0
         ? input.toAmount
         : await convertUsingRateSource(
             input.amount,
@@ -150,6 +154,7 @@ export const localTransactionStore: TransactionStore = {
         ? { paidChargeIds: input.paidChargeIds }
         : {}),
       ...(input.rateSource ? { rateSource: input.rateSource } : {}),
+      ...(hasFee ? { fee: input.fee } : {}),
     };
     const inDoc: Transaction = {
       id: inId,
@@ -172,6 +177,7 @@ export const localTransactionStore: TransactionStore = {
         ? { paidChargeIds: input.paidChargeIds }
         : {}),
       ...(input.rateSource ? { rateSource: input.rateSource } : {}),
+      ...(hasFee ? { fee: input.fee } : {}),
     };
     write([outDoc, inDoc, ...read()]);
   },

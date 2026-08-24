@@ -5,7 +5,7 @@ import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
-import { formatDate } from "@/lib/utils/format";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
 
 interface TransactionDetailsModalProps {
@@ -123,6 +123,11 @@ export default function TransactionDetailsModal({
                       ? (linkedAccount?.name ?? "—")
                       : (account?.name ?? "—")}
                   </Row>
+                  {typeof transaction.fee === "number" && transaction.fee > 0 && (
+                    <Row label="Fee">
+                      {formatCurrency(transaction.fee, transaction.currency)}
+                    </Row>
+                  )}
                 </>
               ) : (
                 <>

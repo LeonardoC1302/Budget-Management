@@ -71,6 +71,10 @@ export interface Transaction {
   transferId?: string;
   transferDirection?: TransferDirection;
   linkedAccountId?: string;
+  // Fixed commission charged by the source entity on a transfer, in the
+  // transfer's currency. Stored on both paired legs; the destination leg's
+  // `amount` is already net of it.
+  fee?: number;
   recurringId?: string;
   // Set on both paired docs of a credit-card payment transfer.
   paymentForAccountId?: string;
@@ -143,6 +147,10 @@ export interface NewTransfer {
   // bank charges the source account more than what actually pays down the card
   // (e.g. FX spread or fees). Falls back to `amount * fx(fromCurrency,toCurrency)`.
   toAmount?: number;
+  // Fixed commission charged by the source entity, in `fromCurrency`. Only
+  // applied when `fromCurrency === toCurrency` — destination leg is credited
+  // `amount - fee`. Distinct from `toAmount` (which models FX spread).
+  fee?: number;
   rateSource?: RateSource;
 }
 
