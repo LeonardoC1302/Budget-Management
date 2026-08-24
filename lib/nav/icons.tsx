@@ -60,9 +60,12 @@ export const BudgetsIcon: ComponentType<IconProps> = (props) => (
 
 export const AccountsIcon: ComponentType<IconProps> = (props) => (
   <svg {...base(props)}>
-    <rect x="3" y="6" width="18" height="13" rx="2" />
-    <path d="M3 10h18" />
-    <path d="M16 15h2" />
+    <path d="M3 10 12 4l9 6" />
+    <path d="M4 10v8" />
+    <path d="M9 10v8" />
+    <path d="M15 10v8" />
+    <path d="M20 10v8" />
+    <path d="M3 20h18" />
   </svg>
 );
 

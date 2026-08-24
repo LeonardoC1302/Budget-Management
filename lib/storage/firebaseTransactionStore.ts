@@ -106,8 +106,12 @@ export const firebaseTransactionStore: TransactionStore = {
   },
   async addTransfer(input: NewTransfer) {
     const createdAt = new Date().toISOString();
-    const toAmount =
-      typeof input.toAmount === "number" && input.toAmount > 0
+    const sameCurrency = input.fromCurrency === input.toCurrency;
+    const hasFee =
+      sameCurrency && typeof input.fee === "number" && input.fee > 0;
+    const toAmount = hasFee
+      ? input.amount - (input.fee as number)
+      : typeof input.toAmount === "number" && input.toAmount > 0
         ? input.toAmount
         : await convertUsingRateSource(
             input.amount,
@@ -140,6 +144,7 @@ export const firebaseTransactionStore: TransactionStore = {
           ? input.paidChargeIds
           : undefined,
       rateSource: input.rateSource,
+      fee: hasFee ? input.fee : undefined,
     });
 
     const outDoc = {

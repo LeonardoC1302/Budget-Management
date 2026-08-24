@@ -38,6 +38,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
   const [fromId, setFromId] = useState<string>("");
   const [toId, setToId] = useState<string>("");
   const [amount, setAmount] = useState("");
+  const [fee, setFee] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(todayISODate());
   const [submitting, setSubmitting] = useState(false);
@@ -57,6 +58,15 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
   const parsedAmount = parseFloat(amount);
   const hasAmount = Number.isFinite(parsedAmount) && parsedAmount > 0;
   const differentCurrencies = fromCurrency !== toCurrency;
+
+  const parsedFee = parseFloat(fee);
+  const hasFee = Number.isFinite(parsedFee) && parsedFee > 0;
+  const feeValid =
+    !hasFee || (!differentCurrencies && hasAmount && parsedFee < parsedAmount);
+
+  useEffect(() => {
+    if (differentCurrencies && fee !== "") setFee("");
+  }, [differentCurrencies, fee]);
 
   const direction = bccrDirection(fromCurrency, toCurrency);
 
@@ -127,6 +137,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
     if (effectiveFromId === effectiveToId) return;
     if (!hasAmount) return;
     if (differentCurrencies && rate === null) return;
+    if (!feeValid) return;
 
     let rateSource: RateSource | undefined;
     if (differentCurrencies) {
@@ -156,8 +167,10 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
         description: description.trim(),
         date,
         ...(rateSource ? { rateSource } : {}),
+        ...(hasFee && !differentCurrencies ? { fee: parsedFee } : {}),
       });
       setAmount("");
+      setFee("");
       setDescription("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transfer failed");
@@ -173,7 +186,8 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
     !!effectiveFromId &&
     !!effectiveToId &&
     effectiveFromId !== effectiveToId &&
-    (!differentCurrencies || rate !== null);
+    (!differentCurrencies || rate !== null) &&
+    feeValid;
 
   if (!accountsLoading && accounts.length < 2) {
     return (
@@ -234,6 +248,33 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
+
+      {!differentCurrencies && (
+        <div className="flex flex-col gap-1">
+          <Input
+            label={`Fee (${fromCurrency})`}
+            name="fee"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={fee}
+            onChange={(e) => setFee(e.target.value)}
+          />
+          {hasFee && hasAmount && parsedFee >= parsedAmount && (
+            <p className="text-xs text-expense">
+              Fee must be less than the amount.
+            </p>
+          )}
+          {hasFee && hasAmount && parsedFee < parsedAmount && (
+            <p className="text-xs text-fg-subtle">
+              {toAccount?.name ?? "Destination"} receives{" "}
+              {formatCurrency(parsedAmount - parsedFee, toCurrency)}.
+            </p>
+          )}
+        </div>
+      )}
 
       {differentCurrencies && direction && (
         <EntityRatePicker
