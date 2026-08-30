@@ -1,16 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/atoms/Button";
+import CurrencySelect from "@/components/atoms/CurrencySelect";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import CategoryPicker from "@/components/molecules/CategoryPicker";
+import EntityRatePicker, {
+  type FxDirection,
+  type ResolvedRate,
+} from "@/components/molecules/EntityRatePicker";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
+import { getRate } from "@/lib/services/exchangeRates";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
-import { todayISODate } from "@/lib/utils/format";
+import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import {
   RECURRENCE_FREQUENCY_LABELS,
   type EntryType,
@@ -62,6 +68,11 @@ export default function RecurringForm({
   const [dayB, setDayB] = useState<string>(String(initialDays[1]));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Explicit user override for the template currency. `null` means "track the
+  // account's currency", so switching accounts still auto-updates.
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(
+    initial ? initial.currency : null,
+  );
 
   const categoriesForType = filterByType(type);
 
@@ -73,6 +84,77 @@ export default function RecurringForm({
   const categoryId = categoriesForType.some((c) => c.id === selectedCategoryId)
     ? selectedCategoryId
     : categoriesForType[0]?.id ?? "";
+
+  const currency = currencyOverride ?? accountCurrency;
+  const hasCurrencyMismatch = currency !== accountCurrency;
+
+  const direction = useMemo<FxDirection | null>(() => {
+    if (!hasCurrencyMismatch) return null;
+    if (currency === "USD" && accountCurrency === "CRC") return "USD_TO_CRC";
+    if (currency === "CRC" && accountCurrency === "USD") return "CRC_TO_USD";
+    return null;
+  }, [currency, accountCurrency, hasCurrencyMismatch]);
+
+  const [entityId, setEntityId] = useState<string | null>(
+    initial?.rateBccrEntity?.id ?? null,
+  );
+  const [bccrResolved, setBccrResolved] = useState<ResolvedRate | null>(null);
+  const [bccrFallback, setBccrFallback] = useState(false);
+  const onResolved = useCallback(
+    (result: { resolved: ResolvedRate | null; fallback: boolean }) => {
+      setBccrResolved(result.resolved);
+      setBccrFallback(result.fallback);
+    },
+    [],
+  );
+
+  const [rateEntry, setRateEntry] = useState<{
+    key: string;
+    rate: number | null;
+    error: string | null;
+  }>({ key: "", rate: null, error: null });
+  const pairKey = `${currency}:${accountCurrency}`;
+  const needsFallback = hasCurrencyMismatch && (!direction || bccrFallback);
+  useEffect(() => {
+    if (!needsFallback) return;
+    let cancelled = false;
+    getRate(currency, accountCurrency)
+      .then((r) => {
+        if (!cancelled) setRateEntry({ key: pairKey, rate: r, error: null });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setRateEntry({
+            key: pairKey,
+            rate: null,
+            error: err instanceof Error ? err.message : "Rate unavailable",
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsFallback, currency, accountCurrency, pairKey]);
+
+  const parsedAmountForPreview = parseFloat(amount);
+  const previewRate: number | null = !hasCurrencyMismatch
+    ? 1
+    : direction && bccrResolved && !bccrFallback
+      ? direction === "USD_TO_CRC"
+        ? bccrResolved.rate
+        : bccrResolved.rate === 0
+          ? null
+          : 1 / bccrResolved.rate
+      : rateEntry.key === pairKey
+        ? rateEntry.rate
+        : null;
+  const convertedPreview =
+    hasCurrencyMismatch &&
+    previewRate !== null &&
+    Number.isFinite(parsedAmountForPreview) &&
+    parsedAmountForPreview > 0
+      ? parsedAmountForPreview * previewRate
+      : null;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -116,12 +198,17 @@ export default function RecurringForm({
       return;
     }
 
+    const rateBccrEntity =
+      hasCurrencyMismatch && direction && bccrResolved && !bccrFallback
+        ? { id: bccrResolved.entity.id, name: bccrResolved.entity.name }
+        : undefined;
+
     setSubmitting(true);
     try {
       await onSubmit({
         type,
         amount: parsedAmount,
-        currency: accountCurrency,
+        currency,
         accountId,
         categoryId,
         description: description.trim(),
@@ -130,6 +217,7 @@ export default function RecurringForm({
         semiMonthlyDays,
         endDate: endDate || undefined,
         active: initial?.active ?? true,
+        rateBccrEntity,
       });
     } finally {
       setSubmitting(false);
@@ -169,7 +257,7 @@ export default function RecurringForm({
       </div>
 
       <Input
-        label={`Amount (${accountCurrency})`}
+        label={`Amount (${currency})`}
         name="amount"
         type="number"
         inputMode="decimal"
@@ -189,6 +277,34 @@ export default function RecurringForm({
         options={accounts.map((a) => ({ value: a.id, label: a.name }))}
         disabled={loading || accounts.length === 0}
       />
+
+      <div className="flex flex-col gap-1.5">
+        <CurrencySelect
+          label="Currency"
+          name="currency"
+          value={currency}
+          onChange={(next) =>
+            setCurrencyOverride(next === accountCurrency ? null : next)
+          }
+        />
+        {hasCurrencyMismatch && direction && (
+          <EntityRatePicker
+            direction={direction}
+            value={entityId}
+            onChange={setEntityId}
+            onResolved={onResolved}
+          />
+        )}
+        {hasCurrencyMismatch && (
+          <p role="status" className="text-xs text-fg-subtle">
+            {convertedPreview !== null
+              ? `≈ ${formatCurrency(convertedPreview, accountCurrency)} on the ${accountCurrency} account · rate re-fetched each occurrence`
+              : rateEntry.error
+                ? `Rate unavailable (${rateEntry.error}).`
+                : `Fetching ${currency} → ${accountCurrency} rate…`}
+          </p>
+        )}
+      </div>
 
       <CategoryPicker
         type={type}
