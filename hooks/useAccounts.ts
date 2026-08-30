@@ -146,11 +146,12 @@ export function useAccounts() {
 
   const update = useCallback(
     async (id: string, patch: Partial<NewAccount>) => {
-      const updated = await accountStore.update(id, patch);
+      const target = accounts.find((a) => a.id === id);
+      const updated = await accountStore.update(id, patch, target?._owner?.uid);
       await refresh();
       return updated;
     },
-    [refresh],
+    [accounts, refresh],
   );
 
   const remove = useCallback(
@@ -161,10 +162,11 @@ export function useAccounts() {
           `This account has ${count} transaction${count === 1 ? "" : "s"}. Delete or reassign them before deleting the account.`,
         );
       }
-      await accountStore.remove(id);
+      const target = accounts.find((a) => a.id === id);
+      await accountStore.remove(id, target?._owner?.uid);
       await refresh();
     },
-    [refresh, txCountByAccount],
+    [accounts, refresh, txCountByAccount],
   );
 
   const byId = useMemo(() => {

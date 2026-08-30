@@ -1,0 +1,126 @@
+rules_version = '2';
+
+// Firestore security rules for the shared-accounts feature.
+//
+// Access model:
+//   - Every user owns their subtree at users/{uid}/**. They can always read
+//     and write it themselves.
+//   - Another user can read that subtree if there's an active connection doc
+//     at connections/{uid}_{granteeUid}. Write access additionally requires
+//     `permission == "write"`.
+//   - `connections/{id}` docs are readable/writable by either party. A guest
+//     creates the doc during claim; a code lookup validates the pair.
+//   - `connectionCodes/{code}` docs are short-lived OTPs. Owners create them;
+//     guests read + update them exactly once during claim.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // True iff there's a live grant from `ownerUid` to the current user.
+    // `needWrite` requires `permission == "write"`.
+    function hasGrant(ownerUid, needWrite) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/connections/$(ownerUid + "_" + request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/connections/$(ownerUid + "_" + request.auth.uid)).data.revokedAt == null
+        )
+        && (
+          !needWrite
+          || get(/databases/$(database)/documents/connections/$(ownerUid + "_" + request.auth.uid)).data.permission == "write"
+        );
+    }
+
+    // User profile doc. Readable by any signed-in user so nicknames can be
+    // resolved when displaying badges. Writable only by the owner themselves.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+
+      // All subcollections (accounts, transactions, budgets, goals, holdings,
+      // categories, meta, etc.) share the same rule: owner OR granted guest.
+      match /{document=**} {
+        allow read:  if signedIn() && (request.auth.uid == uid || hasGrant(uid, false));
+        allow write: if signedIn() && (request.auth.uid == uid || hasGrant(uid, true));
+      }
+    }
+
+    // Active connection docs. Either party may read them; either party may
+    // delete (both revoke and "leave" go through the same doc).
+    match /connections/{id} {
+      allow read:   if signedIn()
+                    && (request.auth.uid == resource.data.ownerUid
+                        || request.auth.uid == resource.data.guestUid);
+
+      // Claim: guest writes BOTH direction docs after reading the matching
+      // OTP. Two shapes are allowed:
+      //   Forward — caller is the guest, code's ownerUid == request.ownerUid.
+      //   Mirror  — caller is the owner (i.e. was the code's guest), and the
+      //             code's ownerUid == request.guestUid.
+      // Both writes reference the same `sourceCode` so the transaction is
+      // internally consistent and single-use enforcement still holds.
+      allow create: if signedIn()
+                    && exists(/databases/$(database)/documents/connectionCodes/$(request.resource.data.sourceCode))
+                    && get(/databases/$(database)/documents/connectionCodes/$(request.resource.data.sourceCode)).data.status == "pending"
+                    && (
+                      (
+                        request.resource.data.guestUid == request.auth.uid
+                        && request.resource.data.ownerUid != request.auth.uid
+                        && get(/databases/$(database)/documents/connectionCodes/$(request.resource.data.sourceCode)).data.ownerUid == request.resource.data.ownerUid
+                      ) || (
+                        request.resource.data.ownerUid == request.auth.uid
+                        && request.resource.data.guestUid != request.auth.uid
+                        && get(/databases/$(database)/documents/connectionCodes/$(request.resource.data.sourceCode)).data.ownerUid == request.resource.data.guestUid
+                      )
+                    );
+
+      // Rename: only nickname fields; either party may write their own side.
+      allow update: if signedIn()
+                    && (request.auth.uid == resource.data.ownerUid
+                        || request.auth.uid == resource.data.guestUid)
+                    && request.resource.data.ownerUid == resource.data.ownerUid
+                    && request.resource.data.guestUid == resource.data.guestUid
+                    && request.resource.data.permission == resource.data.permission;
+
+      allow delete: if signedIn()
+                    && (request.auth.uid == resource.data.ownerUid
+                        || request.auth.uid == resource.data.guestUid);
+    }
+
+    // Pending OTP codes. Owner-created; guest-claimed exactly once.
+    match /connectionCodes/{code} {
+      // Owner creates a code for themselves. TTL is enforced by the claim,
+      // not by rules — an unclaimed code lingers until deleted.
+      allow create: if signedIn()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.status == "pending";
+
+      // Any signed-in user may read by-code — it's the primary lookup during
+      // claim. The code itself is the secret; if you know it, you may see it.
+      allow get: if signedIn();
+      // Listing is restricted to your own pending codes. The rule references
+      // `resource.data.ownerUid` which forces the client query to include
+      // `where("ownerUid", "==", request.auth.uid)`.
+      allow list: if signedIn()
+                  && resource.data.ownerUid == request.auth.uid;
+
+      // Claim transaction flips the code from pending → claimed. Enforces
+      // single-use and expiry — Firestore rules evaluate `request.time` at
+      // commit, so a stale code fails here even if the client raced past the
+      // in-transaction expiry check.
+      allow update: if signedIn()
+                    && resource.data.status == "pending"
+                    && request.time < timestamp.value(resource.data.expiresAt)
+                    && request.resource.data.status == "claimed"
+                    && request.resource.data.claimedBy == request.auth.uid
+                    && request.resource.data.ownerUid == resource.data.ownerUid
+                    && resource.data.ownerUid != request.auth.uid;
+
+      // Owner may cancel their own pending code.
+      allow delete: if signedIn()
+                    && request.auth.uid == resource.data.ownerUid;
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
+import OwnerBadge from "@/components/atoms/OwnerBadge";
 import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import { ACCOUNT_TYPE_LABELS, type Account } from "@/lib/types";
 import type { GoalReservation } from "@/hooks/useAccounts";
@@ -25,14 +26,21 @@ export default function AccountCard({
   const totalReserved = reservations.reduce((s, r) => s + r.amount, 0);
   const freeToUse = balance - totalReserved;
   const hasReservations = reservations.length > 0;
+  // Guests with read-only access must not see edit/delete controls at all —
+  // the store would reject the write, and hiding the controls is the primary
+  // UX layer of the read/write toggle.
+  const readOnly = account._owner && account._owner.permission === "read";
 
   return (
     <div className="px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center gap-4">
         <div className="flex-1 min-w-0">
-          <p className="font-serif text-base text-fg truncate">
-            {account.name}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-serif text-base text-fg truncate">
+              {account.name}
+            </p>
+            <OwnerBadge owner={account._owner} />
+          </div>
           <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
             {ACCOUNT_TYPE_LABELS[account.type]} · {transactionCount} tx
           </p>
@@ -46,7 +54,7 @@ export default function AccountCard({
           className="font-serif"
         />
 
-        {(onEdit || onDelete) && (
+        {(onEdit || onDelete) && !readOnly && (
           <div className="flex gap-1">
             {onEdit && (
               <Button

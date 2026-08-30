@@ -22,7 +22,9 @@ async function retireLegacyInvestments(
   );
   if (changes.length === 0) return templates;
   await Promise.all(
-    changes.map((t) => recurringTransactionStore.update(t.id, { active: false })),
+    changes.map((t) =>
+      recurringTransactionStore.update(t.id, { active: false }, t._owner?.uid),
+    ),
   );
   return templates.map((t) =>
     t.type === "investment" && t.active ? { ...t, active: false } : t,
@@ -64,7 +66,12 @@ export function useRecurringTransactions() {
       id: string,
       patch: Partial<Omit<RecurringTransaction, "id" | "createdAt">>,
     ) => {
-      const updated = await recurringTransactionStore.update(id, patch);
+      const target = recurring.find((r) => r.id === id);
+      const updated = await recurringTransactionStore.update(
+        id,
+        patch,
+        target?._owner?.uid,
+      );
       setRecurring((prev) => prev.map((r) => (r.id === id ? updated : r)));
       // If the template was reactivated or its start/frequency changed, run
       // materialization so any newly-due occurrences appear.
@@ -76,13 +83,17 @@ export function useRecurringTransactions() {
       }
       return updated;
     },
-    [],
+    [recurring],
   );
 
-  const remove = useCallback(async (id: string) => {
-    await recurringTransactionStore.remove(id);
-    setRecurring((prev) => prev.filter((r) => r.id !== id));
-  }, []);
+  const remove = useCallback(
+    async (id: string) => {
+      const target = recurring.find((r) => r.id === id);
+      await recurringTransactionStore.remove(id, target?._owner?.uid);
+      setRecurring((prev) => prev.filter((r) => r.id !== id));
+    },
+    [recurring],
+  );
 
   const toggleActive = useCallback(
     async (id: string) => {

@@ -108,3 +108,11 @@ export const MoreIcon: ComponentType<IconProps> = (props) => (
     <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
   </svg>
 );
+
+export const ConnectionsIcon: ComponentType<IconProps> = (props) => (
+  <svg {...base(props)}>
+    <circle cx="7" cy="9" r="3" />
+    <circle cx="17" cy="15" r="3" />
+    <path d="M9.5 10.5l5 3" />
+  </svg>
+);

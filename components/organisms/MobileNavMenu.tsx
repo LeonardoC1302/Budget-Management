@@ -63,7 +63,7 @@ function NavGroup({ heading, items, pathname, onClose }: NavGroupProps) {
               onClick={onClose}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 px-4 py-3.5 transition-colors min-h-11",
+                "relative flex items-center gap-3 px-4 py-3.5 transition-colors min-h-11",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
                 active
                   ? "text-fg"
@@ -73,7 +73,7 @@ function NavGroup({ heading, items, pathname, onClose }: NavGroupProps) {
               {active && (
                 <span
                   aria-hidden
-                  className="w-1.5 h-1.5 rounded-full"
+                  className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
                   style={{ background: "var(--color-celadon)" }}
                 />
               )}

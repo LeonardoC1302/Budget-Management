@@ -9,6 +9,7 @@ import HoldingContributionForm from "@/components/molecules/HoldingContributionF
 import HoldingForm from "@/components/molecules/HoldingForm";
 import ValuationForm from "@/components/molecules/ValuationForm";
 import TransactionList from "@/components/organisms/TransactionList";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { useMarketHistory } from "@/hooks/useMarketHistory";
 import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import type { MarketRange, QuoteResult } from "@/lib/services/marketData";
@@ -119,6 +120,7 @@ export default function HoldingDetailPanel({
   onAddValuation,
   onDeleteValuation,
 }: HoldingDetailPanelProps) {
+  const { displayCurrency, convertUsd } = usePreferences();
   const [range, setRange] = useState<MarketRange>("6M");
   const [modal, setModal] = useState<ModalKind>({ kind: "none" });
   const [confirmDeleteHolding, setConfirmDeleteHolding] = useState(false);
@@ -173,11 +175,15 @@ export default function HoldingDetailPanel({
           )}
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1 min-w-0">
-          <Amount value={snapshot.currentValueUSD} size="xl" />
+          <Amount
+            value={convertUsd(snapshot.currentValueUSD)}
+            size="xl"
+            currency={displayCurrency}
+          />
           {snapshot.gainPct !== null && (
             <span className={cn("text-sm tabular-nums", gainTone)}>
               {snapshot.gainUSD >= 0 ? "+" : ""}
-              {formatCurrency(snapshot.gainUSD, "USD")}{" "}
+              {formatCurrency(convertUsd(snapshot.gainUSD), displayCurrency)}{" "}
               ({snapshot.gainPct >= 0 ? "+" : ""}
               {(snapshot.gainPct * 100).toFixed(2)}%)
             </span>
@@ -207,7 +213,7 @@ export default function HoldingDetailPanel({
             </div>
             {quote?.priceUSD && (
               <span className="text-xs text-fg-subtle tabular-nums">
-                {formatCurrency(quote.priceUSD, "USD")} last
+                {formatCurrency(convertUsd(quote.priceUSD), displayCurrency)} last
               </span>
             )}
           </div>
@@ -238,11 +244,11 @@ export default function HoldingDetailPanel({
       <dl className="grid grid-cols-2 gap-3">
         <Stat
           label="Cost basis"
-          value={formatCurrency(position?.costBasisUSD ?? 0, "USD")}
+          value={formatCurrency(convertUsd(position?.costBasisUSD ?? 0), displayCurrency)}
         />
         <Stat
           label="Current value"
-          value={formatCurrency(snapshot.currentValueUSD, "USD")}
+          value={formatCurrency(convertUsd(snapshot.currentValueUSD), displayCurrency)}
         />
         {isMarket && (position?.shares ?? 0) > 0 && (
           <>
@@ -255,7 +261,7 @@ export default function HoldingDetailPanel({
             />
             <Stat
               label="Avg cost"
-              value={formatCurrency(position?.avgCostUSD ?? 0, "USD")}
+              value={formatCurrency(convertUsd(position?.avgCostUSD ?? 0), displayCurrency)}
             />
           </>
         )}
@@ -328,7 +334,7 @@ export default function HoldingDetailPanel({
               >
                 <div className="min-w-0">
                   <p className="text-sm text-fg tabular-nums">
-                    {formatCurrency(v.valueUSD, "USD")}
+                    {formatCurrency(convertUsd(v.valueUSD), displayCurrency)}
                   </p>
                   <p className="text-xs text-fg-subtle truncate">
                     {formatDate(v.asOfDate)}

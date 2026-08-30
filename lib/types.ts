@@ -1,5 +1,18 @@
 export type TransactionType = "income" | "expense" | "transfer" | "investment";
 
+// Permission an OwnerCtx grants. "owner" is the signed-in user acting on their
+// own data; "read" and "write" describe grants received through a connection.
+export type OwnerPermission = "owner" | "read" | "write";
+
+// Attached to items after they're read via `listAcrossOwners`. Never persisted
+// — stores strip it on writes. When absent on legacy call sites, mutations
+// default to the signed-in user's own subtree (backwards-compatible).
+export interface OwnerCtx {
+  uid: string;
+  nickname: string;
+  permission: OwnerPermission;
+}
+
 // FX rate applied to a transaction or transfer. `bccr` means the user picked a
 // Costa Rican bank's window rate (compra when the bank is buying USD, venta
 // when it's selling). `fallback` means BCCR was unreachable and the app used
@@ -35,6 +48,7 @@ export interface Account {
   paymentDay?: number;
   creditLimit?: number;
   creditLimitUSD?: number;
+  _owner?: OwnerCtx;
 }
 
 export type NewAccount = Omit<
@@ -48,6 +62,7 @@ export interface Category {
   type: EntryType;
   isDefault: boolean;
   createdAt: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewCategory = Omit<Category, "id" | "createdAt" | "isDefault">;
@@ -89,6 +104,7 @@ export interface Transaction {
   // investment category) and has no shares/price on file yet.
   unpriced?: boolean;
   rateSource?: RateSource;
+  _owner?: OwnerCtx;
 }
 
 export type NewTransaction = Omit<
@@ -118,6 +134,7 @@ export interface RecurringTransaction {
   lastGeneratedDate?: string;
   active: boolean;
   createdAt: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewRecurringTransaction = Omit<
@@ -162,6 +179,7 @@ export interface Goal {
   currency: string;
   targetDate?: string;
   createdAt: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewGoal = Omit<Goal, "id" | "createdAt">;
@@ -176,6 +194,7 @@ export interface GoalContribution {
   // Optional to preserve legacy contributions written before goals earmarked
   // money from a specific account. New contributions require it.
   accountId?: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewGoalContribution = Omit<GoalContribution, "id" | "createdAt">;
@@ -186,6 +205,7 @@ export interface Budget {
   amount: number;
   currency: string;
   createdAt: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewBudget = Omit<Budget, "id" | "createdAt">;
@@ -215,6 +235,7 @@ export interface Holding {
   // contributions and valuations compute gain against the real total invested.
   initialCostUSD?: number;
   createdAt: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewHolding = Omit<Holding, "id" | "createdAt">;
@@ -226,6 +247,7 @@ export interface HoldingValuation {
   asOfDate: string;
   note?: string;
   createdAt: string;
+  _owner?: OwnerCtx;
 }
 
 export type NewHoldingValuation = Omit<HoldingValuation, "id" | "createdAt">;

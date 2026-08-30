@@ -5,6 +5,7 @@ import {
   AddIcon,
   BudgetsIcon,
   CardsIcon,
+  ConnectionsIcon,
   GoalsIcon,
   HomeIcon,
   InvestIcon,
@@ -37,6 +38,12 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/investments", label: "Invest", Icon: InvestIcon, group: "secondary" },
   { href: "/cards", label: "Cards", Icon: CardsIcon, group: "secondary" },
   { href: "/rates", label: "Rates", Icon: RatesIcon, group: "secondary" },
+  {
+    href: "/settings/connections",
+    label: "Connections",
+    Icon: ConnectionsIcon,
+    group: "secondary",
+  },
 ];
 
 export const PRIMARY_ITEMS = NAV_ITEMS.filter((i) => i.group === "primary");

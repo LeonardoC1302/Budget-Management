@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrencyCompact } from "@/lib/utils/format";
 import {
   latestValuationFor,
   manualSnapshot,
@@ -23,6 +24,7 @@ export default function DashboardSummary({
   income,
   expense,
 }: DashboardSummaryProps) {
+  const { displayCurrency, convertUsd } = usePreferences();
   const { holdings, positionsById, valuationsByHolding, unassignedInvestments } =
     useHoldings();
 
@@ -88,19 +90,19 @@ export default function DashboardSummary({
     >
       <Tile
         label="Income"
-        value={formatCurrency(income, "USD")}
+        value={formatCurrencyCompact(convertUsd(income), displayCurrency)}
         tone="text-income"
       />
       <Tile
         label="Expenses"
-        value={formatCurrency(expense, "USD")}
+        value={formatCurrencyCompact(convertUsd(expense), displayCurrency)}
         tone="text-expense"
         className="border-l border-border"
       />
       {showPortfolio && portfolio && (
         <Tile
           label="Portfolio"
-          value={formatCurrency(portfolio.currentValue, "USD")}
+          value={formatCurrencyCompact(convertUsd(portfolio.currentValue), displayCurrency)}
           tone="text-invest"
           hint={
             portfolio.gainPct !== null
