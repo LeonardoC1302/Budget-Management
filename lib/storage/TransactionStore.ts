@@ -6,10 +6,14 @@ import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
  */
 export interface TransactionStore {
   list(): Promise<Transaction[]>;
-  add(input: NewTransaction): Promise<Transaction>;
-  addMany(inputs: NewTransaction[]): Promise<void>;
-  addTransfer(input: NewTransfer): Promise<void>;
-  update(id: string, input: NewTransaction): Promise<Transaction>;
-  remove(id: string): Promise<void>;
-  removeTransfer(transferId: string): Promise<void>;
+  add(input: NewTransaction, ownerUid?: string): Promise<Transaction>;
+  addMany(inputs: NewTransaction[], ownerUid?: string): Promise<void>;
+  addTransfer(input: NewTransfer, ownerUid?: string): Promise<void>;
+  update(
+    id: string,
+    input: NewTransaction,
+    ownerUid?: string,
+  ): Promise<Transaction>;
+  remove(id: string, ownerUid?: string): Promise<void>;
+  removeTransfer(transferId: string, ownerUid?: string): Promise<void>;
 }

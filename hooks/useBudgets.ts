@@ -51,19 +51,21 @@ export function useBudgets() {
 
   const update = useCallback(
     async (id: string, patch: Partial<NewBudget>) => {
-      const updated = await budgetStore.update(id, patch);
+      const target = budgets.find((b) => b.id === id);
+      const updated = await budgetStore.update(id, patch, target?._owner?.uid);
       await refresh();
       return updated;
     },
-    [refresh],
+    [budgets, refresh],
   );
 
   const remove = useCallback(
     async (id: string) => {
-      await budgetStore.remove(id);
+      const target = budgets.find((b) => b.id === id);
+      await budgetStore.remove(id, target?._owner?.uid);
       await refresh();
     },
-    [refresh],
+    [budgets, refresh],
   );
 
   const monthKey = currentMonthKey();

@@ -38,21 +38,30 @@ export function useTransactions() {
 
   const remove = useCallback(async (id: string) => {
     const target = transactions.find((t) => t.id === id);
+    const ownerUid = target?._owner?.uid;
     if (target?.transferId) {
-      await transactionStore.removeTransfer(target.transferId);
+      await transactionStore.removeTransfer(target.transferId, ownerUid);
       setTransactions((prev) =>
         prev.filter((t) => t.transferId !== target.transferId),
       );
       return;
     }
-    await transactionStore.remove(id);
+    await transactionStore.remove(id, ownerUid);
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   }, [transactions]);
 
-  const update = useCallback(async (id: string, input: NewTransaction) => {
-    const updated = await transactionStore.update(id, input);
-    setTransactions((prev) => prev.map((t) => (t.id === id ? updated : t)));
-  }, []);
+  const update = useCallback(
+    async (id: string, input: NewTransaction) => {
+      const target = transactions.find((t) => t.id === id);
+      const updated = await transactionStore.update(
+        id,
+        input,
+        target?._owner?.uid,
+      );
+      setTransactions((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    },
+    [transactions],
+  );
 
   const totals = useMemo(() => {
     let income = 0;

@@ -52,36 +52,40 @@ export function useGoals() {
 
   const updateGoal = useCallback(
     async (id: string, patch: Partial<NewGoal>) => {
-      const updated = await goalStore.updateGoal(id, patch);
+      const target = goals.find((g) => g.id === id);
+      const updated = await goalStore.updateGoal(id, patch, target?._owner?.uid);
       await refreshGoals();
       return updated;
     },
-    [refreshGoals],
+    [goals, refreshGoals],
   );
 
   const removeGoal = useCallback(
     async (id: string) => {
-      await goalStore.removeGoal(id);
+      const target = goals.find((g) => g.id === id);
+      await goalStore.removeGoal(id, target?._owner?.uid);
       await refreshGoals();
     },
-    [refreshGoals],
+    [goals, refreshGoals],
   );
 
   const addContribution = useCallback(
     async (input: NewGoalContribution) => {
-      const created = await goalStore.addContribution(input);
+      const goal = goals.find((g) => g.id === input.goalId);
+      const created = await goalStore.addContribution(input, goal?._owner?.uid);
       await refreshGoals();
       return created;
     },
-    [refreshGoals],
+    [goals, refreshGoals],
   );
 
   const removeContribution = useCallback(
     async (id: string) => {
-      await goalStore.removeContribution(id);
+      const target = contributions.find((c) => c.id === id);
+      await goalStore.removeContribution(id, target?._owner?.uid);
       await refreshGoals();
     },
-    [refreshGoals],
+    [contributions, refreshGoals],
   );
 
   const monthlyRate = useMemo(

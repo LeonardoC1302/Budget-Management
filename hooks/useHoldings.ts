@@ -55,45 +55,61 @@ export function useHoldings() {
 
   const updateHolding = useCallback(
     async (id: string, patch: Partial<NewHolding>) => {
-      const updated = await holdingStore.updateHolding(id, patch);
+      const target = holdings.find((h) => h.id === id);
+      const updated = await holdingStore.updateHolding(
+        id,
+        patch,
+        target?._owner?.uid,
+      );
       await refresh();
       return updated;
     },
-    [refresh],
+    [holdings, refresh],
   );
 
   const removeHolding = useCallback(
     async (id: string) => {
-      await holdingStore.removeHolding(id);
+      const target = holdings.find((h) => h.id === id);
+      await holdingStore.removeHolding(id, target?._owner?.uid);
       await refresh();
     },
-    [refresh],
+    [holdings, refresh],
   );
 
   const addValuation = useCallback(
     async (input: NewHoldingValuation) => {
-      const created = await holdingStore.addValuation(input);
+      const holding = holdings.find((h) => h.id === input.holdingId);
+      const created = await holdingStore.addValuation(
+        input,
+        holding?._owner?.uid,
+      );
       await refresh();
       return created;
     },
-    [refresh],
+    [holdings, refresh],
   );
 
   const updateValuation = useCallback(
     async (id: string, patch: Partial<NewHoldingValuation>) => {
-      const updated = await holdingStore.updateValuation(id, patch);
+      const target = valuations.find((v) => v.id === id);
+      const updated = await holdingStore.updateValuation(
+        id,
+        patch,
+        target?._owner?.uid,
+      );
       await refresh();
       return updated;
     },
-    [refresh],
+    [valuations, refresh],
   );
 
   const removeValuation = useCallback(
     async (id: string) => {
-      await holdingStore.removeValuation(id);
+      const target = valuations.find((v) => v.id === id);
+      await holdingStore.removeValuation(id, target?._owner?.uid);
       await refresh();
     },
-    [refresh],
+    [valuations, refresh],
   );
 
   const investments = useMemo(

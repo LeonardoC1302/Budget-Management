@@ -84,9 +84,9 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       const budgets = await budgetStore.list();
       const orphanedBudgets = budgets.filter((b) => b.categoryId === id);
       for (const b of orphanedBudgets) {
-        await budgetStore.remove(b.id);
+        await budgetStore.remove(b.id, b._owner?.uid);
       }
-      await categoryStore.remove(id);
+      await categoryStore.remove(id, target?._owner?.uid);
       await refresh();
       if (orphanedBudgets.length > 0) emitDataChanged();
     },

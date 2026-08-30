@@ -2,20 +2,28 @@ import {
   addDoc,
   deleteDoc,
   getDoc,
-  getDocs,
   orderBy,
   query,
   updateDoc,
 } from "firebase/firestore";
-import { userCollection, userDoc } from "@/lib/firebase/firestoreHelpers";
+import {
+  listAcrossOwners,
+  ownerCollection,
+  ownerDoc,
+} from "@/lib/firebase/firestoreHelpers";
+import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
 import { getRate } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
-import type { Account, NewAccount } from "@/lib/types";
+import type { Account, NewAccount, OwnerCtx } from "@/lib/types";
 import type { AccountStore } from "@/lib/storage/AccountStore";
 
 const COL = "accounts";
 
-function hydrate(id: string, data: Omit<Account, "id">): Account {
+function hydrate(
+  id: string,
+  data: Omit<Account, "id">,
+  owner: OwnerCtx,
+): Account {
   const currency = data.currency ?? BASE_CURRENCY;
   const initialBalanceUSD =
     typeof data.initialBalanceUSD === "number"
@@ -26,7 +34,14 @@ function hydrate(id: string, data: Omit<Account, "id">): Account {
     typeof data.creditLimitUSD !== "number"
       ? data.creditLimit
       : data.creditLimitUSD;
-  return { ...data, id, currency, initialBalanceUSD, creditLimitUSD };
+  return {
+    ...data,
+    id,
+    currency,
+    initialBalanceUSD,
+    creditLimitUSD,
+    _owner: owner,
+  };
 }
 
 function stripUndefined<T extends Record<string, unknown>>(input: T): T {
@@ -39,10 +54,14 @@ function stripUndefined<T extends Record<string, unknown>>(input: T): T {
 
 export const firebaseAccountStore: AccountStore = {
   async list() {
-    const snap = await getDocs(query(userCollection(COL), orderBy("createdAt")));
-    return snap.docs.map((d) => hydrate(d.id, d.data() as Omit<Account, "id">));
+    return listAcrossOwners<Account>(
+      COL,
+      (id, data, owner) => hydrate(id, data as Omit<Account, "id">, owner),
+      (col) => query(col, orderBy("createdAt")),
+    );
   },
-  async add(input: NewAccount) {
+  async add(input: NewAccount, ownerUid?: string) {
+    const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
     const rate = await getRate(input.currency, BASE_CURRENCY);
     const initialBalanceUSD = input.initialBalance * rate;
@@ -56,11 +75,16 @@ export const firebaseAccountStore: AccountStore = {
       creditLimitUSD,
       createdAt,
     });
-    const ref = await addDoc(userCollection(COL), account);
-    return { id: ref.id, ...account } as Account;
+    const ref = await addDoc(ownerCollection(uid, COL), account);
+    return {
+      id: ref.id,
+      ...account,
+      _owner: findOwnerCtx(uid) ?? { uid, nickname: "You", permission: "owner" },
+    } as Account;
   },
-  async update(id, patch) {
-    const ref = userDoc(COL, id);
+  async update(id, patch, ownerUid) {
+    const uid = requireWriteUid(ownerUid);
+    const ref = ownerDoc(uid, COL, id);
     const nextPatch: Partial<Account> = { ...patch };
 
     if (patch.currency !== undefined || patch.initialBalance !== undefined) {
@@ -89,12 +113,20 @@ export const firebaseAccountStore: AccountStore = {
       }
     }
 
+    // Never persist `_owner` — it's a read-time decoration.
+    delete (nextPatch as { _owner?: unknown })._owner;
+
     await updateDoc(ref, stripUndefined(nextPatch));
     const snap = await getDoc(ref);
     if (!snap.exists()) throw new Error(`Account ${id} not found`);
-    return hydrate(snap.id, snap.data() as Omit<Account, "id">);
+    return hydrate(
+      snap.id,
+      snap.data() as Omit<Account, "id">,
+      findOwnerCtx(uid) ?? { uid, nickname: "You", permission: "owner" },
+    );
   },
-  async remove(id) {
-    await deleteDoc(userDoc(COL, id));
+  async remove(id, ownerUid) {
+    const uid = requireWriteUid(ownerUid);
+    await deleteDoc(ownerDoc(uid, COL, id));
   },
 };

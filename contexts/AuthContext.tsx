@@ -11,7 +11,7 @@ import {
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { signInWithGoogle, signOutUser } from "@/lib/firebase/auth";
-import { ensureUserSeed } from "@/lib/firebase/seed";
+import { ensureUserSeed, upsertUserProfile } from "@/lib/firebase/seed";
 
 interface AuthContextValue {
   user: User | null;
@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       ensureUserSeed(nextUser.uid)
+        .then(() => upsertUserProfile(nextUser))
         .catch((err) => {
           console.error("Failed to seed user data", err);
         })

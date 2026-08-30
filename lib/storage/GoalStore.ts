@@ -7,11 +7,14 @@ import type {
 
 export interface GoalStore {
   listGoals(): Promise<Goal[]>;
-  addGoal(input: NewGoal): Promise<Goal>;
-  updateGoal(id: string, patch: Partial<NewGoal>): Promise<Goal>;
-  removeGoal(id: string): Promise<void>;
+  addGoal(input: NewGoal, ownerUid?: string): Promise<Goal>;
+  updateGoal(id: string, patch: Partial<NewGoal>, ownerUid?: string): Promise<Goal>;
+  removeGoal(id: string, ownerUid?: string): Promise<void>;
 
   listContributions(): Promise<GoalContribution[]>;
-  addContribution(input: NewGoalContribution): Promise<GoalContribution>;
-  removeContribution(id: string): Promise<void>;
+  addContribution(
+    input: NewGoalContribution,
+    ownerUid?: string,
+  ): Promise<GoalContribution>;
+  removeContribution(id: string, ownerUid?: string): Promise<void>;
 }
