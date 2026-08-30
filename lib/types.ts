@@ -134,6 +134,10 @@ export interface RecurringTransaction {
   lastGeneratedDate?: string;
   active: boolean;
   createdAt: string;
+  // BCCR bank pick consulted at materialization time when currency differs
+  // from the account's. Only used for USD↔CRC; other pairs fall through to
+  // open.er-api.com. The rate itself is fetched each run, not stored here.
+  rateBccrEntity?: { id: string; name: string };
   _owner?: OwnerCtx;
 }
 
