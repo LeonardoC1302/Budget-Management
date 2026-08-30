@@ -6,7 +6,8 @@ import { defaultAccount, defaultCategories } from "@/lib/storage/seeds";
 // Idempotent profile upsert. Runs on every sign-in so users created before the
 // shared-accounts feature also get a profile doc on their next visit. The
 // nickname field is preserved once written — only email/photoURL are refreshed
-// from Firebase Auth on each call.
+// from Firebase Auth on each call. `preferences` is seeded on first create and
+// never overwritten on subsequent merges so user choices persist.
 export async function upsertUserProfile(user: User): Promise<void> {
   const profileRef = doc(db, "users", user.uid);
   const existing = await getDoc(profileRef);
@@ -17,6 +18,7 @@ export async function upsertUserProfile(user: User): Promise<void> {
       nickname: displayFallback,
       email: user.email ?? null,
       photoURL: user.photoURL ?? null,
+      preferences: { displayCurrency: "USD" },
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -27,6 +29,20 @@ export async function upsertUserProfile(user: User): Promise<void> {
     {
       email: user.email ?? existing.data().email ?? null,
       photoURL: user.photoURL ?? existing.data().photoURL ?? null,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
+export async function updateDisplayCurrency(
+  uid: string,
+  currency: string,
+): Promise<void> {
+  await setDoc(
+    doc(db, "users", uid),
+    {
+      preferences: { displayCurrency: currency },
       updatedAt: serverTimestamp(),
     },
     { merge: true },

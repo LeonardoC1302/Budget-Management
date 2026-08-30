@@ -2,7 +2,25 @@ export function formatCurrency(amount: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+// Compact form for preview surfaces where large-magnitude values (e.g. CRC
+// balances that run into millions) would blow out the layout. Uses "3K", "1.2M"
+// etc. Full-value renders (modals, detail views) should keep `formatCurrency`.
+export function formatCurrencyCompact(
+  amount: number,
+  currency = "USD",
+): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 1,
   }).format(amount);
 }
 

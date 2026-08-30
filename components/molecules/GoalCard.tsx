@@ -3,9 +3,9 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import ProgressBar from "@/components/atoms/ProgressBar";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import { cn } from "@/lib/utils/cn";
-import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency } from "@/lib/utils/format";
 import {
   computeGoalProgress,
@@ -33,6 +33,7 @@ function EstimateLine({
   contributions: GoalContribution[];
   monthlyRate: number | null;
 }) {
+  const { displayCurrency, convertUsd } = usePreferences();
   const estimate = estimateTimeToGoal(goal, contributions, monthlyRate);
 
   if (estimate.kind === "reached") {
@@ -60,7 +61,7 @@ function EstimateLine({
     <p className="lede leading-snug">
       At{" "}
       <span className="text-fg font-medium not-italic figure">
-        {formatCurrency(estimate.monthlyRate, BASE_CURRENCY)}
+        {formatCurrency(convertUsd(estimate.monthlyRate), displayCurrency)}
       </span>
       {" "}per month, you&apos;ll reach it in{" "}
       <span className="text-fg font-medium not-italic">

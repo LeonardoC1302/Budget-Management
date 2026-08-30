@@ -84,6 +84,7 @@ export default function HomePage() {
             transactions={recent}
             accountsById={accountsById}
             categoriesById={categoriesById}
+            compact
           />
         )}
       </section>

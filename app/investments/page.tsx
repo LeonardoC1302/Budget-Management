@@ -10,6 +10,7 @@ import RouteMasthead from "@/components/molecules/RouteMasthead";
 import HoldingForm from "@/components/molecules/HoldingForm";
 import HoldingDetailPanel from "@/components/organisms/HoldingDetailPanel";
 import UnassignedMapper from "@/components/organisms/UnassignedMapper";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import { useHoldings } from "@/hooks/useHoldings";
@@ -41,6 +42,7 @@ export default function InvestmentsPage() {
   } = useHoldings();
   const { byId: accountsById } = useAccounts();
   const { byId: categoriesById } = useCategories();
+  const { displayCurrency, convertUsd } = usePreferences();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [openHoldingId, setOpenHoldingId] = useState<string | null>(null);
@@ -164,10 +166,10 @@ export default function InvestmentsPage() {
           className="courtyard-fig text-invest"
           style={{ fontSize: "clamp(1.875rem, 9vw, 4.5rem)" }}
         >
-          {formatCurrency(totals.currentValue, "USD")}
+          {formatCurrency(convertUsd(totals.currentValue), displayCurrency)}
         </span>
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-fg-muted mt-2">
-          <span>Cost basis · {formatCurrency(totals.costBasis, "USD")}</span>
+          <span>Cost basis · {formatCurrency(convertUsd(totals.costBasis), displayCurrency)}</span>
           {totals.gainPct !== null && (
             <span
               className={
@@ -179,7 +181,7 @@ export default function InvestmentsPage() {
               }
             >
               {totals.gain >= 0 ? "+" : ""}
-              {formatCurrency(totals.gain, "USD")} (
+              {formatCurrency(convertUsd(totals.gain), displayCurrency)} (
               {totals.gainPct >= 0 ? "+" : ""}
               {(totals.gainPct * 100).toFixed(2)}%)
             </span>
@@ -251,11 +253,13 @@ export default function InvestmentsPage() {
             </div>
             <span className="figure text-fg">
               {formatCurrency(
-                unassignedInvestments.reduce(
-                  (sum, t) => sum + t.amountUSD,
-                  0,
+                convertUsd(
+                  unassignedInvestments.reduce(
+                    (sum, t) => sum + t.amountUSD,
+                    0,
+                  ),
                 ),
-                "USD",
+                displayCurrency,
               )}
             </span>
           </button>

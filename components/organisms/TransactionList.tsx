@@ -2,8 +2,9 @@
 
 import EmptyState from "@/components/atoms/EmptyState";
 import TransactionItem from "@/components/molecules/TransactionItem";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { formatDateHeader } from "@/lib/utils/format";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrencyCompact, formatCurrency } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
 
 interface TransactionListProps {
@@ -21,6 +22,8 @@ interface TransactionListProps {
   groupByDate?: boolean;
   /** Collapse each transfer's paired docs into a single source → destination row. */
   groupTransfers?: boolean;
+  /** Preview surfaces (home page recent activity) use compact notation. */
+  compact?: boolean;
 }
 
 /**
@@ -41,7 +44,9 @@ export default function TransactionList({
   emptyMessage = "No transactions yet.",
   groupByDate = false,
   groupTransfers = false,
+  compact = false,
 }: TransactionListProps) {
+  const { displayCurrency, convertUsd } = usePreferences();
   const visible = groupTransfers
     ? transactions.filter(
         (t) => t.type !== "transfer" || t.transferDirection !== "in",
@@ -72,6 +77,7 @@ export default function TransactionList({
       onSelect={onSelect}
       groupedTransfer={groupTransfers}
       hideDate={hideDate}
+      compact={compact}
     />
   );
 
@@ -119,7 +125,10 @@ export default function TransactionList({
               </span>
               <span className={`day-head-meta ${netTone}`}>
                 {net >= 0 ? "+" : "−"}
-                {formatCurrency(Math.abs(net), "USD")}
+                {(compact ? formatCurrencyCompact : formatCurrency)(
+                  Math.abs(convertUsd(net)),
+                  displayCurrency,
+                )}
               </span>
             </div>
             <div className="rooms" role="list">

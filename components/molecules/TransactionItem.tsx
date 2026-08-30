@@ -1,6 +1,7 @@
 "use client";
 
 import Amount from "@/components/atoms/Amount";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { RefreshIcon } from "@/lib/action/icons";
 import { cn } from "@/lib/utils/cn";
 import { formatDate } from "@/lib/utils/format";
@@ -16,6 +17,8 @@ interface TransactionItemProps {
   groupedTransfer?: boolean;
   /** Hide the date column when the list already groups by day. */
   hideDate?: boolean;
+  /** Preview surfaces (home page recent activity) use compact notation. */
+  compact?: boolean;
 }
 
 function shortDate(iso: string): string {
@@ -38,7 +41,9 @@ export default function TransactionItem({
   onSelect,
   groupedTransfer = false,
   hideDate = false,
+  compact = false,
 }: TransactionItemProps) {
+  const { displayCurrency, convertUsd } = usePreferences();
   const isTransfer = transaction.type === "transfer";
   const isIncome = transaction.type === "income";
   const isInvestment = transaction.type === "investment";
@@ -122,10 +127,11 @@ export default function TransactionItem({
         </div>
       </div>
       <Amount
-        value={isTransfer ? transaction.amount : transaction.amountUSD}
+        value={convertUsd(transaction.amountUSD)}
         tone={tone}
         size="md"
-        currency={isTransfer ? transaction.currency : "USD"}
+        currency={displayCurrency}
+        compact={compact}
         showSign={!isTransfer && !isInvestment}
         className={cn(
           "entry-amt shrink-0",

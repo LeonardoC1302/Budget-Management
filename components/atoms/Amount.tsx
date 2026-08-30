@@ -8,6 +8,8 @@ interface AmountProps {
   size?: "sm" | "md" | "lg" | "xl";
   showSign?: boolean;
   currency?: string;
+  /** Use compact notation ("3K", "1.2M") — for preview surfaces. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -30,12 +32,16 @@ export default function Amount({
   size = "md",
   showSign = false,
   currency = "USD",
+  compact = false,
   className,
 }: AmountProps) {
   const formatted = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    maximumFractionDigits: 2,
+    currencyDisplay: "narrowSymbol",
+    ...(compact
+      ? { notation: "compact", compactDisplay: "short", maximumFractionDigits: 1 }
+      : { maximumFractionDigits: 2 }),
   }).format(Math.abs(value));
 
   const sign = showSign ? (tone === "expense" ? "−" : tone === "income" ? "+" : "") : "";
