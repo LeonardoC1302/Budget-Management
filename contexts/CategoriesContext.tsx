@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { budgetStore, categoryStore, transactionStore } from "@/lib/storage";
-import { emitDataChanged } from "@/lib/events/dataChanged";
+import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
 import type { Category, NewCategory, TransactionType } from "@/lib/types";
 
 interface CategoriesContextValue {
@@ -59,6 +59,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       },
     );
   }, []);
+
+  useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
   const add = useCallback(
     async (input: NewCategory) => {
