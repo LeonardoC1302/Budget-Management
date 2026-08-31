@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { emitDataChanged } from "@/lib/events/dataChanged";
+import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
 import { runMaterialization } from "@/lib/recurring/runMaterialization";
 import { recurringTransactionStore } from "@/lib/storage";
 import type {
@@ -49,6 +49,8 @@ export function useRecurringTransactions() {
     const items = await recurringTransactionStore.list();
     setRecurring(items);
   }, []);
+
+  useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
   const add = useCallback(async (input: NewRecurringTransaction) => {
     const created = await recurringTransactionStore.add(input);

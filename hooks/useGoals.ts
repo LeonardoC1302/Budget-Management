@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { goalStore, transactionStore } from "@/lib/storage";
+import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { computeMonthlySavingsRate } from "@/lib/utils/goals";
 import type {
   Goal,
@@ -40,6 +41,22 @@ export function useGoals() {
       ),
     [],
   );
+
+  const refresh = useCallback(
+    () =>
+      Promise.all([
+        goalStore.listGoals(),
+        goalStore.listContributions(),
+        transactionStore.list(),
+      ]).then(([g, c, t]) => {
+        setGoals(g);
+        setContributions(c);
+        setTransactions(t);
+      }),
+    [],
+  );
+
+  useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
   const addGoal = useCallback(
     async (input: NewGoal) => {
