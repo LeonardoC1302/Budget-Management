@@ -29,11 +29,22 @@ function ownerCtxFor(uid: string): OwnerCtx {
 
 export const firebaseCategoryStore: CategoryStore = {
   async list() {
-    return listAcrossOwners<Category>(
+    const all = await listAcrossOwners<Category>(
       COL,
       (id, data, owner) => hydrate(id, data as Omit<Category, "id">, owner),
       (col) => query(col, orderBy("createdAt")),
     );
+    // Default categories have fixed ids (`cat-food`, ...) that collide across
+    // owners' subtrees, so they'd appear once per accessible owner. Dedupe by
+    // id — self is listed first in `getAccessibleContexts`, so the viewer's
+    // own copy wins. Custom categories get random Firestore ids and pass
+    // through untouched.
+    const seen = new Set<string>();
+    return all.filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
   },
   async add(input: NewCategory, ownerUid?: string) {
     const uid = requireWriteUid(ownerUid);
