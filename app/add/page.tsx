@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
@@ -29,8 +29,15 @@ export default function AddTransactionPage() {
   const { add } = useTransactions();
   const [session, setSession] = useState<SessionEntry[]>([]);
   const [formKey, setFormKey] = useState(0);
+  const loggedRef = useRef<HTMLElement>(null);
 
   const last = session[session.length - 1];
+
+  useEffect(() => {
+    if (!last) return;
+    loggedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    loggedRef.current?.focus({ preventScroll: true });
+  }, [last]);
 
   async function handleSubmit(input: NewTransaction) {
     await add(input);
@@ -65,37 +72,24 @@ export default function AddTransactionPage() {
 
       {last && (
         <section
+          ref={loggedRef}
           className="courtyard p-5 flex flex-col gap-3"
           aria-live="polite"
+          tabIndex={-1}
+          style={{ background: "var(--color-income-soft)" }}
         >
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <span
-                aria-hidden
-                className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
-                style={{
-                  background: "var(--color-income-soft)",
-                  color: "var(--color-income)",
-                }}
-              >
-                ✓
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm text-fg">
-                  Logged{" "}
-                  <span className="font-medium">
-                    {formatCurrency(last.amount, last.currency)}
-                  </span>{" "}
-                  <span className="text-fg-muted">
-                    · {TYPE_LABEL[last.type]}
-                  </span>
-                </p>
-                {last.description && (
-                  <p className="lede text-xs mt-1 truncate">
-                    {last.description}
-                  </p>
-                )}
-              </div>
+            <div className="min-w-0">
+              <p className="text-sm text-fg">
+                <span className="font-medium text-income">Logged</span>{" "}
+                <span className="font-medium">
+                  {formatCurrency(last.amount, last.currency)}
+                </span>{" "}
+                <span className="text-fg-muted">· {TYPE_LABEL[last.type]}</span>
+              </p>
+              {last.description && (
+                <p className="lede text-xs mt-1 truncate">{last.description}</p>
+              )}
             </div>
             <span className="kicker shrink-0">
               {session.length} this session

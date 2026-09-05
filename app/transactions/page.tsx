@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@/components/atoms/Modal";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
+import Select from "@/components/atoms/Select";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import TransactionDetailsModal from "@/components/molecules/TransactionDetailsModal";
 import TransactionForm from "@/components/molecules/TransactionForm";
@@ -22,6 +23,7 @@ export default function TransactionsPage() {
   const [selected, setSelected] = useState<Transaction | null>(null);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_FILTER);
+  const [accountFilter, setAccountFilter] = useState<string>(ALL_FILTER);
   const filtersRef = useRef<HTMLDivElement>(null);
 
   const nonInvestment = useMemo(
@@ -43,9 +45,24 @@ export default function TransactionsPage() {
   }, [nonInvestment, categoriesById]);
 
   const filtered = useMemo(() => {
-    if (categoryFilter === ALL_FILTER) return nonInvestment;
-    return nonInvestment.filter((t) => t.categoryId === categoryFilter);
-  }, [nonInvestment, categoryFilter]);
+    return nonInvestment.filter(
+      (t) =>
+        (categoryFilter === ALL_FILTER || t.categoryId === categoryFilter) &&
+        (accountFilter === ALL_FILTER || t.accountId === accountFilter),
+    );
+  }, [nonInvestment, categoryFilter, accountFilter]);
+
+  const accountOptions = useMemo(
+    () => [
+      { value: ALL_FILTER, label: "All accounts" },
+      ...(accountsById
+        ? Object.values(accountsById)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((account) => ({ value: account.id, label: account.name }))
+        : []),
+    ],
+    [accountsById],
+  );
 
   useEffect(() => {
     const el = filtersRef.current;
@@ -64,36 +81,50 @@ export default function TransactionsPage() {
     <div className="flex flex-col gap-6">
       <RouteMasthead kicker="History" title="The ledger" />
 
-      {usedCategories.length > 0 && (
-        <div className="relative -mx-1">
-          <div
-            ref={filtersRef}
-            className="scrollbar-hide flex gap-1 overflow-x-auto px-1 pb-1"
-            role="tablist"
-            aria-label="Filter by category"
-          >
-            <FilterPill
-              label="All"
-              active={categoryFilter === ALL_FILTER}
-              onClick={() => setCategoryFilter(ALL_FILTER)}
+      {(accountOptions.length > 1 || usedCategories.length > 0) && (
+        <div className="flex flex-col gap-3">
+          {accountOptions.length > 1 && (
+            <Select
+              label="Account"
+              options={accountOptions}
+              value={accountFilter}
+              onChange={setAccountFilter}
+              className="w-full sm:max-w-xs"
             />
-            {usedCategories.map((c) => (
-              <FilterPill
-                key={c.id}
-                label={c.name}
-                active={categoryFilter === c.id}
-                onClick={() => setCategoryFilter(c.id)}
+          )}
+
+          {usedCategories.length > 0 && (
+            <div className="relative -mx-1">
+              <div
+                ref={filtersRef}
+                className="scrollbar-hide flex gap-1 overflow-x-auto px-1 pb-1"
+                role="tablist"
+                aria-label="Filter by category"
+              >
+                <FilterPill
+                  label="All"
+                  active={categoryFilter === ALL_FILTER}
+                  onClick={() => setCategoryFilter(ALL_FILTER)}
+                />
+                {usedCategories.map((c) => (
+                  <FilterPill
+                    key={c.id}
+                    label={c.name}
+                    active={categoryFilter === c.id}
+                    onClick={() => setCategoryFilter(c.id)}
+                  />
+                ))}
+              </div>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 right-0 w-8"
+                style={{
+                  background:
+                    "linear-gradient(to left, var(--color-bg), transparent)",
+                }}
               />
-            ))}
-          </div>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-8"
-            style={{
-              background:
-                "linear-gradient(to left, var(--color-bg), transparent)",
-            }}
-          />
+            </div>
+          )}
         </div>
       )}
 
@@ -106,21 +137,27 @@ export default function TransactionsPage() {
           categoriesById={categoriesById}
           onSelect={setSelected}
           groupByDate
-          groupTransfers
+          groupTransfers={accountFilter === ALL_FILTER}
           emptyTitle={
-            categoryFilter === ALL_FILTER
+            categoryFilter === ALL_FILTER && accountFilter === ALL_FILTER
               ? "No entries have been set down yet."
-              : "Nothing in this category yet."
+              : "Nothing matches these filters yet."
           }
           emptyDescription={
-            categoryFilter === ALL_FILTER
+            categoryFilter === ALL_FILTER && accountFilter === ALL_FILTER
               ? "Add your first entry — income, expense, or transfer — to start seeing the shape of the month."
-              : "Nothing matches this category yet. Add a transaction or pick a different filter."
+              : "Try a different account or category filter, or add a new transaction."
           }
           emptyActionLabel={
-            categoryFilter === ALL_FILTER ? "Add a transaction" : undefined
+            categoryFilter === ALL_FILTER && accountFilter === ALL_FILTER
+              ? "Add a transaction"
+              : undefined
           }
-          emptyActionHref={categoryFilter === ALL_FILTER ? "/add" : undefined}
+          emptyActionHref={
+            categoryFilter === ALL_FILTER && accountFilter === ALL_FILTER
+              ? "/add"
+              : undefined
+          }
         />
       )}
 
