@@ -16,7 +16,11 @@ import {
   ownerCollection,
   ownerDoc,
 } from "@/lib/firebase/firestoreHelpers";
-import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
+import {
+  requireWriteUid,
+  findOwnerCtx,
+  getAccessibleContexts,
+} from "@/lib/firebase/access";
 import {
   amountInUsd,
   convertUsingRateSource,
@@ -47,12 +51,29 @@ function hydrate(
 }
 
 async function fetchAccountCurrency(
-  ownerUid: string,
+  writerUid: string,
   accountId: string,
 ): Promise<string> {
-  const snap = await getDoc(ownerDoc(ownerUid, ACCOUNTS_COL, accountId));
-  const data = snap.exists() ? (snap.data() as { currency?: string }) : null;
-  return data?.currency ?? BASE_CURRENCY;
+  // Try the writer first (self-owned accounts are the common case), then any
+  // accessible grantor. Shared accounts live in the owner's subtree, so the
+  // writer's own path misses and would otherwise fall back to USD — corrupting
+  // `accountAmount` for cross-owner writes.
+  const seen = new Set<string>();
+  const order = [writerUid, ...getAccessibleContexts().map((c) => c.uid)];
+  for (const uid of order) {
+    if (!uid || seen.has(uid)) continue;
+    seen.add(uid);
+    try {
+      const snap = await getDoc(ownerDoc(uid, ACCOUNTS_COL, accountId));
+      if (snap.exists()) {
+        const data = snap.data() as { currency?: string };
+        return data.currency ?? BASE_CURRENCY;
+      }
+    } catch {
+      // Revoked grants throw permission-denied; keep searching other owners.
+    }
+  }
+  return BASE_CURRENCY;
 }
 
 function stripUndefined<T extends Record<string, unknown>>(input: T): T {
