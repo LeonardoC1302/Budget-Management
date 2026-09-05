@@ -5,18 +5,25 @@ import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { transactionStore } from "@/lib/storage";
 import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 
+function sortByTransactionDate(items: Transaction[]): Transaction[] {
+  return [...items].sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
+  );
+}
+
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const items = await transactionStore.list();
-    setTransactions(items);
+    setTransactions(sortByTransactionDate(items));
   }, []);
 
   useEffect(() => {
     transactionStore.list().then((items) => {
-      setTransactions(items);
+      setTransactions(sortByTransactionDate(items));
       setLoading(false);
     });
   }, []);
@@ -25,7 +32,7 @@ export function useTransactions() {
 
   const add = useCallback(async (input: NewTransaction) => {
     const created = await transactionStore.add(input);
-    setTransactions((prev) => [created, ...prev]);
+    setTransactions((prev) => sortByTransactionDate([created, ...prev]));
   }, []);
 
   const addTransfer = useCallback(
@@ -58,7 +65,9 @@ export function useTransactions() {
         input,
         target?._owner?.uid,
       );
-      setTransactions((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      setTransactions((prev) =>
+        sortByTransactionDate(prev.map((t) => (t.id === id ? updated : t))),
+      );
     },
     [transactions],
   );
