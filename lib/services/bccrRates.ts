@@ -1,11 +1,13 @@
-// Scraper for the Banco Central de Costa Rica "Tipo de cambio de ventanilla"
-// page — the list of USD/CRC buy/sell rates each commercial bank posts at its
-// window. There is no public REST API for this feed, so we fetch the HTML and
-// walk the table server-side. The upstream page is HTML meant for a browser;
-// treat parsing as best-effort and surface a clear error when it fails.
+// Scraper for tipodecambio.info's "Ventanilla" page — a table of USD/CRC
+// buy/sell rates each Costa Rican financial institution posts at its window,
+// aggregated from data published by the Banco Central de Costa Rica. The
+// BCCR's own ventanilla page (gee.bccr.fi.cr) has gone offline, so this
+// mirror is used instead. There is no public REST API for this feed, so we
+// fetch the HTML and walk the table server-side. The upstream page is HTML
+// meant for a browser; treat parsing as best-effort and surface a clear
+// error when it fails.
 
-const BCCR_URL =
-  "https://gee.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmConsultaTCVentanilla.aspx";
+const BCCR_URL = "https://tipodecambio.info/ventanilla.php?lang=en";
 const BCCR_TTL_MS = 30 * 60 * 1000;
 
 export interface BccrEntityRate {
@@ -20,30 +22,20 @@ export interface BccrEntityRate {
   sell: number | null;
 }
 
-// BCCR groups entities under Spanish "Tipo de Entidad" sections. We surface
-// these to the UI translated. Any section not in this map falls back to its
-// original Spanish label rather than being dropped.
+// tipodecambio.info groups entities under a `data-type` attribute on each
+// row. We surface these to the UI translated. Any type not in this map falls
+// back to its raw value rather than being dropped.
 const CATEGORY_LABELS: Record<string, string> = {
-  "bancos publicos": "Public banks",
-  "bancos privados": "Private banks",
-  financieras: "Finance companies",
-  "mutuales de vivienda": "Housing mutuals",
-  cooperativas: "Cooperatives",
-  "casas de cambio": "Exchange houses",
-  "puestos de bolsa": "Brokerages",
+  banco: "Banks",
+  cooperativa: "Credit unions",
+  casa: "Exchange houses",
+  financiera: "Finance companies",
+  mutual: "Mutual savings",
+  puesto: "Stockbrokers",
 };
 
-function normalizeCategoryKey(raw: string): string {
-  return raw
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function translateCategory(raw: string): string {
-  return CATEGORY_LABELS[normalizeCategoryKey(raw)] ?? raw;
+  return CATEGORY_LABELS[raw.toLowerCase().trim()] ?? raw;
 }
 
 export interface BccrSnapshot {
@@ -83,7 +75,7 @@ function stripTags(fragment: string): string {
 }
 
 function parseNumber(raw: string): number | null {
-  const cleaned = raw.replace(/\s+/g, "");
+  const cleaned = raw.replace(/[^0-9.,]/g, "");
   if (!cleaned) return null;
   const hasDot = cleaned.includes(".");
   const hasComma = cleaned.includes(",");
@@ -92,7 +84,7 @@ function parseNumber(raw: string): number | null {
     // Latin American convention: "1.234,56" — dots are thousands separators.
     normalized = cleaned.replace(/\./g, "").replace(",", ".");
   } else if (hasComma) {
-    // "512,34" → "512.34". BCCR ventanilla uses this shape.
+    // "512,34" → "512.34".
     normalized = cleaned.replace(",", ".");
   } else {
     normalized = cleaned;
@@ -102,50 +94,54 @@ function parseNumber(raw: string): number | null {
 }
 
 /**
- * Extract entity rows from the ventanilla HTML. The upstream table has six
- * columns: [Tipo de Entidad, Entidad Autorizada, Compra, Venta, Diferencial,
- * Última Actualización]. The first column only renders text on the first row
- * of each section — subsequent rows leave it as `&nbsp;` — so we track the
- * "current section" as we walk rows and stamp every entity with it.
+ * Extract entity rows from the ventanilla HTML. Each row looks like:
+ *   <tr data-type="banco" class="table-row">
+ *     <td class="cell-entity">Name</td>
+ *     <td class="cell-number ...">₡123.45</td>   (buy)
+ *     <td class="cell-number ...">₡123.45</td>   (sell)
+ *     <td class="cell-spread ...">1.23</td>
+ *     <td class="cell-time">...</td>
+ *   </tr>
+ * The `data-type` attribute maps to the category via CATEGORY_LABELS.
  */
 function parseVentanillaHtml(html: string): BccrEntityRate[] {
   const rows: BccrEntityRate[] = [];
-  const trRegex = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-  const tdRegex = /<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi;
+  const trRegex =
+    /<tr\s+data-type="([^"]*)"[^>]*>([\s\S]*?)<\/tr>/gi;
+  const tdRegex = /<td\b[^>]*>([\s\S]*?)<\/td>/gi;
 
   const seen = new Set<string>();
-  let currentCategory: string | null = null;
   let match: RegExpExecArray | null;
   while ((match = trRegex.exec(html)) !== null) {
-    const cellsRaw = match[1];
+    const rawCategory = match[1];
+    const cellsRaw = match[2];
     const cells: string[] = [];
     let cellMatch: RegExpExecArray | null;
     tdRegex.lastIndex = 0;
     while ((cellMatch = tdRegex.exec(cellsRaw)) !== null) {
       cells.push(stripTags(cellMatch[1]));
     }
-    // A data row is [category?, entity, compra, venta, diferencial, updated].
-    // Anything narrower is a layout row (title, notes) — skip it.
-    if (cells.length < 4) continue;
+    // A data row is [entity, buy, sell, spread, updated]. Anything narrower
+    // is unexpected markup — skip it.
+    if (cells.length < 3) continue;
 
-    const buy = parseNumber(cells[2]);
-    const sell = parseNumber(cells[3]);
-    // Header row ("Compra"/"Venta" text) has no numbers in these slots and
-    // gets filtered here without a separate check.
-    if (buy === null && sell === null) continue;
-
-    const name = cells[1];
+    const name = cells[0];
     if (!name || name.length < 2) continue;
 
-    // First cell either declares a new section or is blank ("&nbsp;", which
-    // stripTags collapses to "") for continuation rows within the section.
-    const rawCategory = cells[0];
-    if (rawCategory) currentCategory = translateCategory(rawCategory);
+    const buy = parseNumber(cells[1]);
+    const sell = parseNumber(cells[2]);
+    if (buy === null && sell === null) continue;
 
     const id = slugify(name);
     if (!id || seen.has(id)) continue;
     seen.add(id);
-    rows.push({ id, name, category: currentCategory, buy, sell });
+    rows.push({
+      id,
+      name,
+      category: rawCategory ? translateCategory(rawCategory) : null,
+      buy,
+      sell,
+    });
   }
 
   return rows;
@@ -163,17 +159,16 @@ async function fetchBccrHtml(): Promise<string> {
     },
   });
   if (!res.ok) {
-    throw new Error(`BCCR responded with ${res.status}`);
+    throw new Error(`Ventanilla page responded with ${res.status}`);
   }
-  // BCCR serves the page as ISO-8859-1; if we let fetch decode as UTF-8 the
-  // accented entity names come back as mojibake. Detect via Content-Type when
-  // possible, otherwise fall back to latin-1 which matches the observed shape.
+  // The site declares UTF-8; detect via Content-Type when possible, falling
+  // back to utf-8 which matches the observed shape.
   const buffer = await res.arrayBuffer();
   const contentType = res.headers.get("content-type") ?? "";
   const charsetMatch = /charset=([^;]+)/i.exec(contentType);
-  const charset = (charsetMatch?.[1] ?? "iso-8859-1").trim().toLowerCase();
+  const charset = (charsetMatch?.[1] ?? "utf-8").trim().toLowerCase();
   const decoder = new TextDecoder(
-    charset === "utf-8" || charset === "utf8" ? "utf-8" : "iso-8859-1",
+    charset === "iso-8859-1" || charset === "latin1" ? "iso-8859-1" : "utf-8",
   );
   return decoder.decode(buffer);
 }
