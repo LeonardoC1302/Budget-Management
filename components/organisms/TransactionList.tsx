@@ -89,33 +89,52 @@ export default function TransactionList({
     );
   }
 
+  // Native amounts (already in displayCurrency) are summed as-is; amounts in
+  // other currencies fall back to the USD-normalized aggregate, converted once.
   const groups: {
     date: string;
-    income: number;
-    expense: number;
+    nativeIncome: number;
+    nativeExpense: number;
+    usdIncome: number;
+    usdExpense: number;
     items: Transaction[];
   }[] = [];
   for (const t of visible) {
     const dateKey = t.date.slice(0, 10);
+    const isNative = t.currency === displayCurrency;
     const last = groups[groups.length - 1];
-    if (last && last.date === dateKey) {
-      last.items.push(t);
-      if (t.type === "income") last.income += t.amountUSD;
-      else if (t.type === "expense") last.expense += t.amountUSD;
-    } else {
-      groups.push({
-        date: dateKey,
-        income: t.type === "income" ? t.amountUSD : 0,
-        expense: t.type === "expense" ? t.amountUSD : 0,
-        items: [t],
-      });
+    const group =
+      last && last.date === dateKey
+        ? last
+        : (() => {
+            const g = {
+              date: dateKey,
+              nativeIncome: 0,
+              nativeExpense: 0,
+              usdIncome: 0,
+              usdExpense: 0,
+              items: [] as Transaction[],
+            };
+            groups.push(g);
+            return g;
+          })();
+    group.items.push(t);
+    if (t.type === "income") {
+      if (isNative) group.nativeIncome += t.amount;
+      else group.usdIncome += t.amountUSD;
+    } else if (t.type === "expense") {
+      if (isNative) group.nativeExpense += t.amount;
+      else group.usdExpense += t.amountUSD;
     }
   }
 
   return (
     <div className="flex flex-col">
       {groups.map((group) => {
-        const net = group.income - group.expense;
+        const net =
+          group.nativeIncome -
+          group.nativeExpense +
+          convertUsd(group.usdIncome - group.usdExpense);
         const netTone = net >= 0 ? "pos" : "neg";
         return (
           <section key={group.date}>

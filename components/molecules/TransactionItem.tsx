@@ -127,7 +127,11 @@ export default function TransactionItem({
         </div>
       </div>
       <Amount
-        value={convertUsd(transaction.amountUSD)}
+        value={
+          transaction.currency === displayCurrency
+            ? transaction.amount
+            : convertUsd(transaction.amountUSD)
+        }
         tone={tone}
         size="md"
         currency={displayCurrency}
