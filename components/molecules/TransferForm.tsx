@@ -89,7 +89,32 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
     error: string | null;
   }>({ key: "", rate: null, error: null });
 
-  const needsFallback = differentCurrencies && (!direction || bccrFallback);
+  // A rate the user typed in, tied to the currency pair it was entered for so
+  // switching accounts to a different pair drops it.
+  const [customRate, setCustomRate] = useState<{
+    key: string;
+    value: string;
+  } | null>(null);
+  const customActive = differentCurrencies && customRate?.key === pairKey;
+
+  // Quote rates the way banks post them: units of the other currency per
+  // 1 USD, so CRC→USD reads "505" instead of "0.0020". The stored rate is
+  // always from → to.
+  const quoteInverted = fromCurrency !== "USD" && toCurrency === "USD";
+  const quoteBase = quoteInverted ? toCurrency : fromCurrency;
+  const quoteTarget = quoteInverted ? fromCurrency : toCurrency;
+  const toQuote = (r: number) => (quoteInverted ? 1 / r : r);
+
+  const parsedCustom = customActive ? parseFloat(customRate?.value ?? "") : NaN;
+  const customRateValue =
+    Number.isFinite(parsedCustom) && parsedCustom > 0
+      ? quoteInverted
+        ? 1 / parsedCustom
+        : parsedCustom
+      : null;
+
+  const needsFallback =
+    differentCurrencies && !customActive && (!direction || bccrFallback);
 
   useEffect(() => {
     if (!needsFallback) return;
@@ -112,7 +137,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
     };
   }, [needsFallback, fromCurrency, toCurrency, pairKey]);
 
-  const rate: number | null = !differentCurrencies
+  const autoRate: number | null = !differentCurrencies
     ? 1
     : direction && bccrResolved && !bccrFallback
       ? direction === "USD_TO_CRC"
@@ -124,9 +149,18 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
         ? fallbackRate.rate
         : null;
 
+  const rate = customActive ? customRateValue : autoRate;
+
   const rateError = needsFallback && fallbackRate.key === pairKey
     ? fallbackRate.error
     : null;
+
+  function startCustomRate() {
+    // Start from the rate on screen so small corrections are one keystroke.
+    const prefill =
+      autoRate !== null ? String(Number(toQuote(autoRate).toFixed(4))) : "";
+    setCustomRate({ key: pairKey, value: prefill });
+  }
 
   const convertedAmount =
     hasAmount && rate !== null ? parsedAmount * rate : null;
@@ -141,7 +175,9 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
 
     let rateSource: RateSource | undefined;
     if (differentCurrencies) {
-      if (direction && bccrResolved && !bccrFallback) {
+      if (customActive && rate !== null) {
+        rateSource = { provider: "manual", rate };
+      } else if (direction && bccrResolved && !bccrFallback) {
         rateSource = {
           provider: "bccr",
           entityId: bccrResolved.entity.id,
@@ -276,7 +312,25 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
         </div>
       )}
 
-      {differentCurrencies && direction && (
+      {differentCurrencies && customActive && (
+        <Input
+          label={`Exchange rate (${quoteTarget} per 1 ${quoteBase})`}
+          name="customRate"
+          type="number"
+          inputMode="decimal"
+          step="any"
+          min="0"
+          placeholder="0.00"
+          required
+          autoFocus
+          value={customRate?.value ?? ""}
+          onChange={(e) =>
+            setCustomRate({ key: pairKey, value: e.target.value })
+          }
+        />
+      )}
+
+      {differentCurrencies && !customActive && direction && (
         <EntityRatePicker
           direction={direction}
           value={entityId}
@@ -286,21 +340,38 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
       )}
 
       {differentCurrencies && (
-        <div className="text-xs text-fg-subtle">
-          {rateError ? (
+        <div className="flex flex-col gap-1 text-xs text-fg-subtle">
+          {customActive && rate === null ? (
+            <span>Enter a rate above 0.</span>
+          ) : rateError ? (
             <span className="text-expense">{rateError}</span>
           ) : rate === null ? (
             <span>Fetching exchange rate…</span>
           ) : convertedAmount !== null ? (
             <span>
-              ≈ {formatCurrency(convertedAmount, toCurrency)} at{" "}
-              {rate.toFixed(4)} {toCurrency}/{fromCurrency}
+              {customActive ? "=" : "≈"}{" "}
+              {formatCurrency(convertedAmount, toCurrency)} at{" "}
+              {toQuote(rate).toFixed(4)} {quoteTarget}/{quoteBase}
             </span>
           ) : (
             <span>
-              1 {fromCurrency} ≈ {rate.toFixed(4)} {toCurrency}
+              1 {quoteBase} {customActive ? "=" : "≈"}{" "}
+              {toQuote(rate).toFixed(4)} {quoteTarget}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() =>
+              customActive ? setCustomRate(null) : startCustomRate()
+            }
+            className="self-start underline decoration-dotted underline-offset-4"
+          >
+            {customActive
+              ? direction
+                ? "Use a bank rate instead"
+                : "Use the market rate instead"
+              : "Enter my own rate"}
+          </button>
         </div>
       )}
 

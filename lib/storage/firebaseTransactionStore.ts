@@ -20,10 +20,13 @@ import {
   requireWriteUid,
   findOwnerCtx,
   getAccessibleContexts,
+  canWriteTo,
 } from "@/lib/firebase/access";
 import {
+  amountInAccountCurrency,
   amountInUsd,
   convertUsingRateSource,
+  transferAmountInUsd,
 } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type {
@@ -169,9 +172,11 @@ export const firebaseTransactionStore: TransactionStore = {
             input.toCurrency,
             input.rateSource,
           );
-    const amountUSD = await amountInUsd(
+    const amountUSD = await transferAmountInUsd(
       input.amount,
       input.fromCurrency,
+      toAmount,
+      input.toCurrency,
       input.rateSource,
     );
 
@@ -255,5 +260,41 @@ export const firebaseTransactionStore: TransactionStore = {
     const batch = writeBatch(db);
     for (const d of snap.docs) batch.delete(d.ref);
     await batch.commit();
+  },
+  async rebaseAccountCurrency(accountId, currency) {
+    // Transactions on a shared account can live in any writer's subtree, so
+    // scan everything the user can see and update the copies they can write.
+    const all = await firebaseTransactionStore.list();
+    const legsByTransfer = new Map<string, Transaction[]>();
+    for (const t of all) {
+      if (!t.transferId) continue;
+      const legs = legsByTransfer.get(t.transferId) ?? [];
+      legs.push(t);
+      legsByTransfer.set(t.transferId, legs);
+    }
+
+    const targets = all.filter(
+      (t) => t.accountId === accountId && t._owner && canWriteTo(t._owner.uid),
+    );
+    const updates = await Promise.all(
+      targets.map(async (t) => {
+        const paired = t.transferId
+          ? legsByTransfer.get(t.transferId)?.find((l) => l.id !== t.id)
+          : undefined;
+        const accountAmount = await amountInAccountCurrency(t, currency, paired);
+        return { uid: t._owner!.uid, id: t.id, accountAmount };
+      }),
+    );
+
+    // Firestore caps a batch at 500 writes.
+    for (let i = 0; i < updates.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const u of updates.slice(i, i + 450)) {
+        batch.update(ownerDoc(u.uid, COL, u.id), {
+          accountAmount: u.accountAmount,
+        });
+      }
+      await batch.commit();
+    }
   },
 };

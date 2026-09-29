@@ -4,7 +4,7 @@ interface OpenErApiResponse {
   rates: Record<string, number>;
 }
 
-import type { RateSource } from "@/lib/types";
+import type { RateSource, Transaction } from "@/lib/types";
 
 let usdRatesCache: { rates: Record<string, number>; fetchedAt: number } | null =
   null;
@@ -52,7 +52,7 @@ export async function getRate(from: string, to: string): Promise<number> {
  * `RateSource`. Falls back to `getRate` when the source isn't enough to
  * resolve the pair (e.g. a BCCR rate for a non-USD/CRC transfer).
  * BCCR rates are always CRC per 1 USD, so the direction has to be applied
- * explicitly. Fallback rates from the picker are already stored in the
+ * explicitly. Fallback and manual rates are already stored in the
  * `from → to` direction and can be used directly.
  */
 export async function convertUsingRateSource(
@@ -63,7 +63,9 @@ export async function convertUsingRateSource(
 ): Promise<number> {
   if (from === to) return amount;
   if (!source) return amount * (await getRate(from, to));
-  if (source.provider === "fallback") return amount * source.rate;
+  if (source.provider === "fallback" || source.provider === "manual") {
+    return amount * source.rate;
+  }
   if (from === "USD" && to === "CRC") return amount * source.rate;
   if (from === "CRC" && to === "USD") return amount / source.rate;
   return amount * (await getRate(from, to));
@@ -83,11 +85,53 @@ export async function amountInUsd(
   if (source) {
     if (source.provider === "bccr") {
       if (currency === "CRC") return amount / source.rate;
-    } else if (source.provider === "fallback") {
-      // A fallback rate is directional; we can't safely reuse it for the USD
-      // leg unless we know the "to" currency was USD. The caller supplies the
-      // rate for tx→account only, so fall through.
+    } else {
+      // Fallback and manual rates are directional; we can't safely reuse them
+      // for the USD leg unless we know the "to" currency was USD. The caller
+      // supplies the rate for tx→account only, so fall through.
     }
   }
   return amount * (await getRate(currency, "USD"));
+}
+
+/**
+ * USD value of a transfer. When either side is already USD that side is used
+ * as-is, so a transfer priced with a custom or bank rate records the USD
+ * figure that actually moved instead of a mid-market estimate.
+ */
+export async function transferAmountInUsd(
+  amount: number,
+  fromCurrency: string,
+  toAmount: number,
+  toCurrency: string,
+  source: RateSource | undefined,
+): Promise<number> {
+  if (fromCurrency === "USD") return amount;
+  if (toCurrency === "USD") return toAmount;
+  return amountInUsd(amount, fromCurrency, source);
+}
+
+/**
+ * Re-price a transaction into `accountCurrency` after its account changed
+ * currency. Works from the transaction's own `amount`/`currency`, never from
+ * the stale `accountAmount`:
+ * - same currency → the original amount, exactly;
+ * - a transfer leg whose paired leg is already in `accountCurrency` → that
+ *   leg's amount, so a USD payment into a card now in USD matches what left
+ *   the source account;
+ * - a BCCR rate on a USD↔CRC pair → that same bank rate;
+ * - anything else → today's rate (fallback/manual rates were quoted for the
+ *   old account currency and don't apply to the new pair).
+ */
+export async function amountInAccountCurrency(
+  tx: Pick<Transaction, "amount" | "currency" | "rateSource">,
+  accountCurrency: string,
+  pairedLeg?: Pick<Transaction, "amount" | "currency">,
+): Promise<number> {
+  if (tx.currency === accountCurrency) return tx.amount;
+  if (pairedLeg && pairedLeg.currency === accountCurrency) {
+    return pairedLeg.amount;
+  }
+  const source = tx.rateSource?.provider === "bccr" ? tx.rateSource : undefined;
+  return convertUsingRateSource(tx.amount, tx.currency, accountCurrency, source);
 }

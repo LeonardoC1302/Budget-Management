@@ -16,4 +16,8 @@ export interface TransactionStore {
   ): Promise<Transaction>;
   remove(id: string, ownerUid?: string): Promise<void>;
   removeTransfer(transferId: string, ownerUid?: string): Promise<void>;
+  // Recompute `accountAmount` for every transaction on `accountId` after the
+  // account switched to `currency`. Without this, balances keep the old
+  // currency's numbers under the new currency's symbol.
+  rebaseAccountCurrency(accountId: string, currency: string): Promise<void>;
 }
