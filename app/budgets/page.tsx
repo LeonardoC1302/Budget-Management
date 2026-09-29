@@ -24,6 +24,7 @@ export default function BudgetsPage() {
     budgets,
     progressByCategory,
     totals,
+    summaryCurrency,
     monthKey,
     loading,
     add,
@@ -68,7 +69,6 @@ export default function BudgetsPage() {
   }
 
   const usedCategoryIds = budgets.map((b) => b.categoryId);
-  const currency = budgets[0]?.currency ?? "USD";
   const pendingDeleteName = pendingDelete
     ? categoriesById[pendingDelete.categoryId]?.name ?? "this budget"
     : "";
@@ -90,7 +90,7 @@ export default function BudgetsPage() {
       ) : (
         <>
           {budgets.length > 0 && (
-            <BudgetSummary totals={totals} currency={currency} />
+            <BudgetSummary totals={totals} currency={summaryCurrency} />
           )}
 
           <BudgetList

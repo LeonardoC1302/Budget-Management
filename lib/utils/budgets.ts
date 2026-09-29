@@ -15,6 +15,9 @@ export interface BudgetTotals {
   uncappedSpend: number;
 }
 
+// Units of each currency per 1 USD. USD itself is implied as 1.
+export type UsdRates = Record<string, number>;
+
 export function currentMonthKey(): string {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -33,10 +36,49 @@ export function formatMonthLabel(monthKey: string): string {
   });
 }
 
+function usdRate(currency: string, usdRates: UsdRates): number | null {
+  if (currency === "USD") return 1;
+  const rate = usdRates[currency];
+  return typeof rate === "number" && rate > 0 ? rate : null;
+}
+
+/**
+ * Convert an amount between currencies through USD. Returns null while the
+ * needed rate hasn't loaded, so callers can skip instead of mixing units.
+ */
+export function convertAmount(
+  amount: number,
+  from: string,
+  to: string,
+  usdRates: UsdRates,
+): number | null {
+  if (from === to) return amount;
+  const fromRate = usdRate(from, usdRates);
+  const toRate = usdRate(to, usdRates);
+  if (fromRate === null || toRate === null) return null;
+  return (amount / fromRate) * toRate;
+}
+
+/**
+ * A transaction's value in `currency`. A transaction already in that currency
+ * contributes its original amount, untouched by FX. USD targets use the stored
+ * `amountUSD`; anything else converts that USD figure at today's rate.
+ */
+export function transactionAmountIn(
+  t: Pick<Transaction, "amount" | "amountUSD" | "currency">,
+  currency: string,
+  usdRates: UsdRates,
+): number | null {
+  if (t.currency === currency) return t.amount;
+  return convertAmount(t.amountUSD, "USD", currency, usdRates);
+}
+
 export function computeCategorySpend(
   transactions: Transaction[],
   categoryId: string,
   monthKey: string,
+  currency: string,
+  usdRates: UsdRates,
 ): number {
   let sum = 0;
   for (const t of transactions) {
@@ -45,7 +87,7 @@ export function computeCategorySpend(
       t.categoryId === categoryId &&
       monthKeyOf(t.date) === monthKey
     ) {
-      sum += t.amountUSD;
+      sum += transactionAmountIn(t, currency, usdRates) ?? 0;
     }
   }
   return sum;
@@ -61,8 +103,15 @@ export function computeBudgetProgress(
   budget: Budget,
   transactions: Transaction[],
   monthKey: string,
+  usdRates: UsdRates,
 ): BudgetProgress {
-  const spent = computeCategorySpend(transactions, budget.categoryId, monthKey);
+  const spent = computeCategorySpend(
+    transactions,
+    budget.categoryId,
+    monthKey,
+    budget.currency,
+    usdRates,
+  );
   const percent = budget.amount > 0 ? spent / budget.amount : 0;
   return {
     spent,
@@ -72,22 +121,28 @@ export function computeBudgetProgress(
   };
 }
 
+/** Totals across all budgets, expressed in `currency`. */
 export function computeBudgetTotals(
   budgets: Budget[],
   transactions: Transaction[],
   monthKey: string,
+  currency: string,
+  usdRates: UsdRates,
 ): BudgetTotals {
   const cappedIds = new Set(budgets.map((b) => b.categoryId));
   let totalCap = 0;
   let totalSpent = 0;
   let uncappedSpend = 0;
 
-  for (const b of budgets) totalCap += b.amount;
+  for (const b of budgets) {
+    totalCap += convertAmount(b.amount, b.currency, currency, usdRates) ?? 0;
+  }
 
   for (const t of transactions) {
     if (t.type !== "expense" || monthKeyOf(t.date) !== monthKey) continue;
-    if (cappedIds.has(t.categoryId)) totalSpent += t.amountUSD;
-    else uncappedSpend += t.amountUSD;
+    const value = transactionAmountIn(t, currency, usdRates) ?? 0;
+    if (cappedIds.has(t.categoryId)) totalSpent += value;
+    else uncappedSpend += value;
   }
 
   return { totalCap, totalSpent, uncappedSpend };

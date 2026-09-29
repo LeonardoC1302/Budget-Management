@@ -199,12 +199,10 @@ export default function TransactionForm({
   const budget = budgetsByCategoryId[categoryId];
   const overBudgetWarning =
     type === "expense" &&
-    accountCurrency === BASE_CURRENCY &&
-    !hasCurrencyMismatch &&
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0 &&
     !!budget &&
-    wouldExceed(categoryId, parsedAmount)
+    wouldExceed(categoryId, parsedAmount, currency)
       ? `This would push ${categoriesById[categoryId]?.name ?? "this category"} over its ${formatCurrency(budget.amount, budget.currency)} cap.`
       : null;
 
