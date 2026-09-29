@@ -2,20 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { getRate } from "@/lib/services/exchangeRates";
 import { budgetStore, transactionStore } from "@/lib/storage";
 import {
   computeBudgetProgress,
   computeBudgetTotals,
   computeCategorySpend,
+  convertAmount,
   currentMonthKey,
 } from "@/lib/utils/budgets";
 import type { Budget, NewBudget, Transaction } from "@/lib/types";
-import type { BudgetProgress } from "@/lib/utils/budgets";
+import type { BudgetProgress, UsdRates } from "@/lib/utils/budgets";
 
 export function useBudgets() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usdRates, setUsdRates] = useState<UsdRates>({});
 
   useEffect(() => {
     Promise.all([budgetStore.list(), transactionStore.list()]).then(
@@ -70,6 +73,45 @@ export function useBudgets() {
 
   const monthKey = currentMonthKey();
 
+  // Every non-USD currency used by a budget or by this month's expenses.
+  // Only cross-currency spend needs a rate; same-currency spend is used as-is.
+  const neededCurrencies = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of budgets) set.add(b.currency);
+    for (const t of transactions) {
+      if (t.type === "expense" && t.date.startsWith(monthKey)) {
+        set.add(t.currency);
+      }
+    }
+    set.delete("USD");
+    return [...set].sort().join(",");
+  }, [budgets, transactions, monthKey]);
+
+  useEffect(() => {
+    const missing = neededCurrencies
+      .split(",")
+      .filter((c) => c && usdRates[c] === undefined);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      missing.map((c) =>
+        getRate("USD", c).then(
+          (rate) => [c, rate] as const,
+          () => null,
+        ),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      const loaded = results.filter((r) => r !== null);
+      if (loaded.length === 0) return;
+      setUsdRates((prev) => ({ ...prev, ...Object.fromEntries(loaded) }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [neededCurrencies, usdRates]);
+
+  const summaryCurrency = budgets[0]?.currency ?? "USD";
   const byCategoryId = useMemo(() => {
     const map: Record<string, Budget> = {};
     for (const b of budgets) map[b.categoryId] = b;
@@ -79,24 +121,49 @@ export function useBudgets() {
   const progressByCategory = useMemo(() => {
     const map: Record<string, BudgetProgress> = {};
     for (const b of budgets) {
-      map[b.categoryId] = computeBudgetProgress(b, transactions, monthKey);
+      map[b.categoryId] = computeBudgetProgress(
+        b,
+        transactions,
+        monthKey,
+        usdRates,
+      );
     }
     return map;
-  }, [budgets, transactions, monthKey]);
+  }, [budgets, transactions, monthKey, usdRates]);
 
   const totals = useMemo(
-    () => computeBudgetTotals(budgets, transactions, monthKey),
-    [budgets, transactions, monthKey],
+    () =>
+      computeBudgetTotals(
+        budgets,
+        transactions,
+        monthKey,
+        summaryCurrency,
+        usdRates,
+      ),
+    [budgets, transactions, monthKey, summaryCurrency, usdRates],
   );
 
   const wouldExceed = useCallback(
-    (categoryId: string, addedAmount: number): boolean => {
+    (categoryId: string, addedAmount: number, currency: string): boolean => {
       const budget = byCategoryId[categoryId];
       if (!budget) return false;
-      const spent = computeCategorySpend(transactions, categoryId, monthKey);
-      return spent + addedAmount > budget.amount;
+      const added = convertAmount(
+        addedAmount,
+        currency,
+        budget.currency,
+        usdRates,
+      );
+      if (added === null) return false;
+      const spent = computeCategorySpend(
+        transactions,
+        categoryId,
+        monthKey,
+        budget.currency,
+        usdRates,
+      );
+      return spent + added > budget.amount;
     },
-    [byCategoryId, transactions, monthKey],
+    [byCategoryId, transactions, monthKey, usdRates],
   );
 
   return {
@@ -104,6 +171,7 @@ export function useBudgets() {
     byCategoryId,
     progressByCategory,
     totals,
+    summaryCurrency,
     monthKey,
     loading,
     add,
