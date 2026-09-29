@@ -1,8 +1,10 @@
 import type { Account, NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
 import {
+  amountInAccountCurrency,
   amountInUsd,
   convertUsingRateSource,
+  transferAmountInUsd,
 } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 
@@ -123,9 +125,11 @@ export const localTransactionStore: TransactionStore = {
             input.toCurrency,
             input.rateSource,
           );
-    const amountUSD = await amountInUsd(
+    const amountUSD = await transferAmountInUsd(
       input.amount,
       input.fromCurrency,
+      toAmount,
+      input.toCurrency,
       input.rateSource,
     );
 
@@ -209,5 +213,19 @@ export const localTransactionStore: TransactionStore = {
   },
   async removeTransfer(transferId) {
     write(read().filter((t) => t.transferId !== transferId));
+  },
+  async rebaseAccountCurrency(accountId, currency) {
+    const items = read();
+    const next = await Promise.all(
+      items.map(async (t) => {
+        if (t.accountId !== accountId) return t;
+        const paired = t.transferId
+          ? items.find((l) => l.transferId === t.transferId && l.id !== t.id)
+          : undefined;
+        const accountAmount = await amountInAccountCurrency(t, currency, paired);
+        return { ...t, accountAmount };
+      }),
+    );
+    write(next);
   },
 };

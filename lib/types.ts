@@ -17,7 +17,9 @@ export interface OwnerCtx {
 // Costa Rican bank's window rate (compra when the bank is buying USD, venta
 // when it's selling). `fallback` means BCCR was unreachable and the app used
 // the generic open.er-api.com mid-market rate — the transaction still records
-// which source was used so history is traceable.
+// which source was used so history is traceable. `manual` is a rate the user
+// typed in themselves. Both `fallback` and `manual` rates are stored in the
+// from → to direction (target currency units per 1 unit of the source).
 export type RateSource =
   | {
       provider: "bccr";
@@ -27,7 +29,8 @@ export type RateSource =
       side: "compra" | "venta";
       snapshotAt: string;
     }
-  | { provider: "fallback"; rate: number };
+  | { provider: "fallback"; rate: number }
+  | { provider: "manual"; rate: number };
 
 export type EntryType = Exclude<TransactionType, "transfer">;
 

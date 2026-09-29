@@ -148,6 +148,9 @@ export function useAccounts() {
     async (id: string, patch: Partial<NewAccount>) => {
       const target = accounts.find((a) => a.id === id);
       const updated = await accountStore.update(id, patch, target?._owner?.uid);
+      if (patch.currency !== undefined && patch.currency !== target?.currency) {
+        await transactionStore.rebaseAccountCurrency(id, updated.currency);
+      }
       await refresh();
       return updated;
     },
