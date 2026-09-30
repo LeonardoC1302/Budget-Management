@@ -164,25 +164,28 @@ export default function BudgetHistoryChart({
         </span>
       </div>
 
-      <table className="sr-only">
-        <caption>{t("Spending against caps by month")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("Month")}</th>
-            <th scope="col">{t("Spent")}</th>
-            <th scope="col">{t("Cap")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((d) => (
-            <tr key={d.monthKey}>
-              <th scope="row">{monthLabel(d.monthKey, false)}</th>
-              <td>{formatCurrency(d.spent, currency)}</td>
-              <td>{formatCurrency(d.cap, currency)}</td>
+      {/* sr-only goes on a wrapper: a table ignores width: 1px and would widen the page. */}
+      <div className="sr-only">
+        <table>
+          <caption>{t("Spending against caps by month")}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t("Month")}</th>
+              <th scope="col">{t("Spent")}</th>
+              <th scope="col">{t("Cap")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((d) => (
+              <tr key={d.monthKey}>
+                <th scope="row">{monthLabel(d.monthKey, false)}</th>
+                <td>{formatCurrency(d.spent, currency)}</td>
+                <td>{formatCurrency(d.cap, currency)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
