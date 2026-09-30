@@ -25,8 +25,8 @@ import {
   getAccessibleContexts,
   canWriteTo,
 } from "@/lib/firebase/access";
+import { rebaseAccountAmounts } from "@/lib/credit/rebase";
 import {
-  amountInAccountCurrency,
   amountInUsd,
   convertUsingRateSource,
   transferAmountInUsd,
@@ -315,7 +315,7 @@ export const firebaseTransactionStore: TransactionStore = {
       currency: out.currency,
     });
   },
-  async rebaseAccountCurrency(accountId, currency) {
+  async rebaseAccountCurrency(accountId, currency, isCard = false) {
     // Transactions on a shared account can live in any writer's subtree, so
     // scan everything the user can see and update the copies they can write.
     const all = await firebaseTransactionStore.list();
@@ -327,18 +327,25 @@ export const firebaseTransactionStore: TransactionStore = {
       legsByTransfer.set(t.transferId, legs);
     }
 
-    const targets = all.filter(
-      (t) => t.accountId === accountId && t._owner && canWriteTo(t._owner.uid),
-    );
-    const updates = await Promise.all(
-      targets.map(async (t) => {
-        const paired = t.transferId
+    // Price every transaction on the account (payments are matched against
+    // all its charges), then write the copies this user can write.
+    const onAccount = all.filter((t) => t.accountId === accountId);
+    const amounts = await rebaseAccountAmounts(
+      onAccount,
+      currency,
+      (t) =>
+        t.transferId
           ? legsByTransfer.get(t.transferId)?.find((l) => l.id !== t.id)
-          : undefined;
-        const accountAmount = await amountInAccountCurrency(t, currency, paired);
-        return { uid: t._owner!.uid, id: t.id, accountAmount };
-      }),
+          : undefined,
+      isCard,
     );
+    const updates = onAccount
+      .filter((t) => t._owner && canWriteTo(t._owner.uid))
+      .map((t) => ({
+        uid: t._owner!.uid,
+        id: t.id,
+        accountAmount: amounts.get(t.id)!,
+      }));
 
     // Firestore caps a batch at 500 writes.
     for (let i = 0; i < updates.length; i += 450) {

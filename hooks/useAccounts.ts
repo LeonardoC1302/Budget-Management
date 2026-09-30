@@ -154,7 +154,11 @@ export function useAccounts() {
       const currencyChanged =
         patch.currency !== undefined && patch.currency !== target?.currency;
       if (currencyChanged) {
-        await transactionStore.rebaseAccountCurrency(id, updated.currency);
+        await transactionStore.rebaseAccountCurrency(
+          id,
+          updated.currency,
+          updated.type === "credit",
+        );
       }
       await refresh();
       // Other hooks (the Cards page's statements, budgets, insights) hold

@@ -1,7 +1,7 @@
 import type { Account, NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 import type { TransactionStore } from "@/lib/storage/TransactionStore";
+import { rebaseAccountAmounts } from "@/lib/credit/rebase";
 import {
-  amountInAccountCurrency,
   amountInUsd,
   convertUsingRateSource,
   transferAmountInUsd,
@@ -214,18 +214,21 @@ export const localTransactionStore: TransactionStore = {
   async removeTransfer(transferId) {
     write(read().filter((t) => t.transferId !== transferId));
   },
-  async rebaseAccountCurrency(accountId, currency) {
+  async rebaseAccountCurrency(accountId, currency, isCard = false) {
     const items = read();
-    const next = await Promise.all(
-      items.map(async (t) => {
-        if (t.accountId !== accountId) return t;
-        const paired = t.transferId
+    const amounts = await rebaseAccountAmounts(
+      items.filter((t) => t.accountId === accountId),
+      currency,
+      (t) =>
+        t.transferId
           ? items.find((l) => l.transferId === t.transferId && l.id !== t.id)
-          : undefined;
-        const accountAmount = await amountInAccountCurrency(t, currency, paired);
-        return { ...t, accountAmount };
-      }),
+          : undefined,
+      isCard,
     );
-    write(next);
+    write(
+      items.map((t) =>
+        amounts.has(t.id) ? { ...t, accountAmount: amounts.get(t.id)! } : t,
+      ),
+    );
   },
 };
