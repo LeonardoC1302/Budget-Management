@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import BudgetHistoryChart from "@/components/atoms/BudgetHistoryChart";
 import Button from "@/components/atoms/Button";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
@@ -11,7 +12,7 @@ import RouteMasthead from "@/components/molecules/RouteMasthead";
 import BudgetList from "@/components/organisms/BudgetList";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
-import { formatMonthLabel } from "@/lib/utils/budgets";
+import { currentMonthKey, formatMonthLabel } from "@/lib/utils/budgets";
 import type { Budget, NewBudget } from "@/lib/types";
 
 type Mode =
@@ -19,9 +20,19 @@ type Mode =
   | { kind: "create" }
   | { kind: "edit"; budget: Budget };
 
+function shiftMonth(monthKey: string, delta: number): string {
+  const [y, m] = monthKey.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function BudgetsPage() {
+  const thisMonth = currentMonthKey();
+  const [viewMonth, setViewMonth] = useState(thisMonth);
+  const isCurrentMonth = viewMonth === thisMonth;
   const {
     budgets,
+    history,
     progressByCategory,
     totals,
     summaryCurrency,
@@ -30,7 +41,7 @@ export default function BudgetsPage() {
     add,
     update,
     remove,
-  } = useBudgets();
+  } = useBudgets(viewMonth);
   const { byId: categoriesById } = useCategories();
 
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
@@ -90,13 +101,76 @@ export default function BudgetsPage() {
       ) : (
         <>
           {budgets.length > 0 && (
-            <BudgetSummary totals={totals} currency={summaryCurrency} />
+            <nav
+              aria-label="Choose month"
+              className="flex items-center justify-between gap-3"
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMonth(shiftMonth(viewMonth, -1))}
+                aria-label="Previous month"
+              >
+                ← {formatMonthLabel(shiftMonth(viewMonth, -1)).split(" ")[0]}
+              </Button>
+              <span className="text-sm text-fg font-medium">
+                {formatMonthLabel(monthKey)}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setViewMonth(
+                    isCurrentMonth ? viewMonth : shiftMonth(viewMonth, 1),
+                  )
+                }
+                disabled={isCurrentMonth}
+                aria-label="Next month"
+              >
+                {isCurrentMonth
+                  ? "Now"
+                  : `${formatMonthLabel(shiftMonth(viewMonth, 1)).split(" ")[0]} →`}
+              </Button>
+            </nav>
+          )}
+
+          {budgets.length > 0 && (
+            <BudgetSummary
+              totals={totals}
+              currency={summaryCurrency}
+              label={isCurrentMonth ? "Spent this month" : `Spent in ${formatMonthLabel(monthKey)}`}
+            />
+          )}
+
+          {budgets.length > 0 && (
+            <section className="surface p-5 flex flex-col gap-3" aria-label="Budget history">
+              <span className="label-sm">Last {history.length} months</span>
+              <BudgetHistoryChart
+                data={history.map((h) => ({
+                  monthKey: h.monthKey,
+                  spent: h.spent,
+                  cap: h.cap,
+                }))}
+                currency={summaryCurrency}
+                selected={monthKey}
+                onSelect={setViewMonth}
+              />
+              {budgets.some((b) => b.capHistory?.length) ? null : (
+                <p className="text-[11px] text-fg-subtle">
+                  Earlier months are compared with your caps as they are
+                  today. From now on, changing a cap keeps the old amount for
+                  past months.
+                </p>
+              )}
+            </section>
           )}
 
           <BudgetList
             budgets={budgets}
             categoriesById={categoriesById}
             progressByCategory={progressByCategory}
+            isCurrentMonth={isCurrentMonth}
+            history={history}
             onEdit={(budget) => setMode({ kind: "edit", budget })}
             onDelete={(budget) => setPendingDelete(budget)}
             emptyTitle="No budgets yet"

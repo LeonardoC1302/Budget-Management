@@ -1,10 +1,13 @@
-import type { Budget, Transaction } from "@/lib/types";
+import type { Budget, BudgetCapChange, Transaction } from "@/lib/types";
 import { spendSign } from "@/lib/utils/refunds";
 
 export type BudgetStatus = "on-track" | "warning" | "over";
 
 export interface BudgetProgress {
   spent: number;
+  // Cap for the month in question, in `currency` (may differ from today's).
+  cap: number;
+  currency: string;
   remaining: number;
   percent: number;
   status: BudgetStatus;
@@ -95,6 +98,37 @@ export function computeCategorySpend(
   return sum;
 }
 
+/** The cap that applied in `monthKey`. */
+export function capFor(
+  budget: Pick<Budget, "amount" | "currency" | "capHistory">,
+  monthKey: string,
+): { amount: number; currency: string } {
+  const history = [...(budget.capHistory ?? [])].sort((a, b) =>
+    a.until.localeCompare(b.until),
+  );
+  const entry = history.find((h) => monthKey < h.until);
+  return entry
+    ? { amount: entry.amount, currency: entry.currency }
+    : { amount: budget.amount, currency: budget.currency };
+}
+
+/**
+ * History entry to record when a cap changes in `currentMonth`. Several edits
+ * in one month keep the first entry, since that's the cap the earlier months
+ * actually had.
+ */
+export function nextCapHistory(
+  budget: Pick<Budget, "amount" | "currency" | "capHistory">,
+  currentMonth: string,
+): BudgetCapChange[] {
+  const history = budget.capHistory ?? [];
+  if (history.some((h) => h.until === currentMonth)) return history;
+  return [
+    ...history,
+    { until: currentMonth, amount: budget.amount, currency: budget.currency },
+  ];
+}
+
 function statusFor(percent: number): BudgetStatus {
   if (percent > 1) return "over";
   if (percent >= 0.8) return "warning";
@@ -107,17 +141,20 @@ export function computeBudgetProgress(
   monthKey: string,
   usdRates: UsdRates,
 ): BudgetProgress {
+  const cap = capFor(budget, monthKey);
   const spent = computeCategorySpend(
     transactions,
     budget.categoryId,
     monthKey,
-    budget.currency,
+    cap.currency,
     usdRates,
   );
-  const percent = budget.amount > 0 ? spent / budget.amount : 0;
+  const percent = cap.amount > 0 ? spent / cap.amount : 0;
   return {
     spent,
-    remaining: budget.amount - spent,
+    cap: cap.amount,
+    currency: cap.currency,
+    remaining: cap.amount - spent,
     percent,
     status: statusFor(percent),
   };
@@ -131,13 +168,17 @@ export function computeBudgetTotals(
   currency: string,
   usdRates: UsdRates,
 ): BudgetTotals {
+  // Past months are judged against the cap that applied then (see capFor),
+  // including months before the budget existed, so a new budget still shows
+  // how earlier months would have fared.
   const cappedIds = new Set(budgets.map((b) => b.categoryId));
   let totalCap = 0;
   let totalSpent = 0;
   let uncappedSpend = 0;
 
   for (const b of budgets) {
-    totalCap += convertAmount(b.amount, b.currency, currency, usdRates) ?? 0;
+    const cap = capFor(b, monthKey);
+    totalCap += convertAmount(cap.amount, cap.currency, currency, usdRates) ?? 0;
   }
 
   for (const t of transactions) {

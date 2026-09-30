@@ -12,7 +12,7 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Card installments** — Split a credit-card purchase into monthly installments. The card owes the full amount right away; each month's slice lands on its own statement and budget month, and future slices are listed on the Cards page.
 - **CSV import & export** — Settings → Import & export downloads every transaction as CSV and imports income/expenses from a CSV (English or Spanish headers, comma or semicolon, either number format) with a preview, duplicate detection, and a one-tap undo.
 - **Transaction details modal** — Click any row on the `/transactions` page to view the full transaction with the amount in its original currency.
-- **Budgets** — Set monthly caps per category and see spend progress at a glance.
+- **Budgets** — Set monthly caps per category and see spend progress at a glance. Step back through past months, compare the last six months against their caps on a chart, and see each category's recent months at a glance. Changing a cap keeps the old amount for earlier months.
 - **Saving goals** — Create goals with target amounts and dates, log contributions, and track projected monthly rate.
 - **Investments** — Track ETFs, indices, stocks, and crypto as first-class holdings, plus manual positions (pensions, private funds, real estate) tracked via balance entries. Live quotes and 1M–5Y history come from Twelve Data through a server-side proxy. Contributions still leave your selected account, but each holding also shows shares, cost basis, current value, and unrealized P/L.
 - **Insights & analytics** — Monthly income/expense/net summary plus category-level insights on the home dashboard.

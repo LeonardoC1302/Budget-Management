@@ -9,11 +9,13 @@ import type { BudgetTotals } from "@/lib/utils/budgets";
 interface BudgetSummaryProps {
   totals: BudgetTotals;
   currency?: string;
+  label?: string;
 }
 
 export default function BudgetSummary({
   totals,
   currency = "USD",
+  label = "Spent this month",
 }: BudgetSummaryProps) {
   const { totalCap, totalSpent, uncappedSpend } = totals;
   const percent = totalCap > 0 ? totalSpent / totalCap : 0;
@@ -24,7 +26,7 @@ export default function BudgetSummary({
     <section className="masthead-balance surface p-6 flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0 flex flex-col gap-1">
-          <span className="label-sm">Spent this month</span>
+          <span className="label-sm">{label}</span>
           <Amount
             value={totalSpent}
             size="xl"

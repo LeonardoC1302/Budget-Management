@@ -236,7 +236,18 @@ export interface Budget {
   amount: number;
   currency: string;
   createdAt: string;
+  // Earlier caps, so past months are judged against the cap that applied
+  // then. Each entry covers months before `until` (a "YYYY-MM" key, exclusive)
+  // back to the previous entry. Budgets without history use `amount` for
+  // every month.
+  capHistory?: BudgetCapChange[];
   _owner?: OwnerCtx;
+}
+
+export interface BudgetCapChange {
+  until: string;
+  amount: number;
+  currency: string;
 }
 
 export type NewBudget = Omit<Budget, "id" | "createdAt">;

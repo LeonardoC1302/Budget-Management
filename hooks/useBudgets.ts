@@ -11,11 +11,27 @@ import {
   computeCategorySpend,
   convertAmount,
   currentMonthKey,
+  nextCapHistory,
 } from "@/lib/utils/budgets";
 import type { Budget, NewBudget, Transaction } from "@/lib/types";
 import type { BudgetProgress, UsdRates } from "@/lib/utils/budgets";
 
-export function useBudgets() {
+export const HISTORY_MONTHS = 6;
+
+export interface BudgetMonth {
+  monthKey: string;
+  // Totals across budgets active that month, in the summary currency.
+  cap: number;
+  spent: number;
+  // Per-budget progress for that month, keyed by category.
+  byCategory: Record<string, BudgetProgress>;
+}
+
+/**
+ * Budgets with progress for `monthKey` (default: the current month) plus the
+ * six months ending there, for the history chart.
+ */
+export function useBudgets(selectedMonth?: string) {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +72,19 @@ export function useBudgets() {
   const update = useCallback(
     async (id: string, patch: Partial<NewBudget>) => {
       const target = budgets.find((b) => b.id === id);
-      const updated = await budgetStore.update(id, patch, target?._owner?.uid);
+      const capChanged =
+        !!target &&
+        ((patch.amount !== undefined && patch.amount !== target.amount) ||
+          (patch.currency !== undefined && patch.currency !== target.currency));
+      // Keep the old cap for earlier months before overwriting it.
+      const withHistory = capChanged
+        ? { ...patch, capHistory: nextCapHistory(target, currentMonthKey()) }
+        : patch;
+      const updated = await budgetStore.update(
+        id,
+        withHistory,
+        target?._owner?.uid,
+      );
       await refresh();
       return updated;
     },
@@ -74,7 +102,14 @@ export function useBudgets() {
     [budgets, refresh],
   );
 
-  const monthKey = currentMonthKey();
+  const monthKey = selectedMonth ?? currentMonthKey();
+  const historyKeys = useMemo(() => {
+    const [y, m] = monthKey.split("-").map(Number);
+    return Array.from({ length: HISTORY_MONTHS }, (_, i) => {
+      const d = new Date(y, m - 1 - (HISTORY_MONTHS - 1 - i), 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    });
+  }, [monthKey]);
 
   // Every non-USD currency used by a budget or by this month's expenses.
   // Only cross-currency spend needs a rate; same-currency spend is used as-is.
@@ -84,14 +119,18 @@ export function useBudgets() {
     for (const t of transactions) {
       if (
         (t.type === "expense" || t.refundOf) &&
-        t.date.startsWith(monthKey)
+        t.date.slice(0, 7) >= historyKeys[0] &&
+        t.date.slice(0, 7) <= monthKey
       ) {
         set.add(t.currency);
       }
     }
+    for (const b of budgets) {
+      for (const h of b.capHistory ?? []) set.add(h.currency);
+    }
     set.delete("USD");
     return [...set].sort().join(",");
-  }, [budgets, transactions, monthKey]);
+  }, [budgets, transactions, monthKey, historyKeys]);
 
   useEffect(() => {
     const missing = neededCurrencies
@@ -137,6 +176,30 @@ export function useBudgets() {
     return map;
   }, [budgets, transactions, monthKey, usdRates]);
 
+  const history = useMemo<BudgetMonth[]>(
+    () =>
+      historyKeys.map((key) => {
+        const byCategory: Record<string, BudgetProgress> = {};
+        for (const b of budgets) {
+          byCategory[b.categoryId] = computeBudgetProgress(
+            b,
+            transactions,
+            key,
+            usdRates,
+          );
+        }
+        const t = computeBudgetTotals(
+          budgets,
+          transactions,
+          key,
+          summaryCurrency,
+          usdRates,
+        );
+        return { monthKey: key, cap: t.totalCap, spent: t.totalSpent, byCategory };
+      }),
+    [historyKeys, budgets, transactions, summaryCurrency, usdRates],
+  );
+
   const totals = useMemo(
     () =>
       computeBudgetTotals(
@@ -174,6 +237,7 @@ export function useBudgets() {
 
   return {
     budgets,
+    history,
     byCategoryId,
     progressByCategory,
     totals,

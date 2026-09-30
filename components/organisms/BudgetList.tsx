@@ -4,11 +4,14 @@ import EmptyState from "@/components/atoms/EmptyState";
 import BudgetRow from "@/components/molecules/BudgetRow";
 import type { Budget, Category } from "@/lib/types";
 import type { BudgetProgress } from "@/lib/utils/budgets";
+import type { BudgetMonth } from "@/hooks/useBudgets";
 
 interface BudgetListProps {
   budgets: Budget[];
   categoriesById: Record<string, Category>;
   progressByCategory: Record<string, BudgetProgress>;
+  isCurrentMonth?: boolean;
+  history?: BudgetMonth[];
   onEdit?: (budget: Budget) => void;
   onDelete?: (budget: Budget) => void;
   emptyTitle?: string;
@@ -23,6 +26,8 @@ export default function BudgetList({
   budgets,
   categoriesById,
   progressByCategory,
+  isCurrentMonth,
+  history,
   onEdit,
   onDelete,
   emptyTitle,
@@ -54,11 +59,18 @@ export default function BudgetList({
           progress={
             progressByCategory[budget.categoryId] ?? {
               spent: 0,
+              cap: budget.amount,
+              currency: budget.currency,
               remaining: budget.amount,
               percent: 0,
               status: "on-track",
             }
           }
+          isCurrentMonth={isCurrentMonth}
+          trend={history?.map((m) => ({
+            monthKey: m.monthKey,
+            progress: m.byCategory[budget.categoryId],
+          }))}
           onEdit={onEdit}
           onDelete={onDelete}
         />

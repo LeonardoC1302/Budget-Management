@@ -124,6 +124,8 @@ export default function HomePage() {
                 progress={
                   progressByCategory[budget.categoryId] ?? {
                     spent: 0,
+                    cap: budget.amount,
+                    currency: budget.currency,
                     remaining: budget.amount,
                     percent: 0,
                     status: "on-track",
