@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  browserLanguage,
   setLanguage as setModuleLanguage,
   storedLanguage,
   type Language,
@@ -17,6 +18,9 @@ import {
 interface LanguageContextValue {
   language: Language;
   setLanguage: (language: Language) => void;
+  // Public pages: show the browser's language unless the visitor already
+  // picked one. Doesn't save it as their choice.
+  followBrowserLanguage: () => void;
 }
 
 const Ctx = createContext<LanguageContextValue | null>(null);
@@ -34,6 +38,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setState(next);
   }, []);
 
+  const followBrowserLanguage = useCallback(() => {
+    if (storedLanguage()) return;
+    const detected = browserLanguage();
+    setModuleLanguage(detected, { persist: false });
+    setState(detected);
+  }, []);
+
   useEffect(() => {
     const saved = storedLanguage();
     if (saved && saved !== "en") {
@@ -43,7 +54,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return <Ctx.Provider value={{ language, setLanguage }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ language, setLanguage, followBrowserLanguage }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useLanguage(): LanguageContextValue {

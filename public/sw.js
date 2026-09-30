@@ -12,10 +12,13 @@
  * Next falls back to a full page load, which lands in the navigation handler.
  */
 
-const CACHE_NAME = "perch-shell-v3";
+const CACHE_NAME = "perch-shell-v4";
 
 const APP_ROUTES = [
   "/",
+  "/home",
+  "/privacy",
+  "/terms",
   "/transactions",
   "/add",
   "/budgets",
@@ -30,6 +33,7 @@ const APP_ROUTES = [
   "/settings/trash",
   "/settings/data",
   "/settings/security",
+  "/settings/delete-account",
 ];
 
 const STATIC_PREFIXES = ["/_next/static/"];

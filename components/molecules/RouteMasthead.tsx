@@ -32,7 +32,7 @@ export default function RouteMasthead({
     <header className={cn("flex flex-col", className)}>
       <div className="nameplate">
         <Link
-          href="/"
+          href="/home"
           aria-label={t("Home")}
           className="nameplate-brand hover:opacity-80 transition-opacity"
           style={{ borderRadius: "var(--radius-control)" }}

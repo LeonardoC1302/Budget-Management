@@ -1,19 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessProvider } from "@/contexts/AccessContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 import AuthGate from "@/components/organisms/AuthGate";
 
+/** Wraps the signed-in app: shared-budget access, sign-in gate, lock, nav. */
 export default function AppShell({ children }: { children: ReactNode }) {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <AccessProvider>
-          <AuthGate>{children}</AuthGate>
-        </AccessProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <AccessProvider>
+      <AuthGate>{children}</AuthGate>
+    </AccessProvider>
   );
 }

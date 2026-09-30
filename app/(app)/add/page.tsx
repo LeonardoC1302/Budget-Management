@@ -63,7 +63,7 @@ export default function AddTransactionPage() {
         kicker={t("New")}
         title={t("Add transaction")}
         actions={
-          <Link href="/">
+          <Link href="/home">
             <Button variant="secondary" size="sm">
               {t("Done")}
             </Button>

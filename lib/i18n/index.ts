@@ -23,11 +23,19 @@ export function getLanguage(): Language {
   return current;
 }
 
-export function setLanguage(language: Language): void {
+/**
+ * `persist: false` applies a language without recording it as the visitor's
+ * choice (used when public pages follow the browser's language).
+ */
+export function setLanguage(
+  language: Language,
+  { persist = true }: { persist?: boolean } = {},
+): void {
   current = language;
   if (typeof document !== "undefined") {
     document.documentElement.lang = language;
   }
+  if (!persist) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, language);
   } catch {

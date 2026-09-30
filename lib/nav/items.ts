@@ -28,7 +28,7 @@ export interface NavItem {
  * - secondary: reference and less frequent surfaces.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Home", Icon: HomeIcon, group: "primary" },
+  { href: "/home", label: "Home", Icon: HomeIcon, group: "primary" },
   { href: "/transactions", label: "Activity", Icon: ActivityIcon, group: "primary" },
   { href: "/add", label: "Add", Icon: AddIcon, group: "primary" },
   { href: "/budgets", label: "Budgets", Icon: BudgetsIcon, group: "primary" },

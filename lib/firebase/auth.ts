@@ -39,7 +39,8 @@ export const TESTERS = {
 
 export type TesterId = keyof typeof TESTERS;
 
-const TESTER_PASSWORD = "perch-emulator-only";
+// Emulator-only; exported so account deletion can re-authenticate testers.
+export const TESTER_PASSWORD = "perch-emulator-only";
 
 export async function signInAsTester(id: TesterId): Promise<User> {
   if (!usingEmulator) {

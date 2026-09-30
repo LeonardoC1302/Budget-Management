@@ -70,6 +70,16 @@ export default function LoginScreen() {
             </div>
           </div>
         )}
+
+        <p className="text-xs text-fg-subtle text-center">
+          <a href="/privacy" className="underline underline-offset-2 hover:text-fg">
+            {t("Privacy policy")}
+          </a>
+          {" · "}
+          <a href="/terms" className="underline underline-offset-2 hover:text-fg">
+            {t("Terms of service")}
+          </a>
+        </p>
       </div>
     </div>
   );

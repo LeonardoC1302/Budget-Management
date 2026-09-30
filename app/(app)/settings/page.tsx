@@ -47,6 +47,31 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
         title: "Recently deleted",
         description: "Restore anything deleted in the last 30 days.",
       },
+      {
+        href: "/settings/delete-account",
+        title: "Delete account",
+        description: "Permanently delete your account and all its data.",
+      },
+    ],
+  },
+  {
+    heading: "About",
+    links: [
+      {
+        href: "/?stay",
+        title: "Perch website",
+        description: "The public home page.",
+      },
+      {
+        href: "/privacy",
+        title: "Privacy policy",
+        description: "What Perch collects and how it's used.",
+      },
+      {
+        href: "/terms",
+        title: "Terms of service",
+        description: "The rules for using Perch.",
+      },
     ],
   },
 ];

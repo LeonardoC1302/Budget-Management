@@ -755,3 +755,91 @@ body {
   -ms-overflow-style: none;
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ═════ PUBLIC PAGES (landing, legal, 404) ═════
+   Same room as the app, at marketing scale: bigger serif display, wider
+   measure, and product previews set on a quiet stage. */
+
+.landing-h1 {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(2.5rem, 6.4vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  color: var(--color-fg);
+}
+.landing-h2 {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+  color: var(--color-fg);
+}
+.landing-h3 {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.12;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  color: var(--color-fg);
+}
+
+/* The stage: a hairline field the preview sits on, lit from the upper left
+   the way the app's courtyard is. */
+.landing-stage {
+  position: relative;
+  padding: clamp(16px, 4vw, 40px);
+  border: 1px solid var(--color-border);
+  background:
+    radial-gradient(520px 320px at 18% -10%, var(--color-skylight-start) 0%, var(--color-skylight-mid) 34%, transparent 66%),
+    color-mix(in oklab, var(--color-surface) 55%, var(--color-bg));
+}
+.landing-device {
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 24px 48px -32px rgba(0, 0, 0, 0.45);
+}
+
+/* One authored moment: the hero ledger rows settle in after the balance. */
+.landing-entries .entry {
+  animation: masthead-settle 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-entries .entry { animation: none; }
+}
+
+.landing-facts > * + * { border-left: 0; }
+@media (min-width: 768px) {
+  .landing-facts > * + * { border-left: 1px solid var(--color-border); }
+}
+@media (max-width: 767px) {
+  .landing-facts > * + * { border-top: 1px solid var(--color-border); }
+}
+
+/* Long-form legal text. */
+.legal {
+  max-width: 68ch;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-fg);
+}
+.legal h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 2.5rem 0 0.75rem;
+}
+.legal p { margin: 0.75rem 0; color: var(--color-fg-muted); }
+.legal ul { margin: 0.75rem 0; padding-left: 1.25rem; list-style: disc; color: var(--color-fg-muted); }
+.legal li { margin: 0.35rem 0; }
+.legal strong { color: var(--color-fg); font-weight: 500; }
+.legal a { color: var(--color-fg); text-decoration: underline; text-underline-offset: 3px; }
