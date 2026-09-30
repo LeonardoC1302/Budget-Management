@@ -165,18 +165,24 @@ export async function transferAmountInUsd(
  * - a transfer leg whose paired leg is already in `accountCurrency` → that
  *   leg's amount, so a USD payment into a card now in USD matches what left
  *   the source account;
+ * - a USD account → the USD value recorded when the transaction was saved,
+ *   so switching a card back to USD restores its original figures instead
+ *   of re-pricing old purchases at today's rate;
  * - a BCCR rate on a USD↔CRC pair → that same bank rate;
  * - anything else → today's rate (fallback/manual rates were quoted for the
  *   old account currency and don't apply to the new pair).
  */
 export async function amountInAccountCurrency(
-  tx: Pick<Transaction, "amount" | "currency" | "rateSource">,
+  tx: Pick<Transaction, "amount" | "currency" | "rateSource" | "amountUSD">,
   accountCurrency: string,
   pairedLeg?: Pick<Transaction, "amount" | "currency">,
 ): Promise<number> {
   if (tx.currency === accountCurrency) return tx.amount;
   if (pairedLeg && pairedLeg.currency === accountCurrency) {
     return pairedLeg.amount;
+  }
+  if (accountCurrency === "USD" && typeof tx.amountUSD === "number") {
+    return tx.amountUSD;
   }
   const source = tx.rateSource?.provider === "bccr" ? tx.rateSource : undefined;
   return convertUsingRateSource(tx.amount, tx.currency, accountCurrency, source);

@@ -5,6 +5,8 @@ import Button from "@/components/atoms/Button";
 import CurrencySelect from "@/components/atoms/CurrencySelect";
 import Input from "@/components/atoms/Input";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
+import { convertAmountInput } from "@/lib/utils/currencySwitch";
+import { formatCurrency } from "@/lib/utils/format";
 import type { Account, NewAccount } from "@/lib/types";
 
 import { t } from "@/lib/i18n";
@@ -38,8 +40,32 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
   const [creditLimit, setCreditLimit] = useState(
     typeof initial?.creditLimit === "number" ? String(initial.creditLimit) : "",
   );
+  const [limitNote, setLimitNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Editing a card's currency converts its limit so the numbers keep their
+  // value. New cards are left alone: the limit is typed in the new currency.
+  async function handleCurrencyChange(next: string) {
+    const prev = currency;
+    setCurrency(next);
+    if (!initial || next === prev) return;
+    if (next === initial.currency) {
+      setCreditLimit(
+        typeof initial.creditLimit === "number" ? String(initial.creditLimit) : "",
+      );
+      setLimitNote(null);
+      return;
+    }
+    const converted = await convertAmountInput(creditLimit, prev, next);
+    if (!converted) return;
+    setCreditLimit(converted.value);
+    setLimitNote(
+      t("Converted from {amount} at today's rate. Change it if your bank uses a different figure.", {
+        amount: formatCurrency(converted.original, prev),
+      }),
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -59,10 +85,21 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
 
     setSubmitting(true);
     setError(null);
+    // The opening balance has no field here; carry it into the new currency
+    // so it keeps its value instead of changing symbol.
+    let initialBalance = initial?.initialBalance ?? 0;
+    if (initial && currency !== initial.currency) {
+      const converted = await convertAmountInput(
+        String(initialBalance),
+        initial.currency,
+        currency,
+      );
+      if (converted) initialBalance = parseFloat(converted.value);
+    }
     const payload: NewAccount = {
       name: name.trim(),
       type: "credit",
-      initialBalance: initial?.initialBalance ?? 0,
+      initialBalance,
       currency: currency || BASE_CURRENCY,
       cutDay: cut,
       paymentDay: pay,
@@ -88,7 +125,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
         label={t("Currency")}
         name="currency"
         value={currency}
-        onChange={setCurrency}
+        onChange={(next) => void handleCurrencyChange(next)}
       />
 
       <div className="grid grid-cols-2 gap-3 items-end">
@@ -130,8 +167,12 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
         min="0"
         placeholder={t("Optional")}
         value={creditLimit}
-        onChange={(e) => setCreditLimit(e.target.value)}
+        onChange={(e) => {
+          setCreditLimit(e.target.value);
+          setLimitNote(null);
+        }}
       />
+      {limitNote && <p className="text-xs text-fg-subtle -mt-2">{limitNote}</p>}
 
       {error && (
         <p role="status" className="text-xs text-expense">

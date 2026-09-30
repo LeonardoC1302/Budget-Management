@@ -6,6 +6,8 @@ import CurrencySelect from "@/components/atoms/CurrencySelect";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
+import { convertAmountInput } from "@/lib/utils/currencySwitch";
+import { formatCurrency } from "@/lib/utils/format";
 import {
   ACCOUNT_TYPE_LABELS,
   type Account,
@@ -37,7 +39,29 @@ export default function AccountForm({
     initial ? String(initial.initialBalance) : "0",
   );
   const [currency, setCurrency] = useState(initial?.currency ?? BASE_CURRENCY);
+  const [balanceNote, setBalanceNote] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Editing an account's currency converts its balance so it keeps its value.
+  // New accounts are left alone: the balance may be typed before the currency.
+  async function handleCurrencyChange(next: string) {
+    const prev = currency;
+    setCurrency(next);
+    if (!initial || next === prev) return;
+    if (next === initial.currency) {
+      setInitialBalance(String(initial.initialBalance));
+      setBalanceNote(null);
+      return;
+    }
+    const converted = await convertAmountInput(initialBalance, prev, next);
+    if (!converted) return;
+    setInitialBalance(converted.value);
+    setBalanceNote(
+      t("Converted from {amount} at today's rate. Change it if your bank uses a different figure.", {
+        amount: formatCurrency(converted.original, prev),
+      }),
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -81,15 +105,19 @@ export default function AccountForm({
         step="0.01"
         required
         value={initialBalance}
-        onChange={(e) => setInitialBalance(e.target.value)}
+        onChange={(e) => {
+          setInitialBalance(e.target.value);
+          setBalanceNote(null);
+        }}
       />
 
       <CurrencySelect
         label={t("Currency")}
         name="currency"
         value={currency}
-        onChange={setCurrency}
+        onChange={(next) => void handleCurrencyChange(next)}
       />
+      {balanceNote && <p className="text-xs text-fg-subtle -mt-2">{balanceNote}</p>}
 
       <p className="text-xs text-fg-subtle">
         {t("Adding a credit card? Manage those on the")}{" "}

@@ -163,29 +163,32 @@ export default function NetWorthCard() {
           : ""}
       </p>
 
-      <table className="sr-only">
-        <caption>{t("Net worth by month")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("Month")}</th>
-            <th scope="col">{t("Accounts")}</th>
-            <th scope="col">{t("Invested")}</th>
-            <th scope="col">{t("Cards owed")}</th>
-            <th scope="col">{t("Net worth")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {series.map((p) => (
-            <tr key={p.monthKey}>
-              <th scope="row">{monthLabel(p.monthKey, false)}</th>
-              <td>{fmt(p.cash)}</td>
-              <td>{fmt(p.investments)}</td>
-              <td>{fmt(p.liabilities)}</td>
-              <td>{fmt(p.netWorth)}</td>
+      {/* sr-only goes on a wrapper: a table ignores width: 1px and would widen the page. */}
+      <div className="sr-only">
+        <table>
+          <caption>{t("Net worth by month")}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t("Month")}</th>
+              <th scope="col">{t("Accounts")}</th>
+              <th scope="col">{t("Invested")}</th>
+              <th scope="col">{t("Cards owed")}</th>
+              <th scope="col">{t("Net worth")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {series.map((p) => (
+              <tr key={p.monthKey}>
+                <th scope="row">{monthLabel(p.monthKey, false)}</th>
+                <td>{fmt(p.cash)}</td>
+                <td>{fmt(p.investments)}</td>
+                <td>{fmt(p.liabilities)}</td>
+                <td>{fmt(p.netWorth)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

@@ -67,6 +67,18 @@ export default function AppLock({ children }: { children: ReactNode }) {
 
   const showLock = !!settings && locked && !!uid;
 
+  // The hidden app underneath still has its full size; without this the lock
+  // screen could be scrolled (or panned sideways on a phone) over it.
+  useEffect(() => {
+    if (!showLock) return;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, [showLock]);
+
   return (
     <>
       <div
