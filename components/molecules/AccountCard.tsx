@@ -65,7 +65,7 @@ export default function AccountCard({
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Reconcile ${account.name}`}
+                aria-label={t("Reconcile {name}", { name: account.name })}
                 title={t("Check this balance against your bank")}
                 onClick={() => onReconcile(account)}
                 className="px-2"
@@ -77,7 +77,7 @@ export default function AccountCard({
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Edit ${account.name}`}
+                aria-label={t("Edit {name}", { name: account.name })}
                 onClick={() => onEdit(account)}
                 className="px-2"
               >
@@ -88,7 +88,7 @@ export default function AccountCard({
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Delete ${account.name}`}
+                aria-label={t("Delete {name}", { name: account.name })}
                 onClick={() => onDelete(account)}
                 disabled={!canDelete}
                 title={

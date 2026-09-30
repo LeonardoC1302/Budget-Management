@@ -148,7 +148,7 @@ export default function HoldingForm({
                   : "text-fg-muted hover:text-fg",
               )}
             >
-              {k}
+              {t(k)}
             </button>
           ))}
         </div>

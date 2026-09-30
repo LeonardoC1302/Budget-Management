@@ -34,9 +34,13 @@ export function planMaterializations(
     );
     if (dates.length === 0) continue;
 
+    // Investment templates store the amount to invest; the account also pays
+    // the commission, so the transaction carries the total (see Transaction.fee).
+    const fee = template.type === "investment" && template.fee ? template.fee : 0;
     const transactions: NewTransaction[] = dates.map((date) => ({
       type: template.type,
-      amount: template.amount,
+      amount: template.amount + fee,
+      ...(fee > 0 ? { fee } : {}),
       currency: template.currency,
       accountId: template.accountId,
       categoryId: template.categoryId,

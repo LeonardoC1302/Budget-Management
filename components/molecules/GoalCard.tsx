@@ -231,7 +231,7 @@ export default function GoalCard({
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Edit ${goal.name}`}
+                aria-label={t("Edit {name}", { name: goal.name })}
                 onClick={() => onEdit(goal)}
                 className="px-2"
               >
@@ -242,7 +242,7 @@ export default function GoalCard({
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Delete ${goal.name}`}
+                aria-label={t("Delete {name}", { name: goal.name })}
                 onClick={() => onDelete(goal)}
                 className="px-2"
               >

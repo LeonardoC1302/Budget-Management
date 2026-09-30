@@ -93,9 +93,12 @@ export interface Transaction {
   transferId?: string;
   transferDirection?: TransferDirection;
   linkedAccountId?: string;
-  // Fixed commission charged by the source entity on a transfer, in the
+  // Transfers: fixed commission charged by the source entity, in the
   // transfer's currency. Stored on both paired legs; the destination leg's
   // `amount` is already net of it.
+  // Investments: broker commission, in the transaction currency. `amount` is
+  // the total that left the account (invested + fee); shares were bought with
+  // `amount - fee`, and the fee counts toward cost basis.
   fee?: number;
   recurringId?: string;
   // Set on both paired docs of a credit-card payment transfer.
@@ -168,6 +171,9 @@ export interface RecurringTransaction {
   // Investment templates only: the holding each occurrence buys into. Shares
   // are priced at that day's close when the occurrence is materialized.
   holdingId?: string;
+  // Investment templates only: broker commission added to each occurrence,
+  // in the template currency. `amount` is what gets invested.
+  fee?: number;
   _owner?: OwnerCtx;
 }
 

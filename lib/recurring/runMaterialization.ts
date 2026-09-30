@@ -86,7 +86,8 @@ async function priceInvestmentOccurrences(txs: NewTransaction[]): Promise<void> 
       tx.currency === "USD" ? 1 : await resolveFallbackRate(tx.currency, "USD");
     if (close && usdRate) {
       tx.unitPriceUSD = close;
-      tx.sharesDelta = (tx.amount * usdRate) / close;
+      // Shares are bought with what's left after the commission.
+      tx.sharesDelta = ((tx.amount - (tx.fee ?? 0)) * usdRate) / close;
     } else {
       tx.unpriced = true;
     }

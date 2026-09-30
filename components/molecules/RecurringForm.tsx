@@ -258,7 +258,7 @@ export default function RecurringForm({
       </div>
 
       <Input
-        label={`Amount (${currency})`}
+        label={t("Amount ({currency})", { currency: currency })}
         name="amount"
         type="number"
         inputMode="decimal"

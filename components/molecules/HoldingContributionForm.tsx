@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/atoms/Button";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
@@ -14,6 +14,8 @@ import type { Holding, NewTransaction } from "@/lib/types";
 import { t } from "@/lib/i18n";
 interface HoldingContributionFormProps {
   holding: Holding;
+  // Commission used on the last contribution to this holding, to prefill.
+  lastFee?: number;
   onSubmit: (input: NewTransaction) => void | Promise<void>;
   onCancel?: () => void;
 }
@@ -34,6 +36,7 @@ type PriceState =
 
 export default function HoldingContributionForm({
   holding,
+  lastFee,
   onSubmit,
   onCancel,
 }: HoldingContributionFormProps) {
@@ -42,6 +45,7 @@ export default function HoldingContributionForm({
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [date, setDate] = useState(todayISODate());
   const [description, setDescription] = useState("");
+  const [fee, setFee] = useState(lastFee ? String(lastFee) : "");
   const [manualMode, setManualMode] = useState(false);
   const [manualShares, setManualShares] = useState("");
   const [manualPrice, setManualPrice] = useState("");
@@ -93,7 +97,8 @@ export default function HoldingContributionForm({
 
   const parsedAmount = parseFloat(amount);
 
-  const preview = useMemo(() => {
+  // Cheap enough to recompute each render; the React Compiler memoizes it.
+  const preview = (() => {
     if (!isMarket) return null;
     if (manualMode) {
       const s = parseFloat(manualShares);
@@ -121,15 +126,7 @@ export default function HoldingContributionForm({
       unitPriceUSD: effectivePrice.closeUSD,
       amountUSD: NaN,
     };
-  }, [
-    isMarket,
-    manualMode,
-    manualShares,
-    manualPrice,
-    parsedAmount,
-    effectivePrice,
-    accountCurrency,
-  ]);
+  })();
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -168,11 +165,16 @@ export default function HoldingContributionForm({
       }
     }
 
+    const parsedFee = parseFloat(fee);
+    const feeValue = Number.isFinite(parsedFee) && parsedFee > 0 ? parsedFee : 0;
+
     setSubmitting(true);
     try {
       const payload: NewTransaction = {
         type: "investment",
-        amount: amountValue,
+        // The account pays the investment plus the commission.
+        amount: amountValue + feeValue,
+        ...(feeValue > 0 ? { fee: feeValue } : {}),
         currency,
         accountId,
         categoryId: "",
@@ -204,6 +206,19 @@ export default function HoldingContributionForm({
       return t("Latest close {0} on {date}. Shares calculated in USD equivalent at save.", { "0": formatCurrency(effectivePrice.closeUSD, "USD"), date: effectivePrice.date });
     }
     return null;
+  })();
+
+  const feeNumber = parseFloat(fee);
+  const totalLine = (() => {
+    if (!(Number.isFinite(feeNumber) && feeNumber > 0)) return null;
+    const base = isMarket && manualMode ? null : parsedAmount;
+    if (base === null || !Number.isFinite(base) || base <= 0) return null;
+    return t("{total} will leave {account} ({amount} invested + {fee} commission).", {
+      total: formatCurrency(base + feeNumber, accountCurrency),
+      account: account?.name ?? t("the account"),
+      amount: formatCurrency(base, accountCurrency),
+      fee: formatCurrency(feeNumber, accountCurrency),
+    });
   })();
 
   const submitDisabled = (() => {
@@ -268,7 +283,7 @@ export default function HoldingContributionForm({
         </div>
       ) : (
         <Input
-          label={`Amount (${accountCurrency})`}
+          label={t("Amount to invest ({currency})", { currency: accountCurrency })}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -284,6 +299,22 @@ export default function HoldingContributionForm({
       {priceLine && (
         <p className="text-xs text-fg-subtle">{priceLine}</p>
       )}
+
+      <div className="flex flex-col gap-1">
+        <Input
+          label={t("Commission ({currency}, optional)", { currency: accountCurrency })}
+          name="fee"
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          value={fee}
+          onChange={(e) => setFee(e.target.value)}
+          hint={t("What the broker charges for this buy. It's taken from the account on top of the amount and counts toward cost basis.")}
+        />
+        {totalLine && <p className="text-xs text-fg-muted">{totalLine}</p>}
+      </div>
 
       <Select
         label={t("From account")}

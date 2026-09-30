@@ -124,7 +124,7 @@ export default function ContributionForm({
 
       <div className="flex flex-col gap-1">
         <Input
-          label={`Amount (${goalCurrency})`}
+          label={t("Amount ({currency})", { currency: goalCurrency })}
           name="amount"
           type="number"
           inputMode="decimal"

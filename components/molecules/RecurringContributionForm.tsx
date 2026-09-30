@@ -50,6 +50,7 @@ export default function RecurringContributionForm({
     initial?.accountId ?? fundingAccounts[0]?.id ?? "",
   );
   const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
+  const [fee, setFee] = useState(initial?.fee ? String(initial.fee) : "");
   const [frequency, setFrequency] = useState<RecurrenceFrequency>(
     initial?.frequency ?? "monthly",
   );
@@ -70,6 +71,7 @@ export default function RecurringContributionForm({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid || !holding || !account) return;
+    const parsedFee = parseFloat(fee);
     setSubmitting(true);
     setError(null);
     try {
@@ -85,6 +87,7 @@ export default function RecurringContributionForm({
         ...(endDate ? { endDate } : {}),
         active: initial?.active ?? true,
         holdingId: holding.id,
+        ...(Number.isFinite(parsedFee) && parsedFee > 0 ? { fee: parsedFee } : {}),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("Couldn't save."));
@@ -135,6 +138,18 @@ export default function RecurringContributionForm({
         required
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
+      />
+
+      <Input
+        label={t("Commission each time ({currency}, optional)", { currency: account?.currency ?? "" })}
+        name="recurring-fee"
+        type="number"
+        inputMode="decimal"
+        step="0.01"
+        min="0"
+        placeholder="0.00"
+        value={fee}
+        onChange={(e) => setFee(e.target.value)}
       />
 
       <Select

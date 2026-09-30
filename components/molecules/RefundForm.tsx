@@ -95,7 +95,7 @@ export default function RefundForm({
       </p>
 
       <Input
-        label={`Amount (${original.currency})`}
+        label={t("Amount ({currency})", { currency: original.currency })}
         name="refund-amount"
         type="number"
         inputMode="decimal"

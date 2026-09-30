@@ -108,7 +108,7 @@ export default function GoalWithdrawalForm({
       />
 
       <Input
-        label={`Amount (${goal.currency})`}
+        label={t("Amount ({currency})", { currency: goal.currency })}
         name="withdraw-amount"
         type="number"
         inputMode="decimal"

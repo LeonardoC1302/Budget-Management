@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
-import { formatCurrencyCompact } from "@/lib/utils/format";
+import { formatCurrencyCompact, formatPercent } from "@/lib/utils/format";
 import {
   latestValuationFor,
   manualSnapshot,
@@ -107,7 +107,7 @@ export default function DashboardSummary({
           tone="text-invest"
           hint={
             portfolio.gainPct !== null
-              ? `${portfolio.gain >= 0 ? "+" : ""}${(portfolio.gainPct * 100).toFixed(2)}%`
+              ? `${portfolio.gain >= 0 ? "+" : ""}${formatPercent(portfolio.gainPct)}`
               : undefined
           }
           hintTone={gainTone}

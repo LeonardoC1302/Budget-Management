@@ -70,7 +70,7 @@ export default function BottomNav() {
             {ActiveIcon ? (
               <ActiveIcon width={18} height={18} aria-hidden />
             ) : null}
-            <span>{activeItem?.label ?? t("Menu")}</span>
+            <span>{activeItem ? t(activeItem.label) : t("Menu")}</span>
           </button>
         </div>
       </nav>

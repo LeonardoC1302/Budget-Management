@@ -19,7 +19,7 @@ import { useRecurringTransactions } from "@/hooks/useRecurringTransactions";
 import { emitDataChanged } from "@/lib/events/dataChanged";
 import { announceRemoval } from "@/lib/events/undo";
 import type { Holding, NewHolding, NewTransaction } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import {
   latestValuationFor,
   manualSnapshot,
@@ -188,7 +188,7 @@ export default function InvestmentsPage() {
               {totals.gain >= 0 ? "+" : ""}
               {formatCurrency(convertUsd(totals.gain), displayCurrency)} (
               {totals.gainPct >= 0 ? "+" : ""}
-              {(totals.gainPct * 100).toFixed(2)}%)
+              {formatPercent(totals.gainPct)})
             </span>
           )}
         </div>

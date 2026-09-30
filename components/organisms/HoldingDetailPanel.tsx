@@ -15,7 +15,7 @@ import { useMarketHistory } from "@/hooks/useMarketHistory";
 import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import type { MarketRange, QuoteResult } from "@/lib/services/marketData";
 import { cn } from "@/lib/utils/cn";
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/utils/format";
 import type {
   Account,
   Holding,
@@ -198,7 +198,7 @@ export default function HoldingDetailPanel({
               {snapshot.gainUSD >= 0 ? "+" : ""}
               {formatCurrency(convertUsd(snapshot.gainUSD), displayCurrency)}{" "}
               ({snapshot.gainPct >= 0 ? "+" : ""}
-              {(snapshot.gainPct * 100).toFixed(2)}%)
+              {formatPercent(snapshot.gainPct)})
             </span>
           )}
         </div>
@@ -443,6 +443,11 @@ export default function HoldingDetailPanel({
       >
         <HoldingContributionForm
           holding={holding}
+          lastFee={
+            [...(position?.contributions ?? [])]
+              .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
+              .find((c) => typeof c.fee === "number")?.fee
+          }
           onSubmit={async (input) => {
             await onContribute(input);
             setModal({ kind: "none" });

@@ -8,6 +8,7 @@ import type { Holding } from "@/lib/types";
 import type { HoldingPosition, HoldingValueSnapshot } from "@/lib/utils/holdings";
 
 import { getLocale, t } from "@/lib/i18n";
+import { formatPercent } from "@/lib/utils/format";
 interface HoldingCardProps {
   holding: Holding;
   position?: HoldingPosition;
@@ -28,7 +29,7 @@ function formatShares(shares: number): string {
 
 function formatSignedPct(pct: number): string {
   const sign = pct >= 0 ? "+" : "";
-  return `${sign}${(pct * 100).toFixed(2)}%`;
+  return `${sign}${formatPercent(pct)}`;
 }
 
 export default function HoldingCard({

@@ -264,7 +264,7 @@ export default function TransactionForm({
 
       <div className="flex flex-col gap-1.5">
         <Input
-          label={`Amount (${currency})`}
+          label={t("Amount ({currency})", { currency: currency })}
           name="amount"
           type="number"
           inputMode="decimal"

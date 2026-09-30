@@ -447,7 +447,7 @@ export default function PayCardForm({
       <Input
         label={t("Note")}
         name="description"
-        placeholder={`Payment · ${card.name}`}
+        placeholder={t("Payment · {name}", { name: card.name })}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />

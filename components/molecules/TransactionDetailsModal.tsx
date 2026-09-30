@@ -186,6 +186,15 @@ export default function TransactionDetailsModal({
                     : t(" (full)")}
                 </Row>
               )}
+              {isInvestment && typeof transaction.fee === "number" && transaction.fee > 0 && (
+                <Row label={t("Commission")}>
+                  {formatCurrency(transaction.fee, transaction.currency)}
+                  {" · "}
+                  {t("{amount} invested", {
+                    amount: formatCurrency(transaction.amount - transaction.fee, transaction.currency),
+                  })}
+                </Row>
+              )}
               {transaction.installment && (
                 <Row label={t("Installment")}>
                   {t("{index} of {count} · {total} total", {

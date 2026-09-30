@@ -484,7 +484,7 @@ function RowActions({
         <Button
           variant="ghost"
           size="sm"
-          aria-label={`Reconcile ${card.name}`}
+          aria-label={t("Reconcile {name}", { name: card.name })}
           title={t("Check what you owe against your bank")}
           onClick={() => onReconcile(card)}
           className="px-2"
@@ -495,7 +495,7 @@ function RowActions({
       <Button
         variant="ghost"
         size="sm"
-        aria-label={`Edit ${card.name}`}
+        aria-label={t("Edit {name}", { name: card.name })}
         onClick={() => onEdit(card)}
         className="px-2"
       >
@@ -504,7 +504,7 @@ function RowActions({
       <Button
         variant="ghost"
         size="sm"
-        aria-label={`Delete ${card.name}`}
+        aria-label={t("Delete {name}", { name: card.name })}
         onClick={() => onDelete(card)}
         disabled={!canDelete}
         title={

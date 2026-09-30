@@ -274,7 +274,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
       />
 
       <Input
-        label={`Amount (${fromCurrency})`}
+        label={t("Amount ({currency})", { currency: fromCurrency })}
         name="amount"
         type="number"
         inputMode="decimal"
@@ -289,7 +289,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
       {!differentCurrencies && (
         <div className="flex flex-col gap-1">
           <Input
-            label={`Fee (${fromCurrency})`}
+            label={t("Fee ({currency})", { currency: fromCurrency })}
             name="fee"
             type="number"
             inputMode="decimal"

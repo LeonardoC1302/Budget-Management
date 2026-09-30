@@ -62,3 +62,12 @@ export function formatDateHeader(iso: string): string {
   }
   return formatDate(iso);
 }
+
+/** 0.1234 → "12.34%" (or "12,34 %" in Spanish). */
+export function formatPercent(ratio: number, digits = 2): string {
+  return new Intl.NumberFormat(getLocale(), {
+    style: "percent",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(ratio);
+}
