@@ -1,12 +1,13 @@
-# Budget Management
+# Budget Management (Perch)
 
-A personal budgeting app for tracking accounts, transactions, budgets, and savings goals across multiple currencies. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, and Firebase.
+Perch is a personal budgeting app for tracking accounts, credit cards, transactions, budgets, savings goals and investments in US dollars and Costa Rican colones. It has a public landing page at `/` and the signed-in app at `/home`. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, and Firebase.
 
 ## Features
 
 - **Accounts** — Track balances across debit, credit, wallet, cash, and savings accounts, each in its own currency.
 - **Transactions** — Log income and expenses with categories, descriptions, and dates. Delete or inspect any transaction from the history view.
-- **Multi-currency with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Dashboard totals, previews, and lists show USD so cross-currency figures stay comparable. Live rates are fetched from [open.er-api.com](https://open.er-api.com) and cached in-memory for one hour.
+- **USD and CRC with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Totals are computed in USD and shown in the display currency you pick (USD or CRC). General rates come from [open.er-api.com](https://open.er-api.com), cached for one hour; Costa Rican bank window rates (compra/venta) come from tipodecambio.info through `/api/rates/bccr`, and a purchase can store the exact rate your bank used.
+- **Credit cards** — Cut and payment days, the current statement, credit left, and payments of the full statement or of chosen charges.
 - **Search, tags and refunds** — Search the ledger by description, category, account, amount or `#tag`, and filter by period. Tag transactions (e.g. `#japan-trip`) and tap a tag to see what it adds up to by category. Record a refund against an expense; it lowers that category's spend instead of counting as income.
 - **Reconcile** — Check any account or card against your bank. Perch posts a balance adjustment for the difference (not counted as income or spending) and shows when each account was last reconciled.
 - **Card installments** — Split a credit-card purchase into monthly installments. The card owes the full amount right away; each month's slice lands on its own statement and budget month, and future slices are listed on the Cards page.
@@ -18,6 +19,7 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Insights & analytics** — Monthly income/expense/net summary plus category-level insights on the home dashboard.
 - **Net worth over time** — Twelve months of month-end net worth: account balances plus investments (month-end close, or latest valuation for manual holdings) minus what's owed on cards.
 - **Savings rate** — The share of each month's income you kept, with this month's rate and the income-weighted average.
+- **Connections** — Share your data with people you trust (e.g. a partner) by exchanging a one-time code under Settings → Connections. Connected users can see and edit each other's accounts and budgets.
 - **Category management** — Add or remove income/expense categories via a dedicated modal; default categories are seeded per user on first sign-in.
 - **Google Sign-In** — Firebase Authentication with Google as the identity provider.
 - **Cloud persistence** — All data is stored per-user in Firebase Firestore. A local-storage store implementation is also included and can be swapped in for offline-only use.
@@ -26,6 +28,9 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **English and Spanish** — Switch language in Settings; the choice follows you across devices. Spanish formats money and dates the Costa Rican way. Strings live in `lib/i18n/es.ts`, keyed by the English text passed to `t()`.
 - **App lock** — Optional PIN, plus fingerprint or face unlock where the device supports it (WebAuthn), set per device under Settings → App lock. It's a screen lock, not encryption.
 - **Onboarding** — New users pick a language and display currency and add their own accounts; there's no default cash account any more. Existing users never see it.
+- **Delete account** — Settings → Delete account asks you to sign in again, then deletes all your data, your connections and codes, your profile, and your Firebase Auth user.
+- **Public site** — Landing page, privacy policy and terms of service (English and Spanish, following the browser language), 404 and error pages, `robots.txt`, `sitemap.xml`, an Open Graph image and JSON-LD. Signed-in visitors to `/` are sent to `/home` unless the URL has `?stay`.
+- **Light and dark themes** — Follows the system by default; the toggle saves the choice per device.
 - **Mobile-first UI** — Responsive layout with bottom-anchored actions on small screens.
 
 ## Tech stack
@@ -35,6 +40,7 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - [TypeScript 5](https://www.typescriptlang.org)
 - [Tailwind CSS v4](https://tailwindcss.com) via `@tailwindcss/postcss`
 - [Firebase 12](https://firebase.google.com) — Authentication and Firestore
+- [jose](https://github.com/panva/jose) — verifies Firebase ID tokens on the API routes
 - ESLint 9 with `eslint-config-next`
 
 ## Prerequisites
@@ -85,7 +91,7 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) and sign in with Google. On first sign-in, a set of default categories is seeded for your user.
+   Open [http://localhost:3000](http://localhost:3000) to see the landing page, then sign in with Google to reach the app at `/home`. New users go through a short onboarding and get a default set of categories.
 
 ## Local testing without a Firebase account
 
@@ -100,7 +106,7 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 
 ## Environment variables
 
-All variables are read at build time and must be prefixed with `NEXT_PUBLIC_` because they are consumed by the client-side Firebase SDK. These values are considered public Firebase config, not secrets — but Firestore access is still gated by Auth and security rules, so keep those tight.
+The `NEXT_PUBLIC_` variables are read at build time and shipped to the browser. The Firebase ones are public config, not secrets; Firestore access is still gated by Auth and security rules, so keep those tight.
 
 | Variable | Description |
 | --- | --- |
@@ -112,6 +118,7 @@ All variables are read at build time and must be prefixed with `NEXT_PUBLIC_` be
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase App ID for the Web app. |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | (Optional) Google Analytics measurement ID. |
 | `TWELVEDATA_API_KEY` | (Optional) [Twelve Data](https://twelvedata.com) API key used by the Investments tab for live ETF/stock/crypto quotes and history. Free tier is fine (800 req/day, 8/min). When unset, the Investments tab still works — holdings simply show cost basis with no market data. This key is server-only and must NOT be prefixed with `NEXT_PUBLIC_`. |
+| `NEXT_PUBLIC_SITE_URL` | (Optional) Public base URL, e.g. `https://perch.example`. Used for canonical links, Open Graph URLs, `robots.txt` and `sitemap.xml`. When empty, Vercel's production URL is used, then `http://localhost:3000`. |
 
 Never commit `.env.local` — it is already ignored by `.gitignore`. Use your hosting provider's secret manager (Vercel Environment Variables, etc.) in production.
 
@@ -139,26 +146,17 @@ The proxy vars are read on first request and passed to `undici` as the global di
 
 ## Security rules
 
-The app stores everything under a per-user document tree (e.g. `users/{uid}/accounts/{id}`). A minimal Firestore rule set that enforces this:
+The app stores everything under a per-user document tree (e.g. `users/{uid}/accounts/{id}`). The rules in [`firestore.rules`](firestore.rules) let each user read and write their own tree, let a connected user in through a grant, and cover the `connections` and `connectionCodes` collections used for sharing. Deploy them with the Firebase CLI (`firebase deploy --only firestore:rules`); the emulator loads the same file.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-Adjust to your needs before enabling any additional collections.
+The API routes under `app/api/` require a Firebase ID token (`Authorization: Bearer <token>`), which `lib/server/requireUser.ts` verifies against Google's public keys. Client code calls them through `lib/api/apiFetch.ts`, which attaches the token.
 
 ## Scripts
 
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the Next.js dev server on port 3000. |
+| `npm run dev:emulator` | Start the dev server against the local Firebase emulators, with tester sign-in buttons. |
+| `npm run emulator:reset` | Delete the saved emulator data in `.emulator-data/`. |
 | `npm run build` | Create a production build. |
 | `npm start` | Serve the production build. |
 | `npm run lint` | Run ESLint across the project. |
@@ -166,21 +164,30 @@ Adjust to your needs before enabling any additional collections.
 ## Project structure
 
 ```
-app/           Next.js App Router pages (home, transactions, accounts, budgets, goals, add)
-components/    UI components (atoms, molecules, organisms)
-contexts/      React context providers (auth, categories)
-hooks/         Feature hooks (useAccounts, useTransactions, useBudgets, useGoals, useCategories)
+app/
+  (public)/    Landing page, /privacy, /terms (indexed)
+  (app)/       The signed-in app: /home, /transactions, /budgets, /settings, ... (noindex)
+  api/         Market data and bank-rate proxies (auth required)
+  robots.ts, sitemap.ts, opengraph-image.tsx, manifest.ts
+  not-found.tsx, error.tsx, global-error.tsx
+components/
+  atoms/, molecules/, organisms/   App UI
+  public/      Landing page, public shell, legal and status pages
+contexts/      Auth, access, categories, language, preferences
+hooks/         Data hooks (accounts, transactions, budgets, goals, holdings, ...) and offline sync
 lib/
-  firebase/    Firebase client, auth helpers, per-user seeding
-  services/    exchangeRates.ts — live FX rates from open.er-api.com
-               marketData.ts    — Twelve Data proxy (quotes, history, search)
+  firebase/    Client, auth, seeding, connections, account deletion
+  i18n/        t()/tn() and the Spanish dictionary (es.ts)
+  legal/       Privacy policy and terms text, with placeholders in types.ts
+  site/        siteUrl() for metadata, robots and sitemap
+  server/      Server-side ID token verification
+  services/    Exchange rates, bank rates, Twelve Data
   storage/     Store interfaces + Firebase and local-storage implementations
   types.ts     Shared domain types
-  utils/       Formatting, analytics, currency, cn helpers
-public/        Static assets
+public/        Static assets and the service worker (sw.js)
 ```
 
-The per-user Firestore tree now also stores `holdings` and `holdingValuations` — the security rule above already covers them because it matches `users/{userId}/{document=**}`.
+`DESIGN.md` describes the visual system and `PRODUCT.md` the product scope and constraints.
 
 ## Switching to local storage
 
@@ -188,10 +195,18 @@ The per-user Firestore tree now also stores `holdings` and `holdingValuations` �
 
 ## Deployment
 
-The app deploys cleanly to [Vercel](https://vercel.com) — connect the repo, add the `NEXT_PUBLIC_FIREBASE_*` environment variables (plus `TWELVEDATA_API_KEY` if you want the Investments tab's live prices) in the project settings, and deploy. Any host that supports Next.js 16 works; see the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying) for other targets.
+The app deploys to [Vercel](https://vercel.com): connect the repo, add the `NEXT_PUBLIC_FIREBASE_*` environment variables (plus `TWELVEDATA_API_KEY` for live prices) in the project settings, and deploy. Any host that supports Next.js 16 works; see the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying) for other targets.
+
+When you add a custom domain:
+
+1. Set `NEXT_PUBLIC_SITE_URL` to it and redeploy.
+2. Add it under Firebase Console → Authentication → Settings → Authorized domains, or Google sign-in fails there.
+3. Verify it in Google Search Console and submit `/sitemap.xml`.
+
+Before going public, fill in `[CONTACT EMAIL]` and `[FIRESTORE REGION]` in `lib/legal/types.ts`.
 
 ## Notes
 
 - This project uses a customized Next.js 16 setup. Check `AGENTS.md` and `node_modules/next/dist/docs/` for framework specifics before making structural changes.
 - Exchange rates are fetched from open.er-api.com's free endpoint. If you expect heavy usage or need SLAs, swap `lib/services/exchangeRates.ts` for a paid provider.
-- Market data (Investments tab) uses Twelve Data's free tier via a Next.js route proxy. Free tier limits are 800 requests/day and 8/min — plenty for a private tool. Missing keys degrade the tab to cost-basis-only mode; nothing crashes.
+- Market data (Investments tab) uses Twelve Data's free tier via a Next.js route proxy. Free tier limits are 800 requests/day and 8/min; switch to a paid plan if usage grows. Missing keys degrade the tab to cost-basis-only mode; nothing crashes.

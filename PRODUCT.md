@@ -8,179 +8,183 @@ web
 
 ## Users
 
-Perch is a private tool for the builder and a small circle around them — a
-partner, family, or a handful of trusted people who each hold their own
-sign-in. Every user works inside their own per-user data tree; there is no
-sharing, no household view, no collaboration surface. The situation is
-personal money: quick logging on a phone during the day, and calmer
-reconciliation or planning on a larger screen when the user chooses to sit
-with it. There is no intent to open Perch to a general or public audience.
+Perch is a public personal finance app for people in Costa Rica who handle
+money in both colones and US dollars. Anyone with a Google account can sign
+in from the landing page at `/`. Each user works inside their own per-user
+data tree. Users can connect with a one-time code and then see and edit
+each other's data (typically a couple sharing a household budget); there is
+no wider collaboration surface.
+
+The situation is personal money: quick logging on a phone during the day,
+often with a weak or missing connection, and calmer reconciliation or
+planning on a larger screen when the user chooses to sit with it. The app
+and its public pages are available in English and Costa Rican Spanish.
 
 ## Product Purpose
 
 Perch is a personal budgeting PWA for people who want to see, decide, and log
-their own money — across multiple currencies — without a dashboard shouting at
-them. It exists so a small circle of related users can each track accounts,
-transactions, budgets, saving goals, recurring items, and investments in one
-quiet surface that installs on their device and stays under their control.
-Success is a user who trusts what they see, understands where their month
-stands, and returns to Perch because the act of using it feels calm rather
-than taxing.
+their own money across colones and dollars without a dashboard shouting at
+them. Users track accounts, credit cards, transactions, budgets, saving
+goals, recurring items and investments in one quiet surface that installs on
+their device and keeps working offline. Success is a user who trusts what
+they see, understands where their month stands, and returns to Perch because
+using it feels calm rather than taxing.
 
 ## Positioning
 
-Five load-bearing traits, confirmed by the user, that together define what a
-neighboring product could not truthfully copy:
+Five traits that together define what a neighboring product could not
+truthfully copy:
 
-- **Multi-currency by design, USD-normalized.** Every account and transaction
-  stores both its original-currency amount and a USD-converted value. Totals,
-  previews, insights, and cross-account comparisons are always presented in
-  USD so figures from different currencies remain comparable. Original values
-  are preserved on the entity and surfaced in details, not thrown away.
-- **Manual entry only — no bank aggregation.** Perch never connects to a bank,
-  card, or third-party aggregator. Every transaction is a deliberate act by
-  the user. This is a positioning choice, not a limitation to fix.
-- **Quiet, calm, anti-dashboard aesthetic.** Perch is deliberately not a
-  performance-metrics wall. The interface exists to let money be seen, not to
-  perform importance. Tone, density, and motion serve reflection over
-  stimulation.
-- **Mobile-first PWA, installable, offline-tolerant.** A single installable
-  surface that works on a phone in the pocket and a browser on the desktop.
-  There is no native store, no companion app, no split product.
-- **Personal control and privacy.** Data lives per-user in Firestore, gated by
-  the user's own auth. There is no aggregation, no resale of behavior, no
-  third-party bank connection, and no telemetry beyond the platform floor.
+- **Colones and dollars by design.** Every account and transaction keeps its
+  original-currency amount alongside a USD-normalized value. Totals,
+  insights and charts are computed in USD and shown in the user's chosen
+  display currency (USD or CRC). Costa Rican bank window rates (compra and
+  venta) are built in, and a purchase can carry the exact rate the bank
+  used.
+- **Manual entry only, no bank aggregation.** Perch never connects to a
+  bank, card or aggregator and never asks for bank credentials. Every
+  transaction is a deliberate act by the user, helped by recurring items and
+  CSV import. This is a positioning choice, not a limitation to fix.
+- **Quiet, calm, anti-dashboard aesthetic.** The interface lets money be
+  seen instead of performing importance. Tone, density and motion serve
+  reflection over stimulation.
+- **Mobile-first PWA that works offline.** One installable surface for the
+  phone and the desktop. Firestore keeps a local copy, so logging works
+  without signal and syncs later. There is no native store app.
+- **Personal control and privacy.** Data lives per user in Firestore behind
+  the user's own sign-in. No ads, no analytics cookies, no data resale. Users
+  can export everything as CSV and delete their account and data themselves.
 
 ## Operating Context
 
-- **Where it runs.** A browser or an installed PWA on the user's device.
-  Standalone display mode, portrait orientation, and iOS-capable
-  home-screen install are already committed in the manifest and layout.
-- **How it is used.** Fast logging of transactions (income, expense,
-  transfer, investment) during the day; heavier reconciliation, budget
-  setting, goal contributions, and recurring maintenance in slower moments.
-  The mobile shell centers a bottom navigation and a bottom-anchored primary
-  action; the same routes serve desktop.
-- **What it depends on.** Firebase Authentication with Google Sign-In as the
-  identity provider; Firestore for per-user persistence; a local-storage
-  store implementation kept as a swappable seam behind `lib/storage/`. Live
-  exchange rates are pulled from `open.er-api.com` and cached in-memory for
-  one hour. There is no server-owned API beyond these.
-- **Failure and offline posture.** The PWA is installable and expected to
-  tolerate a lost connection well enough that manual entry remains possible
-  in the moment and reconciles once the connection returns. This is a
-  positioning commitment, not merely a nice-to-have.
+- **Where it runs.** A browser or an installed PWA. Standalone display,
+  portrait orientation and iOS home-screen install are set in the manifest.
+  The manifest `id` is pinned to `/` so installs made before the landing
+  page existed stay the same app; `start_url` is `/home`.
+- **Routes.** Public pages live in the `app/(public)` group: the landing
+  page (`/`), `/privacy` and `/terms`. They are indexed by search engines and
+  listed in `sitemap.xml`. The signed-in app lives in `app/(app)` (`/home`,
+  `/transactions`, `/budgets`, …) and is marked `noindex`. A signed-in
+  visitor to `/` is sent to `/home` unless the URL carries `?stay`.
+- **How it is used.** Fast logging of income, expenses, transfers and
+  investment contributions during the day; reconciliation, budget setting,
+  goal contributions and recurring maintenance in slower moments. Mobile
+  uses a bottom menu pill; desktop shows the full navigation row.
+- **What it depends on.**
+  - Firebase Authentication with Google Sign-In.
+  - Firestore with persistent local cache for per-user data.
+  - `open.er-api.com` for general exchange rates (fetched from the browser).
+  - `tipodecambio.info` for Costa Rican bank window rates, via
+    `/api/rates/bccr`.
+  - Twelve Data for market prices, via `/api/market/*`.
+  - Every `/api` route requires a Firebase ID token, verified server-side
+    with `jose` against Google's public keys.
+- **Failure and offline posture.** Manual entry must keep working without a
+  connection and reconcile once it returns. The last known rates are reused
+  while offline. Account deletion is the one flow that requires a
+  connection.
 
 ## Capabilities and Constraints
 
-Functional capabilities already in the product:
+Functional capabilities in the product:
 
-- **Accounts** in five types — debit, credit, digital wallet, cash, savings —
-  each held in its own currency with an initial balance stored in both the
-  original currency and USD.
-- **Transactions** in four kinds — income, expense, transfer, investment —
-  each carrying its original amount, USD-converted amount, currency,
-  account, category, description, and date. Transfers link two accounts and
-  can span currencies; a details modal shows the original amount.
-- **Recurring transactions** with five frequencies — monthly, semi-monthly
-  (two chosen days), weekly, biweekly, yearly — with start, optional end,
-  active flag, and materialization tracking. Income and expense only —
-  investment recurrings were retired when contributions moved under
-  Holdings.
-- **Budgets** as monthly caps per category, with progress and status
-  surfaced against actual spend.
-- **Saving goals** with target amount, optional target date, initial amount,
-  contributions log, and a projected monthly rate.
-- **Investments as Holdings.** Each position is a first-class entity of
-  kind `market` (backed by a Twelve Data ticker — ETFs, indices, stocks,
-  crypto) or `manual` (no ticker, tracked via user-entered balance entries;
-  suits pensions, private funds, real estate). Investment transactions
-  still deduct from a selected account and now also carry `holdingId`,
-  `sharesDelta`, and `unitPriceUSD`, auto-priced from Twelve Data at
-  contribution time. All portfolio totals, cost basis, and P/L are
-  USD-normalized.
-- **Insights** on income, expense, net, and category-level breakdowns for
-  the current month, shown on the dashboard.
-- **Categories** are user-editable, seeded with a default set on first
-  sign-in, typed as income or expense.
-- **Auth and persistence.** Google Sign-In via Firebase; per-user Firestore
-  tree; a local-storage store retained as a working alternative behind the
-  same interface.
+- **Accounts** in five types (debit, credit, digital wallet, cash, savings),
+  each in USD or CRC, with reconciliation against the bank balance.
+- **Credit cards** with cut and payment days, statement view, credit left,
+  payments of the statement or of chosen charges, and purchases split into
+  monthly installments.
+- **Transactions** (income, expense, transfer, investment) with original and
+  USD amounts, category, description, date, `#tags`, refunds that lower
+  spending, search and period filters.
+- **Recurring items** (monthly, semi-monthly, weekly, biweekly, yearly) for
+  income, expenses and investment contributions.
+- **Budgets** as monthly caps per category, with month navigation and a
+  six-month history chart. Changing a cap keeps earlier months' amounts.
+- **Saving goals** with contributions, withdrawals and a projected monthly
+  rate.
+- **Investments as holdings**: market holdings priced from Twelve Data and
+  manual holdings updated by hand. Contributions can carry a broker
+  commission that counts toward cost basis.
+- **Insights**: monthly income, expense and net; category breakdowns; net
+  worth over twelve months; savings rate.
+- **Connections**: users share each other's data after exchanging a
+  one-time code.
+- **Data tools**: CSV import and export, undo on delete, and a 30-day
+  Recently deleted bin.
+- **App lock**: per-device PIN plus fingerprint or face unlock (WebAuthn).
+- **Onboarding** for new users: language, display currency and first
+  accounts. Existing users never see it.
+- **Account deletion** from Settings → Delete account: reauthenticates, then
+  removes all user data, connections, the profile and the auth user.
+- **Public site**: landing page, privacy policy and terms (English and
+  Spanish), 404 and error pages, `robots.txt`, `sitemap.xml`, Open Graph
+  image and JSON-LD.
 
-Durable constraints the user has locked in this round and future work must
-preserve:
+Durable constraints future work must preserve:
 
-- **Manual entry stays.** No bank sync, no Plaid, no OFX, no aggregator —
-  ever. Flows must not assume automatic ingestion.
-- **USD is the normalization baseline.** All cross-currency totals, previews,
-  and comparisons render in USD. Changing the baseline is a product-level
-  decision, not a UI toggle.
-- **PWA-first, no native app planned.** Installability via the web manifest
-  is the whole native story. Do not design flows that presume a native
-  iOS/Android shell, app-store distribution, or platform-specific APIs
-  outside what a PWA can access.
+- **Existing users' data is never lost or rewritten.** New fields are
+  optional and old documents keep working. Migrations that modify stored
+  data need an explicit decision.
+- **Manual entry stays.** No bank sync, no Plaid, no OFX, no aggregator.
+  Flows must not assume automatic ingestion.
+- **USD is the storage baseline.** Amounts are normalized to USD for
+  storage and comparison; the display currency is a view preference.
+  Changing the storage baseline is a product-level decision.
+- **PWA-first, no native app planned.** Do not design flows that need a
+  native shell, app-store distribution or APIs a PWA can't reach.
+- **Legal pages track the code.** When a data flow changes (a new
+  provider, analytics, payments), update `lib/legal/` in the same change.
 
-Explicitly undecided, recorded here so future work does not silently lock
-them in:
+Explicitly undecided, recorded so future work does not silently lock it in:
 
-- Whether Perch ever opens to users outside the small circle. Not planned
-  today.
-- Whether the product ever grows a shared or household view. Not planned
-  today.
-- Whether a paid exchange-rate provider replaces `open.er-api.com` if
-  reliability or SLA needs change.
-- Whether Twelve Data's free tier gets replaced by a paid feed if quota or
-  reliability needs change.
+- Pricing. Perch may become freemium. Public copy must not promise that it
+  is free; the terms say paid features may come with notice.
+- The final name and domain. "Perch" has not been checked for trademark or
+  store conflicts, and there is no custom domain yet.
+- Whether a paid exchange-rate or market-data provider replaces the free
+  tiers if reliability or quota needs change.
+- Hardening deferred for later: Firebase App Check and bot blocking, a
+  Content-Security-Policy header, and operational monitoring.
 
 ## Brand Commitments
 
-The following exist in the current implementation but were **not** declared as
-locked commitments in this init:
-
 - The name **Perch** and the tagline **"A quiet place for your money to
-  rest."** are the incumbent identity used in `layout.tsx`, the PWA
-  manifest, and the app icon. They stand until the user rebrands, and future
-  work should not casually replace them; they are also not confirmed as
-  final.
-- The dark-only palette committed in `app/globals.css` (near-black surfaces
-  with muted borders and a small semantic palette for income, expense, and
-  investment) is the incumbent visual world. It is treated as current
-  implementation, not a product-level ban on light or alternate themes.
-
-Any binding change to name, tagline, or theme direction is a redesign
-decision that belongs in a new-work pass, not in a refinement.
+  rest."** appear in the metadata, manifest, landing page, Open Graph image
+  and app icon. They stand until the user rebrands; see the undecided name
+  check above.
+- The visual world is **Alcove**, described in `DESIGN.md`: light and dark
+  themes, celadon accent, Newsreader serif display over Geist sans. Any
+  binding change to name, tagline or visual direction is a redesign
+  decision that belongs in a new-work pass, not in a refinement.
+- The operator is an individual developer based in Costa Rica. The legal
+  pages say so; the contact email is still a placeholder.
 
 ## Evidence on Hand
 
-- The running codebase is the primary evidence: routes under `app/`, the
-  atoms/molecules/organisms component tree, `lib/storage/` stores, and the
-  domain types in `lib/types.ts`.
-- The README at the project root describes the shipped feature set and setup.
-- Exchange-rate data source: `open.er-api.com` (free tier), cached
-  in-memory for one hour by `lib/services/exchangeRates.ts`.
-- Market-data source (Investments tab): [Twelve Data](https://twelvedata.com)
-  free tier (800 req/day, 8/min), proxied server-side by
-  `lib/services/marketData.ts` and the `app/api/market/*` route handlers.
-  Gated behind `TWELVEDATA_API_KEY`; the Investments tab degrades to
-  cost-basis-only mode when unset.
-- Firebase project configuration lives in environment variables prefixed
-  `NEXT_PUBLIC_FIREBASE_*`; access is gated by the Firestore rules
-  documented in the README.
-- There are **no** external testimonials, press mentions, customer logos,
-  case studies, benchmarks, published pricing, licensing claims, or third-
-  party integrations. Future work must not fabricate any of these.
+- The running codebase: routes under `app/`, the atoms/molecules/organisms
+  component tree, stores in `lib/storage/`, domain types in `lib/types.ts`.
+- The README describes the shipped features, setup and deployment.
+- Legal text lives in `lib/legal/`, with `[CONTACT EMAIL]` and
+  `[FIRESTORE REGION]` placeholders in `lib/legal/types.ts`.
+- Rate and price sources: `open.er-api.com` (free tier),
+  `tipodecambio.info`, and Twelve Data's free tier (800 requests/day,
+  8/min) behind `TWELVEDATA_API_KEY`. Without that key, investments fall
+  back to cost basis only.
+- There are **no** testimonials, user counts, press mentions, customer
+  logos, case studies, benchmarks, published pricing or third-party
+  integrations. The landing page's previews use labeled sample data. Future
+  work must not invent any of these.
 
 ## Product Principles
 
 1. **Quiet over spectacle.** The interface recedes so the money can be seen.
-   Density, tone, and motion serve reflection, not performance.
-2. **Manual is a feature.** Every entry is a deliberate act by the user; the
-   product's job is to make that act fast and clear, not to remove it.
-3. **Currency parity is first-class.** Multi-currency reality — original
-   amounts preserved, USD used for comparison — is a foundation, not a
-   toggle. No feature may quietly assume a single-currency world.
-4. **Private by default.** Data stays per-user under the user's own auth.
-   No aggregation, no third-party bank connection, no behavioral resale.
+   Density, tone and motion serve reflection, not performance.
+2. **Manual is a feature.** Every entry is a deliberate act; the product's
+   job is to make that act fast and clear, not to remove it.
+3. **Two currencies are first-class.** Original amounts are preserved and
+   USD is used for comparison. No feature may quietly assume a
+   single-currency world.
+4. **Private by default.** Data stays per user under the user's own sign-in,
+   is exportable, and can be deleted by the user.
 5. **One surface, everywhere.** A single installable PWA serves the phone,
-   the tablet, and the desktop. There is no companion app and no split
-   feature set by device.
+   the tablet and the desktop, online or not.
