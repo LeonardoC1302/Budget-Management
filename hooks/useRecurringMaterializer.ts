@@ -20,7 +20,7 @@ export function useRecurringMaterializer() {
     ranForUid.current = user.uid;
 
     let cancelled = false;
-    (async () => {
+    const run = async () => {
       try {
         const inserted = await runMaterialization();
         if (!cancelled && inserted) emitDataChanged();
@@ -28,8 +28,22 @@ export function useRecurringMaterializer() {
         console.error("Recurring materialization failed", err);
         ranForUid.current = null;
       }
-    })();
+    };
 
+    // Offline, two devices could both generate the same occurrence before
+    // either syncs. Wait for a connection so the server copy is up to date.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const onOnline = () => void run();
+      window.addEventListener("online", onOnline, { once: true });
+      return () => {
+        cancelled = true;
+        window.removeEventListener("online", onOnline);
+        // Nothing ran yet, so let the next mount register again.
+        ranForUid.current = null;
+      };
+    }
+
+    void run();
     return () => {
       cancelled = true;
     };

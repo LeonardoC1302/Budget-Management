@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import BottomNav from "@/components/organisms/BottomNav";
+import StatusToasts from "@/components/organisms/StatusToasts";
 import LoadingScreen from "@/components/molecules/LoadingScreen";
 import LoginScreen from "@/components/molecules/LoginScreen";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +18,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
         <main className="flex-1 w-full max-w-2xl mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-28 sm:px-6">
           {children}
         </main>
+        <StatusToasts />
         <BottomNav />
       </CategoriesProvider>
     </PreferencesProvider>

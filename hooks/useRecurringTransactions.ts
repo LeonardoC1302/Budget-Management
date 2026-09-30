@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { runMaterialization } from "@/lib/recurring/runMaterialization";
 import { recurringTransactionStore } from "@/lib/storage";
 import type {
@@ -91,8 +92,10 @@ export function useRecurringTransactions() {
   const remove = useCallback(
     async (id: string) => {
       const target = recurring.find((r) => r.id === id);
-      await recurringTransactionStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await recurringTransactionStore.remove(id, ownerUid);
       setRecurring((prev) => prev.filter((r) => r.id !== id));
+      announceRemoval("Recurring item deleted", [{ ownerUid, trashId }]);
     },
     [recurring],
   );

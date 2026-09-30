@@ -7,15 +7,27 @@ import {
   type User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { auth, googleProvider, usingEmulator } from "@/lib/firebase/client";
+import { clearIndexedDbPersistence, terminate } from "firebase/firestore";
+import { auth, db, googleProvider, usingEmulator } from "@/lib/firebase/client";
 
 export async function signInWithGoogle(): Promise<User> {
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
 }
 
+// Also wipes this device's offline copy of the data, so the next person to
+// sign in on a shared device can't read it from the cache. Callers must make
+// sure nothing is waiting to sync first (see hasUnsyncedChanges). The
+// Firestore instance can't be reused after terminate, hence the reload.
 export async function signOutUser(): Promise<void> {
   await signOut(auth);
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch (err) {
+    console.error("Couldn't clear the offline cache", err);
+  }
+  window.location.reload();
 }
 
 // Two local-only accounts so shared-account flows (Connections) can be tested

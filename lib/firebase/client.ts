@@ -9,6 +9,8 @@ import {
   connectFirestoreEmulator,
   getFirestore,
   initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   type Firestore,
 } from "firebase/firestore";
 
@@ -49,9 +51,22 @@ if (!config.apiKey || !config.projectId || !config.appId) {
 const existingApp = getApps()[0];
 export const app: FirebaseApp = existingApp ?? initializeApp(config);
 export const auth: Auth = getAuth(app);
+// The persistent cache keeps a copy of the user's data in IndexedDB so the app
+// reads and writes offline; queued writes sync once the connection returns.
+// Multi-tab manager lets several open tabs share that cache. Server-side
+// rendering has no IndexedDB, so it keeps the default memory cache.
 export const db: Firestore = existingApp
   ? getFirestore(app)
-  : initializeFirestore(app, { ignoreUndefinedProperties: true });
+  : initializeFirestore(app, {
+      ignoreUndefinedProperties: true,
+      ...(typeof window !== "undefined"
+        ? {
+            localCache: persistentLocalCache({
+              tabManager: persistentMultipleTabManager(),
+            }),
+          }
+        : {}),
+    });
 export const googleProvider = new GoogleAuthProvider();
 
 // Connect once per app instance. HMR re-evaluates this module against the

@@ -13,7 +13,7 @@ export interface HoldingStore {
     patch: Partial<NewHolding>,
     ownerUid?: string,
   ): Promise<Holding>;
-  removeHolding(id: string, ownerUid?: string): Promise<void>;
+  removeHolding(id: string, ownerUid?: string): Promise<string | void>;
 
   listValuations(): Promise<HoldingValuation[]>;
   addValuation(
@@ -25,5 +25,5 @@ export interface HoldingStore {
     patch: Partial<NewHoldingValuation>,
     ownerUid?: string,
   ): Promise<HoldingValuation>;
-  removeValuation(id: string, ownerUid?: string): Promise<void>;
+  removeValuation(id: string, ownerUid?: string): Promise<string | void>;
 }

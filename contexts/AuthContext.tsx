@@ -40,10 +40,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
+      // The profile refresh isn't needed to render, so it doesn't hold up
+      // sign-in (it may be waiting on a slow or missing connection).
       ensureUserSeed(nextUser.uid)
-        .then(() => upsertUserProfile(nextUser))
         .catch((err) => {
           console.error("Failed to seed user data", err);
+        })
+        .then(() => {
+          upsertUserProfile(nextUser).catch((err) => {
+            console.error("Failed to update user profile", err);
+          });
         })
         .finally(() => {
           setUser(nextUser);

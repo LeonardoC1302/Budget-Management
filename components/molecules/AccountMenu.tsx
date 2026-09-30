@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { hasUnsyncedChanges } from "@/lib/offline/syncStatus";
 import { cn } from "@/lib/utils/cn";
 
 function initialsOf(name: string): string {
@@ -20,6 +22,9 @@ export default function AccountMenu() {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Signing out clears this device's offline copy, so changes that haven't
+  // reached the server yet would be lost. Block it until they sync.
+  const [unsynced, setUnsynced] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -51,6 +56,10 @@ export default function AccountMenu() {
   const initials = initialsOf(name);
 
   async function handleSignOut() {
+    if (hasUnsyncedChanges()) {
+      setUnsynced(true);
+      return;
+    }
     setSubmitting(true);
     try {
       await signOut();
@@ -122,11 +131,26 @@ export default function AccountMenu() {
 
           <div className="h-px bg-border mx-1 my-1" aria-hidden />
 
+          <Link
+            href="/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={cn(
+              "block w-full text-left px-3 py-2.5 rounded-[8px]",
+              "text-sm text-fg-muted hover:text-fg hover:bg-surface-2",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
+              "transition-colors",
+            )}
+          >
+            Settings
+          </Link>
+
           <button
             type="button"
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setUnsynced(false);
               setConfirmOpen(true);
             }}
             className={cn(
@@ -144,7 +168,11 @@ export default function AccountMenu() {
       <ConfirmDialog
         open={confirmOpen}
         title="Sign out of Perch?"
-        message="Your data stays where it is. You'll need to sign in with Google again to open it."
+        message={
+          unsynced
+            ? "Some changes on this device haven't synced yet. Connect to the internet and wait for “Syncing changes” to finish, or they'll be lost."
+            : "Your data stays where it is. You'll need to sign in with Google again to open it."
+        }
         confirmLabel="Sign out"
         cancelLabel="Stay signed in"
         tone="danger"

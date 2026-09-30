@@ -14,7 +14,7 @@ export interface RecurringTransactionStore {
     patch: Partial<Omit<RecurringTransaction, "id" | "createdAt">>,
     ownerUid?: string,
   ): Promise<RecurringTransaction>;
-  remove(id: string, ownerUid?: string): Promise<void>;
+  remove(id: string, ownerUid?: string): Promise<string | void>;
   updateLastGeneratedDates(
     updates: { id: string; lastGeneratedDate: string; ownerUid?: string }[],
   ): Promise<void>;

@@ -202,11 +202,12 @@ export default function GoalsPage() {
         message={
           pendingDelete && (
             <>
-              This will permanently delete{" "}
+              This deletes{" "}
               <span className="text-fg font-medium">
                 &ldquo;{pendingDelete.name}&rdquo;
               </span>{" "}
-              and all of its contributions. This can&apos;t be undone.
+              and all of its contributions. You can restore it from Recently
+              deleted for 30 days.
             </>
           )
         }

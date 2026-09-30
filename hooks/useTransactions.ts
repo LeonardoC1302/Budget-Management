@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { transactionStore } from "@/lib/storage";
 import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 
@@ -47,14 +48,19 @@ export function useTransactions() {
     const target = transactions.find((t) => t.id === id);
     const ownerUid = target?._owner?.uid;
     if (target?.transferId) {
-      await transactionStore.removeTransfer(target.transferId, ownerUid);
+      const trashId = await transactionStore.removeTransfer(
+        target.transferId,
+        ownerUid,
+      );
       setTransactions((prev) =>
         prev.filter((t) => t.transferId !== target.transferId),
       );
+      announceRemoval("Transfer deleted", [{ ownerUid, trashId }]);
       return;
     }
-    await transactionStore.remove(id, ownerUid);
+    const trashId = await transactionStore.remove(id, ownerUid);
     setTransactions((prev) => prev.filter((t) => t.id !== id));
+    announceRemoval("Transaction deleted", [{ ownerUid, trashId }]);
   }, [transactions]);
 
   const update = useCallback(

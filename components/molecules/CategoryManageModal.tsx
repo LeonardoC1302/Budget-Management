@@ -121,7 +121,7 @@ export default function CategoryManageModal({
         message={
           <>
             Delete <strong className="text-fg">{pendingDelete?.name}</strong>?
-            This cannot be undone.
+            You can restore it from Recently deleted for 30 days.
           </>
         }
         confirmLabel="Delete"

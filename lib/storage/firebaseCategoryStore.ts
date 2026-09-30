@@ -1,14 +1,17 @@
 import {
-  addDoc,
-  deleteDoc,
+  doc,
   orderBy,
   query,
+  setDoc,
 } from "firebase/firestore";
 import {
+  commitWrite,
   listAcrossOwners,
   ownerCollection,
   ownerDoc,
+  readDoc,
 } from "@/lib/firebase/firestoreHelpers";
+import { softDelete } from "@/lib/firebase/trash";
 import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
 import type { Category, NewCategory, OwnerCtx } from "@/lib/types";
 import type { CategoryStore } from "@/lib/storage/CategoryStore";
@@ -50,11 +53,18 @@ export const firebaseCategoryStore: CategoryStore = {
     const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
     const payload = { ...input, isDefault: false, createdAt };
-    const ref = await addDoc(ownerCollection(uid, COL), payload);
+    const ref = doc(ownerCollection(uid, COL));
+    await commitWrite(setDoc(ref, payload));
     return { id: ref.id, ...payload, _owner: ownerCtxFor(uid) };
   },
   async remove(id, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    await deleteDoc(ownerDoc(uid, COL, id));
+    const snap = await readDoc(ownerDoc(uid, COL, id));
+    const data = snap.data() as Partial<Category> | undefined;
+    return softDelete(uid, {
+      kind: "category",
+      label: data?.name || "Category",
+      refs: [{ col: COL, id }],
+    });
   },
 };

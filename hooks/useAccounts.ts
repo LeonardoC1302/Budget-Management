@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { accountStore, goalStore, transactionStore } from "@/lib/storage";
 import { computeCardTotals, type CardTotals } from "@/lib/credit/statement";
 import type {
@@ -166,8 +167,10 @@ export function useAccounts() {
         );
       }
       const target = accounts.find((a) => a.id === id);
-      await accountStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await accountStore.remove(id, ownerUid);
       await refresh();
+      announceRemoval("Account deleted", [{ ownerUid, trashId }]);
     },
     [accounts, refresh, txCountByAccount],
   );

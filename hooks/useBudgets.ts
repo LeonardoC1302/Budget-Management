@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { getRate } from "@/lib/services/exchangeRates";
 import { budgetStore, transactionStore } from "@/lib/storage";
 import {
@@ -65,8 +66,10 @@ export function useBudgets() {
   const remove = useCallback(
     async (id: string) => {
       const target = budgets.find((b) => b.id === id);
-      await budgetStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await budgetStore.remove(id, ownerUid);
       await refresh();
+      announceRemoval("Budget deleted", [{ ownerUid, trashId }]);
     },
     [budgets, refresh],
   );

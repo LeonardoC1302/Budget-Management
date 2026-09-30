@@ -15,6 +15,8 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Category management** — Add or remove income/expense categories via a dedicated modal; default categories are seeded per user on first sign-in.
 - **Google Sign-In** — Firebase Authentication with Google as the identity provider.
 - **Cloud persistence** — All data is stored per-user in Firebase Firestore. A local-storage store implementation is also included and can be swapped in for offline-only use.
+- **Offline** — The app opens and records transactions with no connection. Firestore keeps a copy of your data on the device and syncs queued changes when the connection returns; a status line shows what's still waiting. Last known exchange and bank rates are reused while offline.
+- **Undo and Recently deleted** — Deletes can be undone for a few seconds, and anything deleted stays restorable under Settings → Recently deleted for 30 days before it's removed for good.
 - **Mobile-first UI** — Responsive layout with bottom-anchored actions on small screens.
 
 ## Tech stack

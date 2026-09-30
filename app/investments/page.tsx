@@ -16,6 +16,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { emitDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import type { Holding, NewHolding, NewTransaction } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/format";
 import {
@@ -111,8 +112,9 @@ export default function InvestmentsPage() {
   }
 
   async function handleDeleteTransaction(id: string) {
-    await transactionStore.remove(id);
+    const trashId = await transactionStore.remove(id);
     emitDataChanged();
+    announceRemoval("Contribution deleted", [{ trashId }]);
   }
 
   async function handleAssignUnassigned(

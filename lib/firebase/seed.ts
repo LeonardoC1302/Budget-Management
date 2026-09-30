@@ -1,6 +1,7 @@
-import { doc, getDoc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "@/lib/firebase/client";
+import { commitWrite, readDoc } from "@/lib/firebase/firestoreHelpers";
 import { defaultAccount, defaultCategories } from "@/lib/storage/seeds";
 
 // Idempotent profile upsert. Runs on every sign-in so users created before the
@@ -10,10 +11,14 @@ import { defaultAccount, defaultCategories } from "@/lib/storage/seeds";
 // never overwritten on subsequent merges so user choices persist.
 export async function upsertUserProfile(user: User): Promise<void> {
   const profileRef = doc(db, "users", user.uid);
-  const existing = await getDoc(profileRef);
+  const existing = await readDoc(profileRef);
   const displayFallback = user.displayName || user.email || "You";
   if (!existing.exists()) {
-    await setDoc(profileRef, {
+    // A cache miss (e.g. a new device opened offline) says nothing about the
+    // server. Creating the profile then would overwrite the real nickname and
+    // preferences, so only create it when the server confirms it's missing.
+    if (existing.metadata.fromCache) return;
+    await commitWrite(setDoc(profileRef, {
       uid: user.uid,
       nickname: displayFallback,
       email: user.email ?? null,
@@ -21,10 +26,10 @@ export async function upsertUserProfile(user: User): Promise<void> {
       preferences: { displayCurrency: "USD" },
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    }));
     return;
   }
-  await setDoc(
+  await commitWrite(setDoc(
     profileRef,
     {
       email: user.email ?? existing.data().email ?? null,
@@ -32,21 +37,21 @@ export async function upsertUserProfile(user: User): Promise<void> {
       updatedAt: serverTimestamp(),
     },
     { merge: true },
-  );
+  ));
 }
 
 export async function updateDisplayCurrency(
   uid: string,
   currency: string,
 ): Promise<void> {
-  await setDoc(
+  await commitWrite(setDoc(
     doc(db, "users", uid),
     {
       preferences: { displayCurrency: currency },
       updatedAt: serverTimestamp(),
     },
     { merge: true },
-  );
+  ));
 }
 
 // Seeds default accounts + categories on first sign-in only. Gated by the
@@ -54,8 +59,11 @@ export async function updateDisplayCurrency(
 // profile upsert so pre-existing users still get their profile created.
 export async function ensureUserSeed(uid: string): Promise<void> {
   const marker = doc(db, "users", uid, "meta", "seed");
-  const existing = await getDoc(marker);
+  const existing = await readDoc(marker);
   if (existing.exists()) return;
+  // Same guard as the profile: never seed defaults on a cache miss, or an
+  // existing user on a fresh offline device would get a second cash account.
+  if (existing.metadata.fromCache) return;
 
   const batch = writeBatch(db);
 
@@ -70,5 +78,5 @@ export async function ensureUserSeed(uid: string): Promise<void> {
 
   batch.set(marker, { seededAt: serverTimestamp() });
 
-  await batch.commit();
+  await commitWrite(batch.commit());
 }

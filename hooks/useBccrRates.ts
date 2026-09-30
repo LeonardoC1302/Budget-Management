@@ -15,6 +15,34 @@ interface Cache {
 // snappy while the sheet is open.
 const CLIENT_TTL_MS = 5 * 60 * 1000;
 let cache: Cache = { snapshot: null, error: null, storedAt: 0 };
+
+// Last good snapshot, kept so bank rates stay pickable offline. The snapshot
+// carries its own `fetchedAt`, which the picker shows, so staleness is visible.
+const STORAGE_KEY = "perch:bccrSnapshot";
+
+function readStoredSnapshot(): BccrSnapshot | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as BccrSnapshot) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeSnapshot(snapshot: BccrSnapshot) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Storage blocked: offline fallback just won't be available.
+  }
+}
+
+function failWith(message: string) {
+  const stored = readStoredSnapshot();
+  cache = stored
+    ? { snapshot: stored, error: null, storedAt: Date.now() }
+    : { snapshot: null, error: message, storedAt: Date.now() };
+}
 let inFlight: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
@@ -42,16 +70,13 @@ async function loadOnce(force: boolean): Promise<void> {
           "error" in data && data.error
             ? data.error
             : `BCCR unavailable (${res.status})`;
-        cache = { snapshot: null, error: message, storedAt: Date.now() };
+        failWith(message);
       } else {
         cache = { snapshot: data, error: null, storedAt: Date.now() };
+        storeSnapshot(data);
       }
     } catch (err) {
-      cache = {
-        snapshot: null,
-        error: err instanceof Error ? err.message : "Network error",
-        storedAt: Date.now(),
-      };
+      failWith(err instanceof Error ? err.message : "Network error");
     } finally {
       inFlight = null;
       emit();

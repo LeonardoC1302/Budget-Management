@@ -11,6 +11,7 @@ import {
 } from "react";
 import { budgetStore, categoryStore, transactionStore } from "@/lib/storage";
 import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import type { Category, NewCategory, TransactionType } from "@/lib/types";
 
 interface CategoriesContextValue {
@@ -85,11 +86,15 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       }
       const budgets = await budgetStore.list();
       const orphanedBudgets = budgets.filter((b) => b.categoryId === id);
+      const removed: { ownerUid?: string; trashId: string | void }[] = [];
       for (const b of orphanedBudgets) {
-        await budgetStore.remove(b.id, b._owner?.uid);
+        const ownerUid = b._owner?.uid;
+        removed.push({ ownerUid, trashId: await budgetStore.remove(b.id, ownerUid) });
       }
-      await categoryStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      removed.push({ ownerUid, trashId: await categoryStore.remove(id, ownerUid) });
       await refresh();
+      announceRemoval("Category deleted", removed);
       if (orphanedBudgets.length > 0) emitDataChanged();
     },
     [categories, usage, refresh],

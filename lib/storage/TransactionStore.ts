@@ -14,8 +14,9 @@ export interface TransactionStore {
     input: NewTransaction,
     ownerUid?: string,
   ): Promise<Transaction>;
-  remove(id: string, ownerUid?: string): Promise<void>;
-  removeTransfer(transferId: string, ownerUid?: string): Promise<void>;
+  // Firebase stores soft-delete and resolve to the trash entry id (for undo).
+  remove(id: string, ownerUid?: string): Promise<string | void>;
+  removeTransfer(transferId: string, ownerUid?: string): Promise<string | void>;
   // Recompute `accountAmount` for every transaction on `accountId` after the
   // account switched to `currency`. Without this, balances keep the old
   // currency's numbers under the new currency's symbol.
