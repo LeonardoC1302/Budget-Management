@@ -9,6 +9,8 @@ interface GoalListProps {
   contributionsByGoal: Record<string, GoalContribution[]>;
   monthlyRate: number | null;
   onContribute?: (goal: Goal) => void;
+  onWithdraw?: (goal: Goal) => void;
+  onDeleteContribution?: (id: string) => void | Promise<void>;
   onEdit?: (goal: Goal) => void;
   onDelete?: (goal: Goal) => void;
   emptyTitle?: string;
@@ -24,6 +26,8 @@ export default function GoalList({
   contributionsByGoal,
   monthlyRate,
   onContribute,
+  onWithdraw,
+  onDeleteContribution,
   onEdit,
   onDelete,
   emptyTitle,
@@ -54,6 +58,8 @@ export default function GoalList({
           contributions={contributionsByGoal[goal.id] ?? []}
           monthlyRate={monthlyRate}
           onContribute={onContribute}
+          onWithdraw={onWithdraw}
+          onDeleteContribution={onDeleteContribution}
           onEdit={onEdit}
           onDelete={onDelete}
         />

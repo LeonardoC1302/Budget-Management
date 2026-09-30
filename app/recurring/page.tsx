@@ -5,11 +5,13 @@ import Button from "@/components/atoms/Button";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
+import RecurringContributionForm from "@/components/molecules/RecurringContributionForm";
 import RecurringForm from "@/components/molecules/RecurringForm";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import RecurringList from "@/components/organisms/RecurringList";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
+import { useHoldings } from "@/hooks/useHoldings";
 import { useRecurringTransactions } from "@/hooks/useRecurringTransactions";
 import type {
   NewRecurringTransaction,
@@ -19,6 +21,7 @@ import type {
 type Mode =
   | { kind: "closed" }
   | { kind: "create" }
+  | { kind: "create-investment" }
   | { kind: "edit"; template: RecurringTransaction };
 
 export default function RecurringPage() {
@@ -26,6 +29,7 @@ export default function RecurringPage() {
     useRecurringTransactions();
   const { byId: accountsById } = useAccounts();
   const { byId: categoriesById } = useCategories();
+  const { holdings } = useHoldings();
 
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [error, setError] = useState<string | null>(null);
@@ -78,9 +82,20 @@ export default function RecurringPage() {
         kicker="Automations"
         title="Recurring"
         actions={
-          <Button size="md" onClick={() => setMode({ kind: "create" })}>
-            + Add
-          </Button>
+          <>
+            {holdings.length > 0 && (
+              <Button
+                size="md"
+                variant="secondary"
+                onClick={() => setMode({ kind: "create-investment" })}
+              >
+                + Investment
+              </Button>
+            )}
+            <Button size="md" onClick={() => setMode({ kind: "create" })}>
+              + Add
+            </Button>
+          </>
         }
       />
 
@@ -144,16 +159,32 @@ export default function RecurringPage() {
       <Modal
         open={mode.kind !== "closed"}
         onClose={close}
-        title={mode.kind === "edit" ? "Edit recurring" : "New recurring"}
+        title={
+          mode.kind === "create-investment"
+            ? "New recurring contribution"
+            : mode.kind === "edit"
+              ? "Edit recurring"
+              : "New recurring"
+        }
       >
         <>
           {error && <div className="mb-4 text-sm text-expense">{error}</div>}
-          {mode.kind !== "closed" && (
-            <RecurringForm
+          {mode.kind === "create-investment" ||
+          (mode.kind === "edit" && mode.template.type === "investment") ? (
+            <RecurringContributionForm
+              holdings={holdings}
               initial={mode.kind === "edit" ? mode.template : undefined}
               onSubmit={handleSubmit}
               onCancel={close}
             />
+          ) : (
+            mode.kind !== "closed" && (
+              <RecurringForm
+                initial={mode.kind === "edit" ? mode.template : undefined}
+                onSubmit={handleSubmit}
+                onCancel={close}
+              />
+            )
           )}
         </>
       </Modal>

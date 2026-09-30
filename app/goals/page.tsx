@@ -9,6 +9,7 @@ import ProgressBar from "@/components/atoms/ProgressBar";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
 import ContributionForm from "@/components/molecules/ContributionForm";
 import GoalForm from "@/components/molecules/GoalForm";
+import GoalWithdrawalForm from "@/components/molecules/GoalWithdrawalForm";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import GoalList from "@/components/organisms/GoalList";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -19,7 +20,8 @@ type Mode =
   | { kind: "closed" }
   | { kind: "create" }
   | { kind: "edit"; goal: Goal }
-  | { kind: "contribute"; goal: Goal };
+  | { kind: "contribute"; goal: Goal }
+  | { kind: "withdraw"; goal: Goal };
 
 export default function GoalsPage() {
   const {
@@ -31,8 +33,14 @@ export default function GoalsPage() {
     updateGoal,
     removeGoal,
     addContribution,
+    removeContribution,
   } = useGoals();
-  const { accounts, balances, reservationsByAccount } = useAccounts();
+  const {
+    accounts,
+    byId: accountsById,
+    balances,
+    reservationsByAccount,
+  } = useAccounts();
 
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [pendingDelete, setPendingDelete] = useState<Goal | null>(null);
@@ -74,7 +82,9 @@ export default function GoalsPage() {
         ? "Edit goal"
         : mode.kind === "contribute"
           ? `Contribute to ${mode.goal.name}`
-          : "";
+          : mode.kind === "withdraw"
+            ? `Withdraw from ${mode.goal.name}`
+            : "";
 
   const totalsByCurrency = useMemo(() => {
     const map: Record<string, { saved: number; target: number }> = {};
@@ -165,6 +175,8 @@ export default function GoalsPage() {
               contributionsByGoal={contributionsByGoal}
               monthlyRate={monthlyRate}
               onContribute={(goal) => setMode({ kind: "contribute", goal })}
+              onWithdraw={(goal) => setMode({ kind: "withdraw", goal })}
+              onDeleteContribution={removeContribution}
               onEdit={(goal) => setMode({ kind: "edit", goal })}
               onDelete={(goal) => setPendingDelete(goal)}
               emptyTitle="No goals yet."
@@ -184,6 +196,14 @@ export default function GoalsPage() {
             accounts={accounts}
             balances={balances}
             reservationsByAccount={reservationsByAccount}
+            onSubmit={handleContributionSubmit}
+            onCancel={close}
+          />
+        ) : mode.kind === "withdraw" ? (
+          <GoalWithdrawalForm
+            goal={mode.goal}
+            contributions={contributionsByGoal[mode.goal.id] ?? []}
+            accountsById={accountsById}
             onSubmit={handleContributionSubmit}
             onCancel={close}
           />

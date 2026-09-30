@@ -7,6 +7,7 @@ import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
 import HoldingContributionForm from "@/components/molecules/HoldingContributionForm";
 import HoldingForm from "@/components/molecules/HoldingForm";
+import RecurringContributionForm from "@/components/molecules/RecurringContributionForm";
 import ValuationForm from "@/components/molecules/ValuationForm";
 import TransactionList from "@/components/organisms/TransactionList";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -21,8 +22,13 @@ import type {
   HoldingValuation,
   NewHolding,
   NewHoldingValuation,
+  NewRecurringTransaction,
   NewTransaction,
+  RecurringTransaction,
 } from "@/lib/types";
+import { RECURRENCE_FREQUENCY_LABELS } from "@/lib/types";
+import { nextOccurrenceAfter, toRule } from "@/lib/recurring/engine";
+import { todayISODate } from "@/lib/utils/format";
 import type {
   HoldingPosition,
   HoldingValueSnapshot,
@@ -42,6 +48,9 @@ interface HoldingDetailPanelProps {
   onDeleteHolding: (holding: Holding) => void | Promise<void>;
   onAddValuation: (input: NewHoldingValuation) => Promise<unknown>;
   onDeleteValuation: (id: string) => void | Promise<void>;
+  // Standing contributions into this holding.
+  recurringRules?: RecurringTransaction[];
+  onAddRecurring?: (input: NewRecurringTransaction) => Promise<unknown>;
 }
 
 const RANGES: MarketRange[] = ["1M", "3M", "6M", "1Y", "5Y"];
@@ -101,6 +110,7 @@ function LineChart({ values }: { values: { date: string; value: number }[] }) {
 type ModalKind =
   | { kind: "none" }
   | { kind: "contribute" }
+  | { kind: "recurring" }
   | { kind: "edit" }
   | { kind: "valuation"; existing?: HoldingValuation }
   | { kind: "confirm-delete-tx"; transactionId: string; shares?: number };
@@ -119,6 +129,8 @@ export default function HoldingDetailPanel({
   onDeleteHolding,
   onAddValuation,
   onDeleteValuation,
+  recurringRules = [],
+  onAddRecurring,
 }: HoldingDetailPanelProps) {
   const { displayCurrency, convertUsd } = usePreferences();
   const [range, setRange] = useState<MarketRange>("6M");
@@ -281,6 +293,15 @@ export default function HoldingDetailPanel({
         >
           Contribute
         </Button>
+        {onAddRecurring && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setModal({ kind: "recurring" })}
+          >
+            Repeat
+          </Button>
+        )}
         {!isMarket && (
           <Button
             variant="secondary"
@@ -372,6 +393,49 @@ export default function HoldingDetailPanel({
           emptyDescription="Use Contribute to log your first buy."
         />
       </div>
+
+      {recurringRules.length > 0 && (
+        <ul className="flex flex-col gap-1 text-xs text-fg-muted">
+          {recurringRules.map((r) => {
+            const next = r.active
+              ? nextOccurrenceAfter(toRule(r), todayISODate())
+              : undefined;
+            return (
+              <li key={r.id}>
+                {formatCurrency(r.amount, r.currency)}{" "}
+                {RECURRENCE_FREQUENCY_LABELS[r.frequency].toLowerCase()}
+                {r.active
+                  ? next
+                    ? ` · next ${formatDate(next)}`
+                    : " · ended"
+                  : " · paused"}
+                {" · "}
+                <a href="/recurring" className="underline underline-offset-2 hover:text-fg">
+                  manage
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {onAddRecurring && (
+        <Modal
+          open={modal.kind === "recurring"}
+          onClose={() => setModal({ kind: "none" })}
+          title={`Repeat a contribution to ${holding.name}`}
+        >
+          <RecurringContributionForm
+            holdings={[holding]}
+            holdingId={holding.id}
+            onSubmit={async (input) => {
+              await onAddRecurring(input);
+              setModal({ kind: "none" });
+            }}
+            onCancel={() => setModal({ kind: "none" })}
+          />
+        </Modal>
+      )}
 
       <Modal
         open={modal.kind === "contribute"}

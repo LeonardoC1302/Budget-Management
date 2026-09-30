@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { goalStore, transactionStore } from "@/lib/storage";
-import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
 import { announceRemoval } from "@/lib/events/undo";
 import { computeMonthlySavingsRate } from "@/lib/utils/goals";
 import type {
@@ -94,6 +94,8 @@ export function useGoals() {
       const goal = goals.find((g) => g.id === input.goalId);
       const created = await goalStore.addContribution(input, goal?._owner?.uid);
       await refreshGoals();
+      // Account reservations (free-to-use) depend on contributions.
+      emitDataChanged();
       return created;
     },
     [goals, refreshGoals],

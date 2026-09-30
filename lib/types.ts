@@ -165,6 +165,9 @@ export interface RecurringTransaction {
   // from the account's. Only used for USD↔CRC; other pairs fall through to
   // open.er-api.com. The rate itself is fetched each run, not stored here.
   rateBccrEntity?: { id: string; name: string };
+  // Investment templates only: the holding each occurrence buys into. Shares
+  // are priced at that day's close when the occurrence is materialized.
+  holdingId?: string;
   _owner?: OwnerCtx;
 }
 
@@ -225,6 +228,9 @@ export interface GoalContribution {
   // Optional to preserve legacy contributions written before goals earmarked
   // money from a specific account. New contributions require it.
   accountId?: string;
+  // Money taken back out of the goal. Stored with a negative `amount` so every
+  // sum (saved, reserved per account) stays a plain total.
+  withdrawal?: boolean;
   _owner?: OwnerCtx;
 }
 

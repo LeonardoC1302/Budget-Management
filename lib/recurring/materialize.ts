@@ -43,6 +43,7 @@ export function planMaterializations(
       description: template.description,
       date,
       recurringId: template.id,
+      ...(template.holdingId ? { holdingId: template.holdingId } : {}),
     }));
 
     plans.push({

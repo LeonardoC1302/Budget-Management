@@ -3,10 +3,11 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import ProgressBar from "@/components/atoms/ProgressBar";
+import { useState } from "react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { DeleteIcon, EditIcon } from "@/lib/action/icons";
 import { cn } from "@/lib/utils/cn";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import {
   computeGoalProgress,
   estimateTimeToGoal,
@@ -20,6 +21,8 @@ interface GoalCardProps {
   contributions: GoalContribution[];
   monthlyRate: number | null;
   onContribute?: (goal: Goal) => void;
+  onWithdraw?: (goal: Goal) => void;
+  onDeleteContribution?: (id: string) => void | Promise<void>;
   onEdit?: (goal: Goal) => void;
   onDelete?: (goal: Goal) => void;
 }
@@ -85,11 +88,17 @@ export default function GoalCard({
   contributions,
   monthlyRate,
   onContribute,
+  onWithdraw,
+  onDeleteContribution,
   onEdit,
   onDelete,
 }: GoalCardProps) {
   const progress = computeGoalProgress(goal, contributions);
-  const contributionCount = contributions.length;
+  const contributionCount = contributions.filter((c) => !c.withdrawal).length;
+  const [showHistory, setShowHistory] = useState(false);
+  const history = [...contributions].sort(
+    (a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
+  );
 
   return (
     <article
@@ -148,14 +157,58 @@ export default function GoalCard({
         />
         <div className="flex items-center justify-between text-[11px] text-fg-muted uppercase tracking-[0.14em]">
           <span>{Math.round(progress.percent * 100)}% laid by</span>
-          {contributionCount > 0 && (
-            <span>
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHistory((v) => !v)}
+              aria-expanded={showHistory}
+              className="uppercase tracking-[0.14em] hover:text-fg"
+            >
               {contributionCount} contribution
               {contributionCount === 1 ? "" : "s"}
-            </span>
+              {history.length > contributionCount
+                ? ` · ${history.length - contributionCount} withdrawn`
+                : ""}{" "}
+              {showHistory ? "▴" : "▾"}
+            </button>
           )}
         </div>
       </div>
+
+      {showHistory && (
+        <ul className="flex flex-col divide-y divide-border text-sm">
+          {history.map((c) => (
+            <li key={c.id} className="flex items-center gap-3 py-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-fg truncate">
+                  {c.note || (c.withdrawal ? "Withdrawal" : "Contribution")}
+                </p>
+                <p className="text-xs text-fg-subtle">{formatDate(c.date)}</p>
+              </div>
+              <span
+                className={cn(
+                  "tabular-nums",
+                  c.amount < 0 ? "text-expense" : "text-fg",
+                )}
+              >
+                {c.amount < 0 ? "−" : "+"}
+                {formatCurrency(Math.abs(c.amount), goal.currency)}
+              </span>
+              {onDeleteContribution && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Delete entry"
+                  onClick={() => onDeleteContribution(c.id)}
+                  className="px-2"
+                >
+                  <DeleteIcon aria-hidden />
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <EstimateLine
         goal={goal}
@@ -163,11 +216,16 @@ export default function GoalCard({
         monthlyRate={monthlyRate}
       />
 
-      {(onContribute || onEdit || onDelete) && (
+      {(onContribute || onWithdraw || onEdit || onDelete) && (
         <div className="flex items-center gap-2 pt-3 border-t border-border">
           {onContribute && !progress.reached && (
             <Button size="sm" onClick={() => onContribute(goal)}>
               + Contribute
+            </Button>
+          )}
+          {onWithdraw && progress.saved > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => onWithdraw(goal)}>
+              Withdraw
             </Button>
           )}
           <div className="ml-auto flex gap-1">

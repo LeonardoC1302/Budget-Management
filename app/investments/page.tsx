@@ -15,6 +15,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
+import { useRecurringTransactions } from "@/hooks/useRecurringTransactions";
 import { emitDataChanged } from "@/lib/events/dataChanged";
 import { announceRemoval } from "@/lib/events/undo";
 import type { Holding, NewHolding, NewTransaction } from "@/lib/types";
@@ -28,6 +29,7 @@ import {
 import { transactionStore } from "@/lib/storage";
 
 export default function InvestmentsPage() {
+  const { recurring, add: addRecurring } = useRecurringTransactions();
   const {
     holdings,
     byId,
@@ -283,6 +285,8 @@ export default function InvestmentsPage() {
           onDeleteHolding={handleDeleteHolding}
           onAddValuation={addValuation}
           onDeleteValuation={removeValuation}
+          recurringRules={recurring.filter((r) => r.holdingId === openHolding.id)}
+          onAddRecurring={addRecurring}
         />
       )}
 
