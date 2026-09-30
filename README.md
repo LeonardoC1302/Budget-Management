@@ -16,6 +16,8 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Saving goals** — Create goals with target amounts and dates, log contributions, and track projected monthly rate. Withdraw from a goal when you need the money, which frees it on its account, and review each goal's contribution history.
 - **Investments** — Track ETFs, indices, stocks, and crypto as first-class holdings, plus manual positions (pensions, private funds, real estate) tracked via balance entries. Live quotes and 1M–5Y history come from Twelve Data through a server-side proxy. Contributions still leave your selected account, but each holding also shows shares, cost basis, current value, and unrealized P/L. Set up recurring contributions (e.g. $200 into VOO monthly); each buy is priced at that day's close when it's recorded.
 - **Insights & analytics** — Monthly income/expense/net summary plus category-level insights on the home dashboard.
+- **Net worth over time** — Twelve months of month-end net worth: account balances plus investments (month-end close, or latest valuation for manual holdings) minus what's owed on cards.
+- **Savings rate** — The share of each month's income you kept, with this month's rate and the income-weighted average.
 - **Category management** — Add or remove income/expense categories via a dedicated modal; default categories are seeded per user on first sign-in.
 - **Google Sign-In** — Firebase Authentication with Google as the identity provider.
 - **Cloud persistence** — All data is stored per-user in Firebase Firestore. A local-storage store implementation is also included and can be swapped in for offline-only use.

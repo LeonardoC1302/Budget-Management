@@ -5,6 +5,8 @@ import CategoryDonut from "@/components/atoms/CategoryDonut";
 import DeltaPill from "@/components/atoms/DeltaPill";
 import EmptyState from "@/components/atoms/EmptyState";
 import SavingsLineChart from "@/components/atoms/SavingsLineChart";
+import SavingsRateChart, { savingsRate } from "@/components/atoms/SavingsRateChart";
+import NetWorthCard from "@/components/organisms/NetWorthCard";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import {
   computeDelta,
@@ -68,6 +70,17 @@ export default function InsightsSection({
 
   const hasData = transactions.length > 0;
 
+  // Income-weighted: total kept over total earned across the window, so a
+  // low-income month doesn't swing the average.
+  const rateSummary = useMemo(() => {
+    const income = series.reduce((s, p) => s + p.income, 0);
+    const net = series.reduce((s, p) => s + p.net, 0);
+    return {
+      current: current ? savingsRate(current) : null,
+      average: income > 0 ? net / income : null,
+    };
+  }, [series, current]);
+
   return (
     <section className="flex flex-col" aria-labelledby="insights-heading">
       <div className="section-head">
@@ -100,6 +113,30 @@ export default function InsightsSection({
               />
             </div>
           )}
+
+          <NetWorthCard />
+
+          <div className="chart-card">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <div>
+                <div className="chart-title">Savings rate</div>
+                <div className="chart-lede">Share of income you kept.</div>
+              </div>
+              <div className="text-right">
+                <div className="font-serif text-2xl tabular-nums leading-tight">
+                  {rateSummary.current === null
+                    ? "—"
+                    : `${Math.round(rateSummary.current * 100)}%`}
+                </div>
+                <div className="text-[11px] text-fg-subtle">
+                  this month
+                  {rateSummary.average !== null &&
+                    ` · ${Math.round(rateSummary.average * 100)}% over ${series.length} months`}
+                </div>
+              </div>
+            </div>
+            <SavingsRateChart data={series} />
+          </div>
 
           <div className="chart-card">
             <div className="chart-title">Six-month savings</div>
