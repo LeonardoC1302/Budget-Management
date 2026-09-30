@@ -151,10 +151,16 @@ export function useAccounts() {
     async (id: string, patch: Partial<NewAccount>) => {
       const target = accounts.find((a) => a.id === id);
       const updated = await accountStore.update(id, patch, target?._owner?.uid);
-      if (patch.currency !== undefined && patch.currency !== target?.currency) {
+      const currencyChanged =
+        patch.currency !== undefined && patch.currency !== target?.currency;
+      if (currencyChanged) {
         await transactionStore.rebaseAccountCurrency(id, updated.currency);
       }
       await refresh();
+      // Other hooks (the Cards page's statements, budgets, insights) hold
+      // their own copy of the transactions; make them pick up the rebased
+      // amounts instead of showing old-currency numbers until a reload.
+      if (currencyChanged) emitDataChanged();
       return updated;
     },
     [accounts, refresh],

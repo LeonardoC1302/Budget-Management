@@ -980,6 +980,7 @@ export const es: Record<string, string> = {
   "market": "mercado",
   "manual": "manual",
 
+  "Converted from {amount} at today's rate. Change it if your bank uses a different figure.": "Convertido desde {amount} al tipo de cambio de hoy. Cámbialo si tu banco usa otra cifra.",
   // ------------------------------------------------------------ public site
   "Permanently delete your account and all its data.": "Elimina de forma permanente tu cuenta y todos sus datos.",
   "About": "Acerca de",
