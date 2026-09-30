@@ -5,6 +5,7 @@ import { monthLabel } from "@/lib/utils/analytics";
 import { cn } from "@/lib/utils/cn";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils/format";
 
+import { t } from "@/lib/i18n";
 export interface BudgetHistoryPoint {
   monthKey: string;
   spent: number;
@@ -60,9 +61,9 @@ export default function BudgetHistoryChart({
         <span className="tabular-nums text-fg">
           {formatCurrency(f.spent, currency)}
           <span className="text-fg-subtle">
-            {f.cap > 0 ? ` of ${formatCurrency(f.cap, currency)}` : " · no caps"}
+            {f.cap > 0 ? ` of ${formatCurrency(f.cap, currency)}` : t(" · no caps")}
           </span>
-          {fOver && <span className="text-expense"> · Over</span>}
+          {fOver && <span className="text-expense">{" "}{t("· Over")}</span>}
         </span>
       </figcaption>
 
@@ -70,7 +71,7 @@ export default function BudgetHistoryChart({
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="w-full h-[150px]"
         role="img"
-        aria-label={`Spending against caps, ${monthLabel(data[0].monthKey, false)} to ${monthLabel(data[data.length - 1].monthKey, false)}`}
+        aria-label={t("Spending against caps, {0} to {1}", { "0": monthLabel(data[0].monthKey, false), "1": monthLabel(data[data.length - 1].monthKey, false) })}
         onMouseLeave={() => setHovered(null)}
       >
         <line
@@ -145,7 +146,7 @@ export default function BudgetHistoryChart({
             className="inline-block h-2.5 w-2.5 rounded-sm"
             style={{ background: "var(--color-celadon-strong)" }}
           />
-          Spent in capped categories
+          {t("Spent in capped categories")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <svg aria-hidden width="14" height="4">
@@ -159,17 +160,17 @@ export default function BudgetHistoryChart({
               strokeDasharray="4 3"
             />
           </svg>
-          Cap
+          {t("Cap")}
         </span>
       </div>
 
       <table className="sr-only">
-        <caption>Spending against caps by month</caption>
+        <caption>{t("Spending against caps by month")}</caption>
         <thead>
           <tr>
-            <th scope="col">Month</th>
-            <th scope="col">Spent</th>
-            <th scope="col">Cap</th>
+            <th scope="col">{t("Month")}</th>
+            <th scope="col">{t("Spent")}</th>
+            <th scope="col">{t("Cap")}</th>
           </tr>
         </thead>
         <tbody>

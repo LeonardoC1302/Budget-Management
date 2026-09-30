@@ -8,6 +8,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils/cn";
 import type { Category, TransactionType } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface CategoryManageModalProps {
   open: boolean;
   onClose: () => void;
@@ -35,7 +36,7 @@ export default function CategoryManageModal({
       setError(null);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not delete category.",
+        err instanceof Error ? err.message : t("Could not delete category."),
       );
     } finally {
       setSubmitting(false);
@@ -47,7 +48,7 @@ export default function CategoryManageModal({
       <Modal
         open={open}
         onClose={onClose}
-        title={`Manage ${type} categories`}
+        title={t("Manage {type} categories", { type })}
       >
         <div className="flex flex-col gap-4">
           {error && (
@@ -57,14 +58,14 @@ export default function CategoryManageModal({
           )}
 
           {categories.length === 0 ? (
-            <p className="text-sm text-fg-subtle">No categories yet.</p>
+            <p className="text-sm text-fg-subtle">{t("No categories yet.")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {categories.map((c) => {
                 const count = usage[c.id] ?? 0;
                 const cannotDelete = c.isDefault || count > 0;
                 const reason = c.isDefault
-                  ? "Default"
+                  ? t("Default")
                   : count > 0
                     ? `${count} tx`
                     : null;
@@ -99,7 +100,7 @@ export default function CategoryManageModal({
                         "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent",
                       )}
                     >
-                      Delete
+                      {t("Delete")}
                     </button>
                   </li>
                 );
@@ -109,7 +110,7 @@ export default function CategoryManageModal({
 
           <div className="flex justify-end pt-2">
             <Button type="button" variant="secondary" size="md" onClick={onClose}>
-              Done
+              {t("Done")}
             </Button>
           </div>
         </div>
@@ -117,14 +118,13 @@ export default function CategoryManageModal({
 
       <ConfirmDialog
         open={!!pendingDelete}
-        title="Delete category?"
+        title={t("Delete category?")}
         message={
           <>
-            Delete <strong className="text-fg">{pendingDelete?.name}</strong>?
-            You can restore it from Recently deleted for 30 days.
+            {t("Delete")}{" "}<strong className="text-fg">{pendingDelete?.name}</strong>{t("? You can restore it from Recently deleted for 30 days.")}
           </>
         }
-        confirmLabel="Delete"
+        confirmLabel={t("Delete")}
         submitting={submitting}
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingDelete(null)}

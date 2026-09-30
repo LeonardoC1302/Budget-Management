@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils/format";
 import { ACCOUNT_TYPE_LABELS, type Account } from "@/lib/types";
 import type { GoalReservation } from "@/hooks/useAccounts";
 
+import { t } from "@/lib/i18n";
 interface AccountCardProps {
   account: Account;
   balance: number;
@@ -45,8 +46,8 @@ export default function AccountCard({
             <OwnerBadge owner={account._owner} />
           </div>
           <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
-            {ACCOUNT_TYPE_LABELS[account.type]} · {transactionCount} tx
-            {account.reconciledAt && ` · Reconciled ${formatDate(account.reconciledAt)}`}
+            {t(ACCOUNT_TYPE_LABELS[account.type])} · {t("{count} tx", { count: transactionCount })}
+            {account.reconciledAt && t(" · Reconciled {0}", { "0": formatDate(account.reconciledAt) })}
           </p>
         </div>
 
@@ -65,7 +66,7 @@ export default function AccountCard({
                 variant="ghost"
                 size="sm"
                 aria-label={`Reconcile ${account.name}`}
-                title="Check this balance against your bank"
+                title={t("Check this balance against your bank")}
                 onClick={() => onReconcile(account)}
                 className="px-2"
               >
@@ -92,8 +93,8 @@ export default function AccountCard({
                 disabled={!canDelete}
                 title={
                   canDelete
-                    ? "Delete account"
-                    : "Delete or reassign this account's transactions first"
+                    ? t("Delete account")
+                    : t("Delete or reassign this account's transactions first")
                 }
                 className="px-2"
               >
@@ -112,7 +113,7 @@ export default function AccountCard({
               className="flex items-center justify-between gap-3"
             >
               <span className="text-fg-muted truncate">
-                Reserved for {r.goalName}
+                {t("Reserved for {name}", { name: r.goalName })}
               </span>
               <Amount
                 value={r.amount}
@@ -124,7 +125,7 @@ export default function AccountCard({
           ))}
           <div className="flex items-center justify-between gap-3 pt-1 border-t border-border">
             <span className="text-fg uppercase tracking-[0.14em] text-[11px]">
-              Free to use
+              {t("Free to use")}
             </span>
             <Amount
               value={freeToUse}

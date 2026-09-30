@@ -5,6 +5,7 @@ import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import type { Category, NewCategory } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface CategoryFormProps {
   type: Category["type"];
   onSubmit: (input: NewCategory) => void | Promise<void>;
@@ -31,7 +32,6 @@ export default function CategoryForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-xs text-fg-subtle">
-        Adding a new{" "}
         <span
           className={
             type === "income"
@@ -41,15 +41,18 @@ export default function CategoryForm({
                 : "text-invest"
           }
         >
-          {type}
-        </span>{" "}
-        category.
+          {type === "income"
+            ? t("Adding a new income category.")
+            : type === "expense"
+              ? t("Adding a new expense category.")
+              : t("Adding a new investment category.")}
+        </span>
       </p>
 
       <Input
-        label="Name"
+        label={t("Name")}
         name="category-name"
-        placeholder="e.g. Groceries"
+        placeholder={t("e.g. Groceries")}
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -64,11 +67,11 @@ export default function CategoryForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
-          {submitting ? "Adding…" : "Add category"}
+          {submitting ? t("Adding…") : t("Add category")}
         </Button>
       </div>
     </form>

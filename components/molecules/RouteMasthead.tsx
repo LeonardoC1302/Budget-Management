@@ -6,6 +6,7 @@ import PerchMark from "@/components/atoms/PerchMark";
 import ThemeToggle from "@/components/atoms/ThemeToggle";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface RouteMastheadProps {
   /** Small uppercase context word (e.g. "History", "Portfolio"). */
   kicker: string;
@@ -32,12 +33,12 @@ export default function RouteMasthead({
       <div className="nameplate">
         <Link
           href="/"
-          aria-label="Home"
+          aria-label={t("Home")}
           className="nameplate-brand hover:opacity-80 transition-opacity"
           style={{ borderRadius: "var(--radius-control)" }}
         >
           <PerchMark size={18} />
-          <span>Perch</span>
+          <span>{t("Perch")}</span>
         </Link>
         <div className="nameplate-tools">
           {actions}

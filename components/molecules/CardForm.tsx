@@ -7,6 +7,7 @@ import Input from "@/components/atoms/Input";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type { Account, NewAccount } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface CardFormProps {
   initial?: Account;
   onSubmit: (input: NewAccount) => void | Promise<void>;
@@ -48,11 +49,11 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
     const pay = parseDay(paymentDay);
 
     if (cut === undefined || pay === undefined) {
-      setError("Add both a cut day and a payment day so Perch can track your cycle.");
+      setError(t("Add both a cut day and a payment day so Perch can track your cycle."));
       return;
     }
     if (cut < 1 || cut > 31 || pay < 1 || pay > 31) {
-      setError("Cut and payment days need to be between 1 and 31.");
+      setError(t("Cut and payment days need to be between 1 and 31."));
       return;
     }
 
@@ -75,16 +76,16 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
-        label="Card name"
+        label={t("Card name")}
         name="name"
-        placeholder="e.g. BAC Credomatic Visa"
+        placeholder={t("e.g. BAC Credomatic Visa")}
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
 
       <CurrencySelect
-        label="Currency"
+        label={t("Currency")}
         name="currency"
         value={currency}
         onChange={setCurrency}
@@ -92,7 +93,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
 
       <div className="grid grid-cols-2 gap-3 items-end">
         <Input
-          label="Cut day"
+          label={t("Cut day")}
           name="cutDay"
           type="number"
           inputMode="numeric"
@@ -104,7 +105,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
           onChange={(e) => setCutDay(e.target.value)}
         />
         <Input
-          label="Payment day"
+          label={t("Payment day")}
           name="paymentDay"
           type="number"
           inputMode="numeric"
@@ -117,18 +118,17 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
         />
       </div>
       <p className="text-xs text-fg-subtle -mt-2">
-        Two dates from your card statement. Cut is when billing closes; payment
-        is when it&apos;s due.
+        {t("Two dates from your card statement. Cut is when billing closes; payment is when it's due.")}
       </p>
 
       <Input
-        label={`Credit limit (${currency || BASE_CURRENCY})`}
+        label={t("Credit limit ({0})", { "0": currency || BASE_CURRENCY })}
         name="creditLimit"
         type="number"
         inputMode="decimal"
         step="0.01"
         min="0"
-        placeholder="Optional"
+        placeholder={t("Optional")}
         value={creditLimit}
         onChange={(e) => setCreditLimit(e.target.value)}
       />
@@ -148,11 +148,11 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
-          {submitting ? "Saving…" : initial ? "Save changes" : "Add card"}
+          {submitting ? t("Saving…") : initial ? t("Save changes") : t("Add card")}
         </Button>
       </div>
     </form>

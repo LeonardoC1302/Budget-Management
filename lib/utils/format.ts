@@ -1,5 +1,7 @@
+import { getLocale, t } from "@/lib/i18n";
+
 export function formatCurrency(amount: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getLocale(), {
     style: "currency",
     currency,
     currencyDisplay: "narrowSymbol",
@@ -14,7 +16,7 @@ export function formatCurrencyCompact(
   amount: number,
   currency = "USD",
 ): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(getLocale(), {
     style: "currency",
     currency,
     currencyDisplay: "narrowSymbol",
@@ -34,7 +36,7 @@ export function formatDate(iso: string): string {
   const y = Number(match[1]);
   const m = Number(match[2]);
   const d = Number(match[3]);
-  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+  return new Date(y, m - 1, d).toLocaleDateString(getLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -48,7 +50,7 @@ export function todayISODate(): string {
 
 export function formatDateHeader(iso: string): string {
   const today = todayISODate();
-  if (iso === today) return "Today";
+  if (iso === today) return t("Today");
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(today);
   if (match) {
     const y = Number(match[1]);
@@ -56,7 +58,7 @@ export function formatDateHeader(iso: string): string {
     const d = Number(match[3]);
     const yesterday = new Date(y, m - 1, d - 1);
     const yISO = `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`;
-    if (iso === yISO) return "Yesterday";
+    if (iso === yISO) return t("Yesterday");
   }
   return formatDate(iso);
 }

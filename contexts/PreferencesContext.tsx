@@ -12,6 +12,8 @@ import {
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getLanguage } from "@/lib/i18n";
 import { updateDisplayCurrency } from "@/lib/firebase/seed";
 import { getRate } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -29,6 +31,7 @@ const Ctx = createContext<PreferencesContextValue | null>(null);
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { setLanguage: setUiLanguage } = useLanguage();
   const [displayCurrency, setDisplayCurrencyState] =
     useState<string>(BASE_CURRENCY);
   const [usdToDisplayRate, setUsdToDisplayRate] = useState<number>(1);
@@ -39,13 +42,18 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       return;
     }
     const unsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      // A language chosen on another device follows the user here.
+      const lang = snap.data()?.preferences?.language;
+      if ((lang === "en" || lang === "es") && lang !== getLanguage()) {
+        setUiLanguage(lang);
+      }
       const pref = snap.data()?.preferences?.displayCurrency;
       setDisplayCurrencyState(
         typeof pref === "string" && pref ? pref : BASE_CURRENCY,
       );
     });
     return unsub;
-  }, [user]);
+  }, [user, setUiLanguage]);
 
   useEffect(() => {
     let cancelled = false;

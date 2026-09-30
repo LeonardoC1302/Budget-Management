@@ -17,6 +17,7 @@ import { getRate } from "@/lib/services/exchangeRates";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { Account, NewTransfer, Transaction } from "@/lib/types";
 
+import { getLocale, t } from "@/lib/i18n";
 interface PayCardFormProps {
   card: Account;
   totals: CardTotals;
@@ -39,7 +40,7 @@ function formatISOShort(iso: string): string {
     Number(m[1]),
     Number(m[2]) - 1,
     Number(m[3]),
-  ).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  ).toLocaleDateString(getLocale(), { month: "short", day: "numeric" });
 }
 
 export default function PayCardForm({
@@ -112,7 +113,7 @@ export default function PayCardForm({
           setRateEntry({
             key: pairKey,
             rate: null,
-            error: err instanceof Error ? err.message : "Rate unavailable",
+            error: err instanceof Error ? err.message : t("Rate unavailable"),
           });
         }
       });
@@ -227,7 +228,7 @@ export default function PayCardForm({
           : {}),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
+      setError(err instanceof Error ? err.message : t("Payment failed"));
     } finally {
       setSubmitting(false);
     }
@@ -237,8 +238,7 @@ export default function PayCardForm({
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-fg-muted">
-          Add a debit, cash, wallet, or savings account first — that&apos;s where
-          the payment will come from.
+          {t("Add a debit, cash, wallet, or savings account first — that's where the payment will come from.")}
         </p>
         {onCancel && (
           <Button
@@ -248,7 +248,7 @@ export default function PayCardForm({
             fullWidth
             onClick={onCancel}
           >
-            Close
+            {t("Close")}
           </Button>
         )}
       </div>
@@ -266,41 +266,41 @@ export default function PayCardForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <section
-        aria-label="Statement preview"
+        aria-label={t("Statement preview")}
         className="rounded-[12px] border border-border bg-surface-2 p-4 flex flex-col gap-2.5"
       >
         <PreviewRow
           label={
             due.kind === "due"
-              ? "Statement due"
+              ? t("Statement due")
               : due.kind === "next"
-                ? "This statement is paid"
-                : "Nothing due"
+                ? t("This statement is paid")
+                : t("Nothing due")
           }
           value={statementDueInCard > 0 ? formatCurrency(statementDueInCard, cardCurrency) : "—"}
           strong={due.kind === "due"}
         />
         <PreviewRow
-          label="Unbilled (next cycle)"
+          label={t("Unbilled (next cycle)")}
           value={
             unbilledInCard > 0 ? formatCurrency(unbilledInCard, cardCurrency) : "—"
           }
         />
         <div className="border-t border-border my-1" />
         <PreviewRow
-          label="Total owed"
+          label={t("Total owed")}
           value={formatCurrency(fullBalanceInCard, cardCurrency)}
           strong
         />
         {due.kind !== "none" && (
           <p className="text-[11px] text-fg-subtle">
-            {due.kind === "due" ? "Due" : "Next due"} {formatCardDate(due.date)}
+            {due.kind === "due" ? t("Due") : t("Next due")} {formatCardDate(due.date)}
           </p>
         )}
       </section>
 
       <Select
-        label="From"
+        label={t("From")}
         name="from"
         value={effectiveFromId}
         onChange={setFromId}
@@ -313,12 +313,12 @@ export default function PayCardForm({
 
       {hasSelectionUI && (
         <section
-          aria-label="Charges to pay"
+          aria-label={t("Charges to pay")}
           className="rounded-[12px] border border-border bg-surface-2 p-3 flex flex-col gap-2"
         >
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-medium text-fg-muted uppercase tracking-wide">
-              Charges to pay
+              {t("Charges to pay")}
             </span>
             {unbilledCharges.length > 0 && (
               <button
@@ -326,7 +326,7 @@ export default function PayCardForm({
                 onClick={toggleAllCharges}
                 className="text-[11px] text-fg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded"
               >
-                {allChargesSelected ? "Clear all" : "Select all"}
+                {allChargesSelected ? t("Clear all") : t("Select all")}
               </button>
             )}
           </div>
@@ -335,8 +335,8 @@ export default function PayCardForm({
             <SelectableRow
               checked={includeStatementDue}
               onToggle={toggleIncludeStatementDue}
-              title="Statement due"
-              subtitle="This month's statement"
+              title={t("Statement due")}
+              subtitle={t("This month's statement")}
               amount={formatCurrency(statementDueInCard, cardCurrency)}
               strong
             />
@@ -348,7 +348,7 @@ export default function PayCardForm({
                 const label =
                   c.description ||
                   categoriesById[c.categoryId]?.name ||
-                  "Charge";
+                  t("Charge");
                 const subtitle = `${categoriesById[c.categoryId]?.name ?? "—"} · ${formatISOShort(c.date)}`;
                 const amount =
                   c.currency === cardCurrency
@@ -370,13 +370,13 @@ export default function PayCardForm({
 
           {unbilledCharges.length === 0 && statementDueInCard === 0 && (
             <p className="px-1 py-2 text-xs text-fg-subtle">
-              No pending charges. Enter an amount below to pay down the balance.
+              {t("No pending charges. Enter an amount below to pay down the balance.")}
             </p>
           )}
 
           {(includeStatementDue || selectedIds.size > 0) && (
             <div className="flex items-center justify-between border-t border-border pt-2 px-1">
-              <span className="text-xs text-fg-muted">Selection total</span>
+              <span className="text-xs text-fg-muted">{t("Selection total")}</span>
               <span className="text-sm font-medium text-fg tabular-nums">
                 {formatCurrency(derivedCardAmount, cardCurrency)}
               </span>
@@ -387,7 +387,7 @@ export default function PayCardForm({
 
       <div className="flex flex-col gap-2">
         <Input
-          label={`Applied to card (${cardCurrency})`}
+          label={t("Applied to card ({cardCurrency})", { cardCurrency })}
           name="cardAmount"
           type="number"
           inputMode="decimal"
@@ -400,13 +400,13 @@ export default function PayCardForm({
         />
         {cardTouched && derivedCardAmount > 0 && (
           <p className="text-[11px] text-fg-subtle px-1">
-            Manual amount — clear it to pay from the selection above.
+            {t("Manual amount — clear it to pay from the selection above.")}
           </p>
         )}
         {fullBalanceInCard > 0 && (
           <div className="flex gap-2 flex-wrap">
             <QuickChip
-              label={`Full balance · ${formatCurrency(fullBalanceInCard, cardCurrency)}`}
+              label={t("Full balance · {0}", { "0": formatCurrency(fullBalanceInCard, cardCurrency) })}
               onClick={() => fillWithCardTarget(fullBalanceInCard)}
             />
           </div>
@@ -415,7 +415,7 @@ export default function PayCardForm({
 
       <div className="flex flex-col gap-2">
         <Input
-          label={`Charged from source (${sourceCurrency})`}
+          label={t("Charged from source ({sourceCurrency})", { sourceCurrency })}
           name="sourceAmount"
           type="number"
           inputMode="decimal"
@@ -432,27 +432,27 @@ export default function PayCardForm({
             rateError ? (
               <span className="text-expense">{rateError}</span>
             ) : rate === null ? (
-              "Fetching exchange rate…"
+              t("Fetching exchange rate…")
             ) : (
               <>
-                Default rate: 1 {sourceCurrency} ≈ {rate.toFixed(4)} {cardCurrency}. Adjust if the bank charges a different amount — only what&apos;s here leaves the source; the card is credited by the amount above.
+                {t("Default rate: 1 {from} ≈ {rate} {to}. Adjust if the bank charges a different amount — only what's here leaves the source; the card is credited by the amount above.", { from: sourceCurrency, rate: rate.toFixed(4), to: cardCurrency })}
               </>
             )
           ) : (
-            "Adjust if the bank charges a fee or different amount. The card is still credited by the amount above."
+            t("Adjust if the bank charges a fee or different amount. The card is still credited by the amount above.")
           )}
         </p>
       </div>
 
       <Input
-        label="Note"
+        label={t("Note")}
         name="description"
         placeholder={`Payment · ${card.name}`}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
-      <DatePicker label="Date" name="date" required value={date} onChange={setDate} />
+      <DatePicker label={t("Date")} name="date" required value={date} onChange={setDate} />
 
       {error && <p className="text-xs text-expense">{error}</p>}
 
@@ -465,11 +465,11 @@ export default function PayCardForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={!canSubmit}>
-          {submitting ? "Paying…" : "Pay card"}
+          {submitting ? t("Paying…") : t("Pay card")}
         </Button>
       </div>
     </form>
@@ -566,7 +566,7 @@ function QuickChip({
 }
 
 function formatCardDate(d: Date): string {
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(getLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",

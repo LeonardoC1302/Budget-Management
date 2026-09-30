@@ -1,6 +1,7 @@
 import type { Goal, GoalContribution, Transaction } from "@/lib/types";
 import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 
+import { getLocale, t, tn } from "@/lib/i18n";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const DAYS_PER_MONTH = 30;
 const MIN_HISTORY_DAYS = 30;
@@ -89,21 +90,21 @@ export function estimateTimeToGoal(
 export function formatMonthsRough(months: number): string {
   if (months < 1) {
     const weeks = Math.max(Math.round(months * 4.345), 1);
-    return `${weeks} ${weeks === 1 ? "week" : "weeks"}`;
+    return tn("{count} week", "{count} weeks", weeks);
   }
   if (months < 12) {
     const rounded = Math.ceil(months);
-    return `${rounded} ${rounded === 1 ? "month" : "months"}`;
+    return tn("{count} month", "{count} months", rounded);
   }
   const years = Math.floor(months / 12);
   const remMonths = Math.ceil(months - years * 12);
   if (remMonths === 0 || remMonths === 12) {
     const y = remMonths === 12 ? years + 1 : years;
-    return `${y} ${y === 1 ? "year" : "years"}`;
+    return tn("{count} year", "{count} years", y);
   }
-  return `${years}y ${remMonths}mo`;
+  return t("{years}y {months}mo", { years, months: remMonths });
 }
 
 export function formatTargetMonth(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return date.toLocaleDateString(getLocale(), { month: "long", year: "numeric" });
 }

@@ -9,6 +9,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { NewTransaction, Transaction } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface RefundFormProps {
   // The expense being refunded.
   original: Transaction;
@@ -40,7 +41,7 @@ export default function RefundForm({
   const [date, setDate] = useState(initial?.date ?? todayISODate());
   const [description, setDescription] = useState(
     initial?.description ??
-      (original.description ? `Refund · ${original.description}` : "Refund"),
+      (original.description ? `Refund · ${original.description}` : t("Refund")),
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export default function RefundForm({
         ...(original.tags?.length ? { tags: original.tags } : {}),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save the refund.");
+      setError(err instanceof Error ? err.message : t("Couldn't save the refund."));
     } finally {
       setSubmitting(false);
     }
@@ -82,16 +83,15 @@ export default function RefundForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-sm text-fg-muted">
-        Refund for{" "}
+        {t("Refund for")}{" "}
         <span className="text-fg font-medium">
-          {original.description || "this expense"}
+          {original.description || t("this expense")}
         </span>{" "}
         ({formatCurrency(original.amount, original.currency)}
         {alreadyRefunded > 0 && !initial
-          ? `, ${formatCurrency(alreadyRefunded, original.currency)} already refunded`
+          ? t(", {0} already refunded", { "0": formatCurrency(alreadyRefunded, original.currency) })
           : ""}
-        ). It lowers spending in the same category instead of counting as
-        income.
+        {t("). It lowers spending in the same category instead of counting as income.")}
       </p>
 
       <Input
@@ -106,26 +106,26 @@ export default function RefundForm({
         onChange={(e) => setAmount(e.target.value)}
         error={
           tooMuch
-            ? `That's more than the ${formatCurrency(ceiling, original.currency)} left to refund.`
+            ? t("That's more than the {0} left to refund.", { "0": formatCurrency(ceiling, original.currency) })
             : undefined
         }
       />
 
       <Select
-        label="Refunded to"
+        label={t("Refunded to")}
         value={accountId}
         onChange={setAccountId}
         options={accounts.map((a) => ({ value: a.id, label: a.name }))}
       />
 
       <Input
-        label="Description"
+        label={t("Description")}
         name="refund-description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
-      <DatePicker label="Date" name="refund-date" required value={date} onChange={setDate} />
+      <DatePicker label={t("Date")} name="refund-date" required value={date} onChange={setDate} />
 
       {error && <p className="text-sm text-expense">{error}</p>}
 
@@ -135,7 +135,7 @@ export default function RefundForm({
         fullWidth
         disabled={submitting || !Number.isFinite(parsed) || parsed <= 0 || tooMuch}
       >
-        {submitting ? "Saving…" : initial ? "Save refund" : "Record refund"}
+        {submitting ? t("Saving…") : initial ? t("Save refund") : t("Record refund")}
       </Button>
     </form>
   );

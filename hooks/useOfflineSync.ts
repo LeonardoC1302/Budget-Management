@@ -16,6 +16,13 @@ import {
 } from "@/lib/offline/syncStatus";
 
 let purgedThisSession = false;
+// Whether we switched Firestore's network off. Module-level because the tree
+// remounts (e.g. on a language change) and Firestore must only be toggled on
+// a real transition: enableNetwork() on an already-running client restarts
+// its write stream mid-flight and trips an internal assertion (da08), after
+// which queued writes never get acknowledged.
+let networkDisabled = false;
+let queueChecked = false;
 
 /**
  * Mount once inside the signed-in shell. Mirrors the browser's online state
@@ -25,16 +32,31 @@ let purgedThisSession = false;
  */
 export function useOfflineSyncDriver() {
   useEffect(() => {
-    function apply(online: boolean) {
-      setOnline(online);
-      void (online ? enableNetwork(db) : disableNetwork(db)).catch(() => {});
-      if (online) watchQueuedWrites(waitForPendingWrites(db));
+    function goOnline() {
+      setOnline(true);
+      if (networkDisabled) {
+        networkDisabled = false;
+        void enableNetwork(db).catch(() => {});
+      }
+      watchQueuedWrites(waitForPendingWrites(db));
     }
-    const onOnline = () => apply(true);
-    const onOffline = () => apply(false);
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-    apply(navigator.onLine);
+    function goOffline() {
+      setOnline(false);
+      if (!networkDisabled) {
+        networkDisabled = true;
+        void disableNetwork(db).catch(() => {});
+      }
+    }
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    if (!navigator.onLine) goOffline();
+    else if (!queueChecked) {
+      // Once per page load: surface writes an earlier session left queued.
+      queueChecked = true;
+      setOnline(true);
+      watchQueuedWrites(waitForPendingWrites(db));
+    }
 
     if (!purgedThisSession && navigator.onLine) {
       purgedThisSession = true;
@@ -44,8 +66,8 @@ export function useOfflineSyncDriver() {
     }
 
     return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
     };
   }, []);
 }

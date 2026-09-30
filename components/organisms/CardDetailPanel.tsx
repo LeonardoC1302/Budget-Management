@@ -14,6 +14,7 @@ import { effectiveDue } from "@/lib/credit/statement";
 import type { Account, Category } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/format";
 
+import { getLocale, t, tn } from "@/lib/i18n";
 interface CardDetailPanelProps {
   card: Account;
   totals?: CardTotals;
@@ -32,11 +33,11 @@ function isoFromDate(d: Date): string {
 }
 
 function formatShortDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString(getLocale(), { month: "short", day: "numeric" });
 }
 
 function formatLongDate(d: Date): string {
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(getLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -52,11 +53,11 @@ function formatISOShort(iso: string): string {
 }
 
 function daysCopy(days: number): string {
-  if (days === 0) return "today";
-  if (days === 1) return "tomorrow";
-  if (days === -1) return "1 day late";
-  if (days > 0) return `in ${days} days`;
-  return `${Math.abs(days)} days late`;
+  if (days === 0) return t("today");
+  if (days === 1) return t("tomorrow");
+  if (days === -1) return t("1 day late");
+  if (days > 0) return t("in {days} days", { days });
+  return t("{0} days late", { "0": Math.abs(days) });
 }
 
 export default function CardDetailPanel({
@@ -79,7 +80,7 @@ export default function CardDetailPanel({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-fg truncate">{card.name}</p>
-            <p className="text-xs text-fg-subtle">{card.currency} · Card</p>
+            <p className="text-xs text-fg-subtle">{card.currency}{" "}{t("· Card")}</p>
           </div>
           <RowActions
             card={card}
@@ -90,10 +91,10 @@ export default function CardDetailPanel({
           />
         </div>
         <p className="text-sm text-fg-muted">
-          Add cut and payment days to see what&apos;s due.
+          {t("Add cut and payment days to see what's due.")}
         </p>
         <Button variant="secondary" size="sm" onClick={() => onEdit(card)} className="self-start">
-          Add statement schedule
+          {t("Add statement schedule")}
         </Button>
       </section>
     );
@@ -121,8 +122,8 @@ export default function CardDetailPanel({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-fg truncate">{card.name}</p>
           <p className="text-xs text-fg-subtle">
-            {card.currency} · Cut on day {card.cutDay} · Pay on day {card.paymentDay}
-            {card.reconciledAt && ` · Reconciled ${formatISOShort(card.reconciledAt)}`}
+            {card.currency}{" "}{t("· Cut on day")}{" "}{card.cutDay}{" "}{t("· Pay on day")}{" "}{card.paymentDay}
+            {card.reconciledAt && t(" · Reconciled {0}", { "0": formatISOShort(card.reconciledAt) })}
           </p>
         </div>
         <RowActions
@@ -137,7 +138,7 @@ export default function CardDetailPanel({
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3">
         <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-[0.08em] text-fg-subtle mb-1.5">
-            You owe
+            {t("You owe")}
           </p>
           <Amount
             value={owed}
@@ -152,7 +153,7 @@ export default function CardDetailPanel({
           onClick={() => onPay(card)}
           disabled={owed === 0}
         >
-          Pay card
+          {t("Pay card")}
         </Button>
       </div>
 
@@ -162,21 +163,21 @@ export default function CardDetailPanel({
             due.daysUntil <= 3 ? "text-sm text-expense" : "text-sm text-fg-muted"
           }
         >
-          Pay{" "}
-          <span className="text-fg font-medium">
-            {formatCurrency(due.amount, card.currency)}
-          </span>{" "}
-          by {formatLongDate(due.date)} · {daysCopy(due.daysUntil)}
+          {t("Pay {amount} by {date} · {when}", {
+            amount: formatCurrency(due.amount, card.currency),
+            date: formatLongDate(due.date),
+            when: daysCopy(due.daysUntil),
+          })}
         </p>
       )}
       {due.kind === "next" && (
         <p className="text-sm text-fg-subtle">
-          Nothing due yet — next statement due{" "}
+          {t("Nothing due yet — next statement due")}{" "}
           <span className="text-fg-muted">{formatLongDate(due.date)}</span>.
         </p>
       )}
       {due.kind === "none" && (
-        <p className="text-sm text-fg-subtle">Nothing due — you&apos;re clear.</p>
+        <p className="text-sm text-fg-subtle">{t("Nothing due — you're clear.")}</p>
       )}
 
       {typeof utilization === "number" && typeof card.creditLimit === "number" && (
@@ -184,16 +185,17 @@ export default function CardDetailPanel({
           <ProgressBar
             value={utilization}
             tone={utilization >= 0.9 ? "expense" : "accent"}
-            ariaLabel={`${Math.round(utilization * 100)}% of credit limit used`}
+            ariaLabel={t("{0}% of credit limit used", { "0": Math.round(utilization * 100) })}
           />
           <p className="text-xs text-fg-subtle flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-            <span>{Math.round(utilization * 100)}% of limit used</span>
+            <span>{t("{percent}% of limit used", { percent: Math.round(utilization * 100) })}</span>
             <span>
-              {formatCurrency(
-                totals.availableCredit ?? card.creditLimit,
-                card.currency,
-              )}{" "}
-              available
+              {t("{amount} available", {
+                amount: formatCurrency(
+                  totals.availableCredit ?? card.creditLimit,
+                  card.currency,
+                ),
+              })}
             </span>
           </p>
         </div>
@@ -201,7 +203,7 @@ export default function CardDetailPanel({
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 pt-1">
         <MetricRow
-          label="Statement due"
+          label={t("Statement due")}
           value={
             totals.statementDue > 0
               ? formatCurrency(totals.statementDue, card.currency)
@@ -214,7 +216,7 @@ export default function CardDetailPanel({
           }
         />
         <MetricRow
-          label="Unbilled (next cycle)"
+          label={t("Unbilled (next cycle)")}
           value={
             netUnbilled > 0
               ? formatCurrency(netUnbilled, card.currency)
@@ -224,34 +226,34 @@ export default function CardDetailPanel({
             netUnbilled > 0
               ? `closes ${formatLongDate(totals.cycle.nextCutDate)}`
               : advancePayments > 0
-                ? `${formatCurrency(advancePayments, card.currency)} paid in advance`
+                ? t("{0} paid in advance", { "0": formatCurrency(advancePayments, card.currency) })
                 : undefined
           }
         />
         {totals.scheduled > 0 && (
           <MetricRow
-            label="Future installments"
+            label={t("Future installments")}
             value={formatCurrency(totals.scheduled, card.currency)}
-            subline="on later statements"
+            subline={t("on later statements")}
           />
         )}
         <MetricRow
-          label="Last cut"
+          label={t("Last cut")}
           value={formatLongDate(totals.cycle.lastCutDate)}
         />
         <MetricRow
-          label="Next cut"
+          label={t("Next cut")}
           value={formatLongDate(totals.cycle.nextCutDate)}
         />
         {history && history.observedCycleCount > 0 && (
           <>
             <MetricRow
-              label="Avg per cycle"
+              label={t("Avg per cycle")}
               value={formatCurrency(history.avgMonthlyCharges, card.currency)}
-              subline={`across ${history.observedCycleCount} cycle${history.observedCycleCount === 1 ? "" : "s"}`}
+              subline={tn("across {count} cycle", "across {count} cycles", history.observedCycleCount)}
             />
             <MetricRow
-              label="Peak cycle"
+              label={t("Peak cycle")}
               value={formatCurrency(history.peakCycleCharges, card.currency)}
             />
           </>
@@ -259,7 +261,7 @@ export default function CardDetailPanel({
       </dl>
 
       {categoryEntries.length > 0 && (
-        <Group title="Charges this cycle">
+        <Group title={t("Charges this cycle")}>
           <ul className="flex flex-col divide-y divide-border">
             {categoryEntries.map(([catId, amt]) => (
               <li
@@ -272,7 +274,7 @@ export default function CardDetailPanel({
                   size="sm"
                 />
                 <span className="text-sm text-fg flex-1 truncate">
-                  {categoriesById[catId]?.name ?? "Uncategorized"}
+                  {categoriesById[catId]?.name ?? t("Uncategorized")}
                 </span>
                 <span className="text-sm tabular-nums text-fg-muted">
                   {formatCurrency(amt, card.currency)}
@@ -282,15 +284,17 @@ export default function CardDetailPanel({
           </ul>
           {advancePayments > 0 && (
             <p className="text-[11px] text-fg-subtle">
-              {formatCurrency(chargedThisCycle, card.currency)} charged ·{" "}
-              {formatCurrency(advancePayments, card.currency)} already paid.
+              {t("{charged} charged · {paid} already paid.", {
+                charged: formatCurrency(chargedThisCycle, card.currency),
+                paid: formatCurrency(advancePayments, card.currency),
+              })}
             </p>
           )}
         </Group>
       )}
 
       {history && history.recentCharges.length > 0 && (
-        <Group title="Recent charges">
+        <Group title={t("Recent charges")}>
           <ul className="flex flex-col divide-y divide-border">
             {history.recentCharges.map((c) => (
               <li key={c.id} className="flex items-center gap-3 py-2">
@@ -298,7 +302,7 @@ export default function CardDetailPanel({
                   <p className="text-sm text-fg truncate">
                     {c.description ||
                       categoriesById[c.categoryId]?.name ||
-                      "Charge"}
+                      t("Charge")}
                     {c.installment &&
                       ` · ${c.installment.index}/${c.installment.count}`}
                   </p>
@@ -320,7 +324,7 @@ export default function CardDetailPanel({
       )}
 
       {history && history.upcomingInstallments.length > 0 && (
-        <Group title="Upcoming installments">
+        <Group title={t("Upcoming installments")}>
           <ul className="flex flex-col divide-y divide-border">
             {history.upcomingInstallments.map((c) => (
               <li key={c.id} className="flex items-center gap-3 py-2">
@@ -328,7 +332,7 @@ export default function CardDetailPanel({
                   <p className="text-sm text-fg truncate">
                     {c.description ||
                       categoriesById[c.categoryId]?.name ||
-                      "Purchase"}
+                      t("Purchase")}
                     {c.installment &&
                       ` · ${c.installment.index}/${c.installment.count}`}
                   </p>
@@ -349,7 +353,7 @@ export default function CardDetailPanel({
       )}
 
       {history && history.paymentHistory.length > 0 && (
-        <Group title="Recent payments">
+        <Group title={t("Recent payments")}>
           <ul className="flex flex-col divide-y divide-border">
             {history.paymentHistory.map((p) => {
               const source = p.sourceAccountId
@@ -359,7 +363,7 @@ export default function CardDetailPanel({
                 <li key={p.id} className="flex items-center gap-3 py-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-fg truncate">
-                      {p.description || "Card payment"}
+                      {p.description || t("Card payment")}
                     </p>
                     <p className="text-xs text-fg-subtle">
                       {source ? `from ${source.name} · ` : ""}
@@ -380,7 +384,7 @@ export default function CardDetailPanel({
       )}
 
       {history && history.priorStatements.length > 0 && (
-        <Group title="Prior statements">
+        <Group title={t("Prior statements")}>
           <ul className="flex flex-col divide-y divide-border">
             {history.priorStatements.map((s) => (
               <PriorStatementRow key={isoFromDate(s.cutDate)} statement={s} currency={card.currency} />
@@ -431,10 +435,10 @@ function PriorStatementRow({
   const remaining = Math.max(0, statement.charges - statement.paidByDue);
   const label =
     remaining === 0 && statement.charges > 0
-      ? "Paid in full"
+      ? t("Paid in full")
       : statement.paidByDue === 0
-        ? "Unpaid"
-        : `${formatCurrency(remaining, currency)} unpaid`;
+        ? t("Unpaid")
+        : t("{0} unpaid", { "0": formatCurrency(remaining, currency) });
   const labelTone =
     remaining === 0 && statement.charges > 0
       ? "text-income"
@@ -445,7 +449,7 @@ function PriorStatementRow({
     <li className="flex items-center gap-3 py-2">
       <div className="flex-1 min-w-0">
         <p className="text-sm text-fg">
-          Statement {formatShortDate(statement.cutDate)}
+          {t("Statement {date}", { date: formatShortDate(statement.cutDate) })}
         </p>
         <p className={`text-xs ${labelTone}`}>{label}</p>
       </div>
@@ -454,7 +458,7 @@ function PriorStatementRow({
           {formatCurrency(statement.charges, currency)}
         </p>
         <p className="text-[11px] text-fg-subtle">
-          due {formatShortDate(statement.dueDate)}
+          {t("due {date}", { date: formatShortDate(statement.dueDate) })}
         </p>
       </div>
     </li>
@@ -481,7 +485,7 @@ function RowActions({
           variant="ghost"
           size="sm"
           aria-label={`Reconcile ${card.name}`}
-          title="Check what you owe against your bank"
+          title={t("Check what you owe against your bank")}
           onClick={() => onReconcile(card)}
           className="px-2"
         >
@@ -505,8 +509,8 @@ function RowActions({
         disabled={!canDelete}
         title={
           canDelete
-            ? "Delete card"
-            : "Delete or reassign this card's transactions first"
+            ? t("Delete card")
+            : t("Delete or reassign this card's transactions first")
         }
         className="px-2"
       >

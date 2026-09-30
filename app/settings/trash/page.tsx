@@ -15,6 +15,7 @@ import {
 } from "@/lib/firebase/trash";
 import { formatCurrency } from "@/lib/utils/format";
 
+import { t, tn } from "@/lib/i18n";
 const KIND_LABELS: Record<TrashKind, string> = {
   transaction: "Transaction",
   transfer: "Transfer",
@@ -43,7 +44,7 @@ export default function TrashPage() {
     () =>
       listTrash().then(setEntries, (err: unknown) => {
         setError(
-          err instanceof Error ? err.message : "Couldn't load deleted items.",
+          err instanceof Error ? err.message : t("Couldn't load deleted items."),
         );
         setEntries([]);
       }),
@@ -65,7 +66,7 @@ export default function TrashPage() {
       setEntries((prev) => prev?.filter((e) => e.id !== entry.id) ?? null);
       emitDataChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't restore that item.");
+      setError(err instanceof Error ? err.message : t("Couldn't restore that item."));
     } finally {
       setRestoring(null);
     }
@@ -73,11 +74,13 @@ export default function TrashPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <RouteMasthead kicker="Settings" title="Recently deleted" />
+      <RouteMasthead kicker={t("Settings")} title={t("Recently deleted")} />
 
       <p className="lede text-sm">
-        Deleted items stay here for {TRASH_RETENTION_DAYS}{" "}
-        days, then they&apos;re removed for good. Restoring puts an item back exactly as it was.
+        {t(
+          "Deleted items stay here for {days} days, then they're removed for good. Restoring puts an item back exactly as it was.",
+          { days: TRASH_RETENTION_DAYS },
+        )}
       </p>
 
       {error && <p className="text-sm text-expense">{error}</p>}
@@ -86,8 +89,8 @@ export default function TrashPage() {
         <RowSkeleton />
       ) : entries.length === 0 ? (
         <EmptyState
-          title="Nothing deleted."
-          description="Things you delete show up here for a while in case you change your mind."
+          title={t("Nothing deleted.")}
+          description={t("Things you delete show up here for a while in case you change your mind.")}
         />
       ) : (
         <ul className="rooms">
@@ -96,16 +99,16 @@ export default function TrashPage() {
             return (
               <li key={entry.id} className="flex items-center gap-4 px-4 py-3">
                 <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                  <span className="text-sm text-fg truncate">{entry.label}</span>
+                  <span className="text-sm text-fg truncate">{t(entry.label)}</span>
                   <span className="text-xs text-fg-subtle">
-                    {KIND_LABELS[entry.kind] ?? entry.kind}
+                    {t(KIND_LABELS[entry.kind] ?? entry.kind)}
                     {typeof entry.amount === "number" && entry.currency
                       ? ` · ${formatCurrency(entry.amount, entry.currency)}`
                       : ""}
                     {" · "}
                     {left === 0
-                      ? "removed today"
-                      : `${left} day${left === 1 ? "" : "s"} left`}
+                      ? t("removed today")
+                      : tn("{count} day left", "{count} days left", left)}
                     {entry._owner && entry._owner.permission !== "owner"
                       ? ` · ${entry._owner.nickname}`
                       : ""}
@@ -117,7 +120,7 @@ export default function TrashPage() {
                   disabled={restoring !== null}
                   className="btn btn-secondary btn-sm"
                 >
-                  {restoring === entry.id ? "Restoring…" : "Restore"}
+                  {restoring === entry.id ? t("Restoring…") : t("Restore")}
                 </button>
               </li>
             );

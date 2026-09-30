@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
+import { getLocale, t } from "@/lib/i18n";
 interface DatePickerProps {
   label?: string;
   value: string;
@@ -31,21 +32,20 @@ interface MenuRect {
   placement: "below" | "above";
 }
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+// Names come from Intl so they follow the UI language. 2023-01-01 is a Sunday.
+function weekdays(): string[] {
+  const fmt = new Intl.DateTimeFormat(getLocale(), { weekday: "short" });
+  return Array.from({ length: 7 }, (_, i) =>
+    fmt.format(new Date(2023, 0, 1 + i)).replace(".", "").slice(0, 2),
+  );
+}
+
+function monthName(m: number): string {
+  const name = new Intl.DateTimeFormat(getLocale(), { month: "long" }).format(
+    new Date(2023, m, 1),
+  );
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
@@ -68,7 +68,11 @@ function parseISO(iso: string): { y: number; m: number; d: number } | null {
 function formatDisplay(iso: string): string {
   const parts = parseISO(iso);
   if (!parts) return iso;
-  return `${MONTH_NAMES[parts.m].slice(0, 3)} ${parts.d}, ${parts.y}`;
+  return new Date(parts.y, parts.m, parts.d).toLocaleDateString(getLocale(), {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function daysInMonth(y: number, m: number): number {
@@ -92,7 +96,7 @@ export default function DatePicker({
   name,
   required,
   disabled,
-  placeholder = "Select date…",
+  placeholder = t("Select date…"),
   className,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
@@ -291,7 +295,7 @@ export default function DatePicker({
               <button
                 type="button"
                 onClick={prevMonth}
-                aria-label="Previous month"
+                aria-label={t("Previous month")}
                 className="w-8 h-8 flex items-center justify-center rounded-[8px] text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
               >
                 <svg
@@ -307,12 +311,12 @@ export default function DatePicker({
                 </svg>
               </button>
               <div className="text-sm font-medium text-fg">
-                {MONTH_NAMES[viewM]} {viewY}
+                {monthName(viewM)} {viewY}
               </div>
               <button
                 type="button"
                 onClick={nextMonth}
-                aria-label="Next month"
+                aria-label={t("Next month")}
                 className="w-8 h-8 flex items-center justify-center rounded-[8px] text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
               >
                 <svg
@@ -330,7 +334,7 @@ export default function DatePicker({
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-1">
-              {WEEKDAYS.map((w) => (
+              {weekdays().map((w) => (
                 <div
                   key={w}
                   className="h-7 flex items-center justify-center text-[11px] font-medium text-fg-subtle"
@@ -380,7 +384,7 @@ export default function DatePicker({
                 onClick={() => commit(todayISO())}
                 className="text-xs text-accent hover:text-accent-hover transition-colors"
               >
-                Today
+                {t("Today")}
               </button>
               {!required && value && (
                 <button
@@ -388,7 +392,7 @@ export default function DatePicker({
                   onClick={() => commit("")}
                   className="text-xs text-fg-subtle hover:text-fg transition-colors"
                 >
-                  Clear
+                  {t("Clear")}
                 </button>
               )}
             </div>

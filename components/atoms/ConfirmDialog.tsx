@@ -3,6 +3,7 @@
 import Button from "@/components/atoms/Button";
 import Modal from "@/components/atoms/Modal";
 
+import { t } from "@/lib/i18n";
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
@@ -19,8 +20,8 @@ export default function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel = t("Confirm"),
+  cancelLabel = t("Cancel"),
   tone = "danger",
   onConfirm,
   onCancel,
@@ -50,7 +51,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={submitting}
           >
-            {submitting ? "Working…" : confirmLabel}
+            {submitting ? t("Working…") : confirmLabel}
           </Button>
         </div>
       </div>

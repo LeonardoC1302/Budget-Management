@@ -20,6 +20,7 @@ import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
 import type { Budget, NewBudget, OwnerCtx } from "@/lib/types";
 import type { BudgetStore } from "@/lib/storage/BudgetStore";
 
+import { t } from "@/lib/i18n";
 const COL = "budgets";
 
 function hydrate(
@@ -52,7 +53,7 @@ export const firebaseBudgetStore: BudgetStore = {
           (d.data() as Budget).categoryId === input.categoryId,
       )
     ) {
-      throw new Error("A budget for this category already exists.");
+      throw new Error(t("A budget for this category already exists."));
     }
     const createdAt = new Date().toISOString();
     const ref = doc(ownerCollection(uid, COL));

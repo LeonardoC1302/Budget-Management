@@ -9,6 +9,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type { Budget, NewBudget } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface BudgetFormProps {
   initial?: Budget;
   /** Category IDs that already have a budget (excluded from picker). */
@@ -64,7 +65,7 @@ export default function BudgetForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Select
-        label="Category"
+        label={t("Category")}
         name="category"
         value={categoryId}
         onChange={setSelectedCategoryId}
@@ -77,13 +78,13 @@ export default function BudgetForm({
 
       {availableCategories.length === 0 && !initial && (
         <p className="text-xs text-fg-subtle">
-          Every expense category already has a budget. Add a new category first.
+          {t("Every expense category already has a budget. Add a new category first.")}
         </p>
       )}
 
       <div className="grid grid-cols-[1fr_9rem] gap-3 items-end">
         <Input
-          label={`Monthly cap (${currency})`}
+          label={t("Monthly cap ({currency})", { currency })}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -95,7 +96,7 @@ export default function BudgetForm({
           onChange={(e) => setAmount(e.target.value)}
         />
         <CurrencySelect
-          label="Currency"
+          label={t("Currency")}
           value={currency}
           onChange={setCurrency}
         />
@@ -110,7 +111,7 @@ export default function BudgetForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button
@@ -119,7 +120,7 @@ export default function BudgetForm({
           fullWidth
           disabled={submitting || !categoryId}
         >
-          {submitting ? "Saving…" : initial ? "Save changes" : "Add budget"}
+          {submitting ? t("Saving…") : initial ? t("Save changes") : t("Add budget")}
         </Button>
       </div>
     </form>

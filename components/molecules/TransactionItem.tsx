@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatDate } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
 
+import { getLocale, t } from "@/lib/i18n";
 interface TransactionItemProps {
   transaction: Transaction;
   account?: Account;
@@ -25,7 +26,7 @@ function shortDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return iso;
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-    .toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    .toLocaleDateString(getLocale(), { month: "short", day: "numeric" });
 }
 
 /**
@@ -56,7 +57,7 @@ export default function TransactionItem({
   let dotClass = "text-fg-subtle";
 
   if (isTransfer) {
-    const other = linkedAccount?.name ?? "another account";
+    const other = linkedAccount?.name ?? t("another account");
     const isCardPayment = !!transaction.paymentForAccountId;
     const cardName =
       transaction.transferDirection === "in"
@@ -73,26 +74,26 @@ export default function TransactionItem({
           : linkedAccount?.name;
       title =
         transaction.description ||
-        (isCardPayment ? "Card payment" : "Transfer");
+        (isCardPayment ? t("Card payment") : t("Transfer"));
       subtitle = `${source ?? "—"} → ${destination ?? "—"}`;
     } else {
       const defaultTitle = isCardPayment
-        ? `Card payment · ${cardName ?? other}`
+        ? t("Card payment · {0}", { "0": cardName ?? other })
         : transaction.transferDirection === "in"
-          ? `Transfer from ${other}`
-          : `Transfer to ${other}`;
+          ? t("Transfer from {other}", { other })
+          : t("Transfer to {other}", { other });
       title = transaction.description || defaultTitle;
       subtitle = account?.name ?? "—";
     }
     tone = "neutral";
     dotClass = "text-fg-subtle";
   } else if (isInvestment) {
-    title = transaction.description || category?.name || "Investment";
+    title = transaction.description || category?.name || t("Investment");
     subtitle = [category?.name, account?.name].filter(Boolean).join(" · ");
     tone = "neutral";
     dotClass = "text-invest";
   } else if (transaction.adjustment) {
-    title = transaction.description || "Balance adjustment";
+    title = transaction.description || t("Balance adjustment");
     subtitle = ["Adjustment", account?.name].filter(Boolean).join(" · ");
     tone = isIncome ? "income" : "expense";
     dotClass = "text-fg-subtle";
@@ -100,8 +101,8 @@ export default function TransactionItem({
     const isRefund = isIncome && !!transaction.refundOf;
     title =
       transaction.description ||
-      (isRefund ? "Refund" : category?.name) ||
-      "Untitled";
+      (isRefund ? t("Refund") : category?.name) ||
+      t("Untitled");
     if (transaction.installment) {
       title += ` · ${transaction.installment.index}/${transaction.installment.count}`;
     }
@@ -130,7 +131,7 @@ export default function TransactionItem({
               <RefreshIcon
                 width={12}
                 height={12}
-                aria-label="From a recurring rule"
+                aria-label={t("From a recurring rule")}
                 className="text-fg-subtle shrink-0"
               />
             )}

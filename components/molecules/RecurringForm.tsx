@@ -25,6 +25,7 @@ import {
   type RecurringTransaction,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface RecurringFormProps {
   initial?: RecurringTransaction;
   onSubmit: (input: NewRecurringTransaction) => void | Promise<void>;
@@ -127,7 +128,7 @@ export default function RecurringForm({
           setRateEntry({
             key: pairKey,
             rate: null,
-            error: err instanceof Error ? err.message : "Rate unavailable",
+            error: err instanceof Error ? err.message : t("Rate unavailable"),
           });
         }
       });
@@ -162,15 +163,15 @@ export default function RecurringForm({
 
     const parsedAmount = parseFloat(amount);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("Enter a positive amount.");
+      setError(t("Enter a positive amount."));
       return;
     }
     if (!accountId || !categoryId) {
-      setError("Pick an account and category.");
+      setError(t("Pick an account and category."));
       return;
     }
     if (!startDate) {
-      setError("Pick a start date.");
+      setError(t("Pick a start date."));
       return;
     }
 
@@ -179,22 +180,22 @@ export default function RecurringForm({
       const a = parseInt(dayA, 10);
       const b = parseInt(dayB, 10);
       if (!Number.isInteger(a) || !Number.isInteger(b)) {
-        setError("Enter two valid days.");
+        setError(t("Enter two valid days."));
         return;
       }
       if (a < 1 || a > 31 || b < 1 || b > 31) {
-        setError("Days must be between 1 and 31.");
+        setError(t("Days must be between 1 and 31."));
         return;
       }
       if (a === b) {
-        setError("The two days must be different.");
+        setError(t("The two days must be different."));
         return;
       }
       semiMonthlyDays = a < b ? [a, b] : [b, a];
     }
 
     if (endDate && endDate < startDate) {
-      setError("End date must be after start date.");
+      setError(t("End date must be after start date."));
       return;
     }
 
@@ -230,27 +231,27 @@ export default function RecurringForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div
         role="tablist"
-        aria-label="Recurring type"
+        aria-label={t("Recurring type")}
         className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income"] as const).map((t) => {
+        {(["expense", "income"] as const).map((kind) => {
           const activeClass =
-            t === "income"
+            kind === "income"
               ? "bg-income-soft text-income"
               : "bg-expense-soft text-expense";
           return (
             <button
-              key={t}
+              key={kind}
               type="button"
               role="tab"
-              aria-selected={type === t}
-              onClick={() => setType(t)}
+              aria-selected={type === kind}
+              onClick={() => setType(kind)}
               className={cn(
                 "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
-                type === t ? activeClass : "text-fg-muted hover:text-fg",
+                type === kind ? activeClass : "text-fg-muted hover:text-fg",
               )}
             >
-              {t}
+              {t(kind)}
             </button>
           );
         })}
@@ -270,7 +271,7 @@ export default function RecurringForm({
       />
 
       <Select
-        label="Account"
+        label={t("Account")}
         name="account"
         value={accountId}
         onChange={setSelectedAccountId}
@@ -280,7 +281,7 @@ export default function RecurringForm({
 
       <div className="flex flex-col gap-1.5">
         <CurrencySelect
-          label="Currency"
+          label={t("Currency")}
           name="currency"
           value={currency}
           onChange={(next) =>
@@ -298,10 +299,10 @@ export default function RecurringForm({
         {hasCurrencyMismatch && (
           <p role="status" className="text-xs text-fg-subtle">
             {convertedPreview !== null
-              ? `≈ ${formatCurrency(convertedPreview, accountCurrency)} on the ${accountCurrency} account · rate re-fetched each occurrence`
+              ? t("≈ {0} on the {accountCurrency} account · rate re-fetched each occurrence", { "0": formatCurrency(convertedPreview, accountCurrency), accountCurrency })
               : rateEntry.error
-                ? `Rate unavailable (${rateEntry.error}).`
-                : `Fetching ${currency} → ${accountCurrency} rate…`}
+                ? t("Rate unavailable ({error}).", { error: rateEntry.error })
+                : t("Fetching {currency} → {accountCurrency} rate…", { currency, accountCurrency })}
           </p>
         )}
       </div>
@@ -313,33 +314,32 @@ export default function RecurringForm({
       />
 
       <Input
-        label="Description"
+        label={t("Description")}
         name="description"
-        placeholder="e.g. Salary, Netflix"
+        placeholder={t("e.g. Salary, Netflix")}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
       <Select
-        label="Frequency"
+        label={t("Frequency")}
         name="frequency"
         value={frequency}
         onChange={(v) => setFrequency(v as RecurrenceFrequency)}
-        options={FREQUENCY_OPTIONS}
+        options={FREQUENCY_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
       />
 
       {frequency === "semi-monthly" && (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium text-fg-muted">
-            Two days each month
+            {t("Two days each month")}
           </span>
           <p className="text-xs text-fg-subtle">
-            If a month has fewer days, the rule falls on the last day of the
-            month. Choose two different days.
+            {t("If a month has fewer days, the rule falls on the last day of the month. Choose two different days.")}
           </p>
           <div className="grid grid-cols-2 gap-3 items-end">
             <Select
-              label="First day"
+              label={t("First day")}
               name="dayA"
               value={dayA}
               onChange={setDayA}
@@ -349,7 +349,7 @@ export default function RecurringForm({
               }))}
             />
             <Select
-              label="Second day"
+              label={t("Second day")}
               name="dayB"
               value={dayB}
               onChange={setDayB}
@@ -363,7 +363,7 @@ export default function RecurringForm({
       )}
 
       <DatePicker
-        label="Start date (first occurrence)"
+        label={t("Start date (first occurrence)")}
         name="startDate"
         required
         value={startDate}
@@ -371,7 +371,7 @@ export default function RecurringForm({
       />
 
       <DatePicker
-        label="End date (optional)"
+        label={t("End date (optional)")}
         name="endDate"
         value={endDate}
         onChange={setEndDate}
@@ -393,7 +393,7 @@ export default function RecurringForm({
             onClick={onCancel}
             disabled={submitting}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button
@@ -402,7 +402,7 @@ export default function RecurringForm({
           fullWidth
           disabled={submitting || loading || !accountId || !categoryId}
         >
-          {submitting ? "Saving…" : initial ? "Save changes" : "Create recurring"}
+          {submitting ? t("Saving…") : initial ? t("Save changes") : t("Create recurring")}
         </Button>
       </div>
     </form>

@@ -28,6 +28,7 @@ import {
 } from "@/lib/utils/holdings";
 import { transactionStore } from "@/lib/storage";
 
+import { t, tn } from "@/lib/i18n";
 export default function InvestmentsPage() {
   const { recurring, add: addRecurring } = useRecurringTransactions();
   const {
@@ -152,20 +153,20 @@ export default function InvestmentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Portfolio"
-        title="Investments"
+        kicker={t("Portfolio")}
+        title={t("Investments")}
         actions={
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            New position
+            {t("New position")}
           </Button>
         }
       />
 
       <section
         className="courtyard p-6 flex flex-col gap-2"
-        aria-label="Portfolio summary"
+        aria-label={t("Portfolio summary")}
       >
-        <span className="kicker">Current value</span>
+        <span className="kicker">{t("Current value")}</span>
         <span
           className="courtyard-fig text-invest"
           style={{ fontSize: "clamp(1.875rem, 9vw, 4.5rem)" }}
@@ -173,7 +174,7 @@ export default function InvestmentsPage() {
           {formatCurrency(convertUsd(totals.currentValue), displayCurrency)}
         </span>
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-fg-muted mt-2">
-          <span>Cost basis · {formatCurrency(convertUsd(totals.costBasis), displayCurrency)}</span>
+          <span>{t("Cost basis · {amount}", { amount: formatCurrency(convertUsd(totals.costBasis), displayCurrency) })}</span>
           {totals.gainPct !== null && (
             <span
               className={
@@ -193,8 +194,7 @@ export default function InvestmentsPage() {
         </div>
         {quoteStatus === "unavailable" && marketSymbols.length > 0 && (
           <p className="lede text-xs mt-2">
-            Live prices unavailable — showing cost basis. Set
-            TWELVEDATA_API_KEY to enable market data.
+            {t("Live prices unavailable — showing cost basis. Set TWELVEDATA_API_KEY to enable market data.")}
           </p>
         )}
       </section>
@@ -202,10 +202,10 @@ export default function InvestmentsPage() {
       <section className="flex flex-col" aria-labelledby="positions">
         <div className="section-head">
           <span id="positions" className="section-head-title">
-            Positions
+            {t("Positions")}
           </span>
           <span className="section-head-meta">
-            {holdings.length} position{holdings.length === 1 ? "" : "s"}
+            {tn("{count} position", "{count} positions", holdings.length)}
           </span>
         </div>
 
@@ -213,9 +213,9 @@ export default function InvestmentsPage() {
           <RowSkeleton count={3} />
         ) : holdings.length === 0 ? (
           <EmptyState
-            title="No positions yet."
-            description="Add an ETF, stock, crypto, or a manual balance (e.g. a pension) to start tracking your portfolio."
-            actionLabel="New position"
+            title={t("No positions yet.")}
+            description={t("Add an ETF, stock, crypto, or a manual balance (e.g. a pension) to start tracking your portfolio.")}
+            actionLabel={t("New position")}
             actionOnClick={() => setCreateOpen(true)}
           />
         ) : (
@@ -247,12 +247,14 @@ export default function InvestmentsPage() {
           >
             <div>
               <p className="font-serif text-sm text-fg">
-                Unassigned contributions
+                {t("Unassigned contributions")}
               </p>
               <p className="lede text-xs mt-1">
-                {unassignedInvestments.length} legacy entr
-                {unassignedInvestments.length === 1 ? "y" : "ies"} · move into a
-                holding
+                {tn(
+                  "{count} legacy entry · move into a holding",
+                  "{count} legacy entries · move into a holding",
+                  unassignedInvestments.length,
+                )}
               </p>
             </div>
             <span className="figure text-fg">
@@ -293,7 +295,7 @@ export default function InvestmentsPage() {
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="Add a position"
+        title={t("Add a position")}
       >
         <HoldingForm
           onSubmit={handleCreateHolding}

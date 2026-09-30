@@ -4,6 +4,7 @@ import EmptyState from "@/components/atoms/EmptyState";
 import GoalCard from "@/components/molecules/GoalCard";
 import type { Goal, GoalContribution } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface GoalListProps {
   goals: Goal[];
   contributionsByGoal: Record<string, GoalContribution[]>;
@@ -35,7 +36,7 @@ export default function GoalList({
   emptyActionLabel,
   emptyActionOnClick,
   emptyActionHref,
-  emptyMessage = "No goals yet.",
+  emptyMessage = t("No goals yet."),
 }: GoalListProps) {
   if (goals.length === 0) {
     return (

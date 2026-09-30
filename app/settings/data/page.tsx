@@ -24,6 +24,7 @@ import { downloadText, parseCsv, toCsv, type DateFormat } from "@/lib/utils/csv"
 import { formatCurrency, formatDate, todayISODate } from "@/lib/utils/format";
 import type { EntryType } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 const NONE = "-1";
 
 const COLUMN_LABELS: Record<ColumnKey, string> = {
@@ -104,7 +105,7 @@ export default function DataPage() {
     const text = await picked.text();
     const parsed = parseCsv(text);
     if (parsed.length < 2) {
-      setError("That file doesn't have a header row and at least one transaction.");
+      setError(t("That file doesn't have a header row and at least one transaction."));
       return;
     }
     const [header, ...rows] = parsed;
@@ -153,7 +154,7 @@ export default function DataPage() {
       setFile(null);
       setColumns(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The import failed.");
+      setError(err instanceof Error ? err.message : t("The import failed."));
     } finally {
       setImporting(false);
     }
@@ -166,13 +167,13 @@ export default function DataPage() {
     try {
       await softDelete(uid, {
         kind: "import",
-        label: `${result.fileName} (${result.count} transactions)`,
+        label: t("{fileName} ({count} transactions)", { fileName: result.fileName, count: result.count }),
         refs: result.ids.map((id) => ({ col: "transactions", id })),
       });
       emitDataChanged();
       setResult({ ...result, undone: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't undo the import.");
+      setError(err instanceof Error ? err.message : t("Couldn't undo the import."));
     } finally {
       setImporting(false);
     }
@@ -185,15 +186,13 @@ export default function DataPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <RouteMasthead kicker="Settings" title="Import & export" />
+      <RouteMasthead kicker={t("Settings")} title={t("Import & export")} />
 
       <section className="flex flex-col gap-3">
-        <h2 className="label-sm">Export</h2>
+        <h2 className="label-sm">{t("Export")}</h2>
         <div className="surface p-5 flex flex-col gap-3">
           <p className="text-sm text-fg-muted">
-            Every transaction, including transfers and investments, as a CSV
-            that opens in Excel, Numbers or Google Sheets. Amounts are in each
-            transaction&apos;s own currency, with the USD value alongside.
+            {t("Every transaction, including transfers and investments, as a CSV that opens in Excel, Numbers or Google Sheets. Amounts are in each transaction's own currency, with the USD value alongside.")}
           </p>
           <Button
             variant="secondary"
@@ -201,20 +200,17 @@ export default function DataPage() {
             disabled={loading || transactions.length === 0}
           >
             {loading
-              ? "Loading…"
-              : `Download ${transactions.length} transaction${transactions.length === 1 ? "" : "s"}`}
+              ? t("Loading…")
+              : tn("Download {count} transaction", "Download {count} transactions", transactions.length)}
           </Button>
         </div>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="label-sm">Import</h2>
+        <h2 className="label-sm">{t("Import")}</h2>
         <div className="surface p-5 flex flex-col gap-4">
           <p className="text-sm text-fg-muted">
-            Bring in income and expenses from a CSV: a Perch export, a bank
-            statement, or your own spreadsheet. You&apos;ll see a preview
-            before anything is saved, and rows already in your ledger are
-            skipped.
+            {t("Bring in income and expenses from a CSV: a Perch export, a bank statement, or your own spreadsheet. You'll see a preview before anything is saved, and rows already in your ledger are skipped.")}
           </p>
 
           <input
@@ -225,7 +221,7 @@ export default function DataPage() {
             onChange={handleFile}
           />
           <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-            {file ? "Choose a different file" : "Choose a CSV file"}
+            {file ? t("Choose a different file") : t("Choose a CSV file")}
           </Button>
 
           {error && <p className="text-sm text-expense">{error}</p>}
@@ -234,8 +230,8 @@ export default function DataPage() {
             <div className="surface-2 p-4 flex items-center gap-3 text-sm">
               <span className="flex-1">
                 {result.undone
-                  ? `Import undone. The ${result.count} transactions are in Recently deleted.`
-                  : `Imported ${result.count} transaction${result.count === 1 ? "" : "s"} from ${result.fileName}.`}
+                  ? t("Import undone. The {count} transactions are in Recently deleted.", { count: result.count })
+                  : tn("Imported {count} transaction from {name}.", "Imported {count} transactions from {name}.", result.count, { name: result.fileName })}
               </span>
               {!result.undone && result.ids.length > 0 && (
                 <Button
@@ -244,7 +240,7 @@ export default function DataPage() {
                   onClick={handleUndoImport}
                   disabled={importing}
                 >
-                  Undo import
+                  {t("Undo import")}
                 </Button>
               )}
             </div>
@@ -253,16 +249,19 @@ export default function DataPage() {
           {file && columns && (
             <div className="flex flex-col gap-4">
               <p className="text-xs text-fg-subtle">
-                {file.name} · {file.rows.length} row
-                {file.rows.length === 1 ? "" : "s"}. Check which column holds
-                what.
+                {tn(
+                  "{name} · {count} row. Check which column holds what.",
+                  "{name} · {count} rows. Check which column holds what.",
+                  file.rows.length,
+                  { name: file.name },
+                )}
               </p>
 
               <div className="grid grid-cols-2 gap-3">
                 {(Object.keys(COLUMN_LABELS) as ColumnKey[]).map((key) => (
                   <Select
                     key={key}
-                    label={COLUMN_LABELS[key]}
+                    label={t(COLUMN_LABELS[key])}
                     options={headerOptions}
                     value={String(columns[key])}
                     onChange={(v) => setColumns({ ...columns, [key]: Number(v) })}
@@ -272,25 +271,25 @@ export default function DataPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <Select
-                  label="Date format"
+                  label={t("Date format")}
                   options={DATE_FORMATS}
                   value={dateFormat}
                   onChange={(v) => setDateFormat(v as DateFormat)}
                 />
                 <Select
-                  label="Account when not in the file"
+                  label={t("Account when not in the file")}
                   options={accounts.map((a) => ({ value: a.id, label: a.name }))}
                   value={accountId}
                   onChange={setDefaultAccountId}
                 />
                 <Select
-                  label="Unmatched expense category"
+                  label={t("Unmatched expense category")}
                   options={expenseCategories.map((c) => ({ value: c.id, label: c.name }))}
                   value={fallbackCategory.expense}
                   onChange={(v) => setFallback({ ...fallback, expense: v })}
                 />
                 <Select
-                  label="Unmatched income category"
+                  label={t("Unmatched income category")}
                   options={incomeCategories.map((c) => ({ value: c.id, label: c.name }))}
                   value={fallbackCategory.income}
                   onChange={(v) => setFallback({ ...fallback, income: v })}
@@ -299,18 +298,17 @@ export default function DataPage() {
 
               {missingRequired ? (
                 <p className="text-sm text-expense">
-                  Pick the Date column and an Amount (or Money out / Money in)
-                  column to continue.
+                  {t("Pick the Date column and an Amount (or Money out / Money in) column to continue.")}
                 </p>
               ) : (
                 <>
                   <p className="text-sm">
-                    <span className="text-fg font-medium">{ready.length} ready</span>
+                    <span className="text-fg font-medium">{t("{count} ready", { count: ready.length })}</span>
                     {duplicates.length > 0 && (
-                      <span className="text-fg-muted"> · {duplicates.length} already in your ledger</span>
+                      <span className="text-fg-muted"> · {t("{count} already in your ledger", { count: duplicates.length })}</span>
                     )}
                     {skipped.length > 0 && (
-                      <span className="text-fg-muted"> · {skipped.length} can&apos;t be read</span>
+                      <span className="text-fg-muted"> · {t("{count} can't be read", { count: skipped.length })}</span>
                     )}
                   </p>
 
@@ -321,7 +319,11 @@ export default function DataPage() {
                         checked={includeDuplicates}
                         onChange={(e) => setIncludeDuplicates(e.target.checked)}
                       />
-                      Import the {duplicates.length} possible duplicates too
+                      {tn(
+                        "Import the possible duplicate too",
+                        "Import the {count} possible duplicates too",
+                        duplicates.length,
+                      )}
                     </label>
                   )}
 
@@ -342,17 +344,17 @@ export default function DataPage() {
                           </>
                         ) : (
                           <span className="flex-1 text-fg-subtle">
-                            {p.status.kind === "skipped" ? p.status.reason : ""}
+                            {p.status.kind === "skipped" ? t(p.status.reason) : ""}
                           </span>
                         )}
                         {p.status.kind === "duplicate" && (
-                          <span className="text-fg-subtle shrink-0">duplicate</span>
+                          <span className="text-fg-subtle shrink-0">{t("duplicate")}</span>
                         )}
                       </li>
                     ))}
                   </ul>
                   {plan.length > 50 && (
-                    <p className="text-xs text-fg-subtle">Showing the first 50 rows.</p>
+                    <p className="text-xs text-fg-subtle">{t("Showing the first 50 rows.")}</p>
                   )}
 
                   <Button
@@ -360,8 +362,8 @@ export default function DataPage() {
                     disabled={importing || toImport.length === 0}
                   >
                     {importing
-                      ? "Importing…"
-                      : `Import ${toImport.length} transaction${toImport.length === 1 ? "" : "s"}`}
+                      ? t("Importing…")
+                      : tn("Import {count} transaction", "Import {count} transactions", toImport.length)}
                   </Button>
                 </>
               )}

@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { normalizeTag } from "@/lib/utils/tags";
 
+import { t } from "@/lib/i18n";
 interface TagInputProps {
   label?: string;
   value: string[];
@@ -18,11 +19,11 @@ interface TagInputProps {
  * as tap-to-add suggestions filtered by what's typed.
  */
 export default function TagInput({
-  label = "Tags",
+  label = t("Tags"),
   value,
   onChange,
   suggestions = [],
-  placeholder = "Add a tag, e.g. japan-trip",
+  placeholder = t("Add a tag, e.g. japan-trip"),
 }: TagInputProps) {
   const inputId = useId();
   const [draft, setDraft] = useState("");
@@ -69,7 +70,7 @@ export default function TagInput({
             <button
               type="button"
               onClick={() => remove(tag)}
-              aria-label={`Remove tag ${tag}`}
+              aria-label={t("Remove tag {tag}", { tag })}
               className="text-fg-subtle hover:text-fg"
             >
               ×

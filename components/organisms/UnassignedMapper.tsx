@@ -12,6 +12,7 @@ import type {
   Transaction,
 } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 interface UnassignedMapperProps {
   open: boolean;
   transactions: Transaction[];
@@ -73,11 +74,11 @@ export default function UnassignedMapper({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Unassigned contributions">
+    <Modal open={open} onClose={onClose} title={t("Unassigned contributions")}>
       <div className="flex flex-col gap-4">
         {holdings.length === 0 && (
           <p className="text-sm text-fg-subtle">
-            Create a holding first to move these contributions into it.
+            {t("Create a holding first to move these contributions into it.")}
           </p>
         )}
 
@@ -91,7 +92,7 @@ export default function UnassignedMapper({
                   : ""}
               </p>
               <p className="text-sm text-fg">
-                {selected.description || category?.name || "Investment"}
+                {selected.description || category?.name || t("Investment")}
               </p>
               <p className="text-sm text-fg tabular-nums">
                 {formatCurrency(selected.amount, selected.currency)}
@@ -99,7 +100,7 @@ export default function UnassignedMapper({
             </div>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="label-sm">Move</legend>
+              <legend className="label-sm">{t("Move")}</legend>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
@@ -108,7 +109,7 @@ export default function UnassignedMapper({
                   checked={scope === "single"}
                   onChange={() => setScope("single")}
                 />
-                Just this one
+                {t("Just this one")}
               </label>
               {category && (
                 <label className="flex items-center gap-2 text-sm">
@@ -119,13 +120,12 @@ export default function UnassignedMapper({
                     checked={scope === "byCategory"}
                     onChange={() => setScope("byCategory")}
                   />
-                  All under &quot;{category.name}&quot; (
-                  {
-                    transactions.filter(
-                      (t) => t.categoryId === selected.categoryId,
-                    ).length
-                  }
-                  )
+                  {t("All under “{name}” ({count})", {
+                    name: category.name,
+                    count: transactions.filter(
+                      (tx) => tx.categoryId === selected.categoryId,
+                    ).length,
+                  })}
                 </label>
               )}
               <label className="flex items-center gap-2 text-sm">
@@ -136,17 +136,17 @@ export default function UnassignedMapper({
                   checked={scope === "all"}
                   onChange={() => setScope("all")}
                 />
-                All unassigned ({transactions.length})
+                {t("All unassigned (")}{transactions.length})
               </label>
             </fieldset>
 
             <Select
-              label="Target holding"
+              label={t("Target holding")}
               name="target"
               value={targetHoldingId}
               onChange={setTargetHoldingId}
               options={[
-                { value: "", label: "— Pick a holding —" },
+                { value: "", label: t("— Pick a holding —") },
                 ...holdings.map((h) => ({
                   value: h.id,
                   label: h.symbol ? `${h.symbol} · ${h.name}` : h.name,
@@ -155,9 +155,11 @@ export default function UnassignedMapper({
             />
 
             <p className="text-xs text-fg-subtle">
-              {affected.length} contribution{affected.length === 1 ? "" : "s"}{" "}
-              will move. Prices are not backfilled — they will show as cost
-              basis only under the new holding.
+              {tn(
+                "{count} contribution will move. Prices are not backfilled — they will show as cost basis only under the new holding.",
+                "{count} contributions will move. Prices are not backfilled — they will show as cost basis only under the new holding.",
+                affected.length,
+              )}
             </p>
 
             <div className="flex gap-2 pt-1">
@@ -171,7 +173,7 @@ export default function UnassignedMapper({
                 }}
                 disabled={submitting}
               >
-                Back
+                {t("Back")}
               </Button>
               <Button
                 size="lg"
@@ -179,34 +181,34 @@ export default function UnassignedMapper({
                 onClick={handleAssign}
                 disabled={submitting || !targetHoldingId}
               >
-                {submitting ? "Moving…" : "Move"}
+                {submitting ? t("Moving…") : t("Move")}
               </Button>
             </div>
           </>
         ) : (
           <ul className="surface divide-y divide-border max-h-[50vh] overflow-y-auto">
-            {transactions.map((t) => {
-              const cat = categoriesById[t.categoryId];
-              const account = accountsById[t.accountId];
+            {transactions.map((tx) => {
+              const cat = categoriesById[tx.categoryId];
+              const account = accountsById[tx.accountId];
               return (
-                <li key={t.id}>
+                <li key={tx.id}>
                   <button
                     type="button"
-                    onClick={() => setSelectedId(t.id)}
+                    onClick={() => setSelectedId(tx.id)}
                     className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 hover:bg-surface-2 transition-colors"
                   >
                     <span className="min-w-0">
                       <span className="block text-sm text-fg truncate">
-                        {t.description || cat?.name || "Investment"}
+                        {tx.description || cat?.name || t("Investment")}
                       </span>
                       <span className="block text-xs text-fg-subtle truncate">
-                        {formatDate(t.date)}
+                        {formatDate(tx.date)}
                         {account ? ` · ${account.name}` : ""}
                         {cat?.name ? ` · ${cat.name}` : ""}
                       </span>
                     </span>
                     <span className="text-sm text-fg tabular-nums shrink-0">
-                      {formatCurrency(t.amount, t.currency)}
+                      {formatCurrency(tx.amount, tx.currency)}
                     </span>
                   </button>
                 </li>

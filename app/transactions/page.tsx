@@ -21,6 +21,7 @@ import { countsAsIncome, refundedByExpense, spendSign } from "@/lib/utils/refund
 import { collectTags, normalizeTag } from "@/lib/utils/tags";
 import type { Account, Category, Transaction } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 const ALL_FILTER = "__all__";
 
 type Period = "all" | "this-month" | "last-month" | "3-months" | "this-year";
@@ -127,7 +128,7 @@ export default function TransactionsPage() {
     return Array.from(ids)
       .map((id) => ({
         id,
-        name: categoriesById[id]?.name ?? "Unknown",
+        name: categoriesById[id]?.name ?? t("Unknown"),
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [nonInvestment, categoriesById]);
@@ -159,7 +160,7 @@ export default function TransactionsPage() {
 
   const accountOptions = useMemo(
     () => [
-      { value: ALL_FILTER, label: "All accounts" },
+      { value: ALL_FILTER, label: t("All accounts") },
       ...(accountsById
         ? Object.values(accountsById)
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -201,18 +202,18 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <RouteMasthead kicker="History" title="The ledger" />
+      <RouteMasthead kicker={t("History")} title={t("The ledger")} />
 
       <div className="flex flex-col gap-3">
         <div className="field">
           <label htmlFor="ledger-search" className="sr-only">
-            Search transactions
+            {t("Search transactions")}
           </label>
           <input
             id="ledger-search"
             type="search"
             className="input"
-            placeholder="Search description, category, amount or #tag"
+            placeholder={t("Search description, category, amount or #tag")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoCapitalize="off"
@@ -222,15 +223,15 @@ export default function TransactionsPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <Select
-            label="Account"
+            label={t("Account")}
             options={accountOptions}
             value={accountFilter}
             onChange={setAccountFilter}
             className="w-full"
           />
           <Select
-            label="Period"
-            options={PERIOD_OPTIONS}
+            label={t("Period")}
+            options={PERIOD_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
             value={period}
             onChange={(v) => setPeriod(v as Period)}
             className="w-full"
@@ -243,10 +244,10 @@ export default function TransactionsPage() {
               ref={filtersRef}
               className="scrollbar-hide flex gap-1 overflow-x-auto px-1 pb-1"
               role="tablist"
-              aria-label="Filter by category"
+              aria-label={t("Filter by category")}
             >
               <FilterPill
-                label="All"
+                label={t("All")}
                 active={categoryFilter === ALL_FILTER}
                 onClick={() => setCategoryFilter(ALL_FILTER)}
               />
@@ -273,7 +274,7 @@ export default function TransactionsPage() {
         {tags.length > 0 && (
           <div
             className="scrollbar-hide flex gap-1 overflow-x-auto -mx-1 px-1 pb-1"
-            aria-label="Filter by tag"
+            aria-label={t("Filter by tag")}
           >
             {tags.map((tag) => (
               <FilterPill
@@ -292,7 +293,7 @@ export default function TransactionsPage() {
             onClick={clearFilters}
             className="self-start text-xs text-fg-subtle hover:text-fg underline underline-offset-2"
           >
-            Clear filters
+            {t("Clear filters")}
           </button>
         )}
       </div>
@@ -309,10 +310,12 @@ export default function TransactionsPage() {
 
       {!loading && upcomingInstallmentCount > 0 && !anyFilter && (
         <p className="text-xs text-fg-subtle">
-          {upcomingInstallmentCount === 1
-            ? "1 future installment charge will appear here on its date."
-            : `${upcomingInstallmentCount} future installment charges will appear here on their dates.`}{" "}
-          The Cards page lists them now.
+          {tn(
+            "{count} future installment charge will appear here on its date.",
+            "{count} future installment charges will appear here on their dates.",
+            upcomingInstallmentCount,
+          )}{" "}
+          {t("The Cards page lists them now.")}
         </p>
       )}
 
@@ -328,15 +331,15 @@ export default function TransactionsPage() {
           groupTransfers={accountFilter === ALL_FILTER}
           emptyTitle={
             anyFilter
-              ? "Nothing matches these filters yet."
-              : "No entries have been set down yet."
+              ? t("Nothing matches these filters yet.")
+              : t("No entries have been set down yet.")
           }
           emptyDescription={
             anyFilter
-              ? "Try a different search or filter, or add a new transaction."
-              : "Add your first entry — income, expense, or transfer — to start seeing the shape of the month."
+              ? t("Try a different search or filter, or add a new transaction.")
+              : t("Add your first entry — income, expense, or transfer — to start seeing the shape of the month.")
           }
-          emptyActionLabel={anyFilter ? undefined : "Add a transaction"}
+          emptyActionLabel={anyFilter ? undefined : t("Add a transaction")}
           emptyActionHref={anyFilter ? undefined : "/add"}
         />
       )}
@@ -367,7 +370,7 @@ export default function TransactionsPage() {
       <Modal
         open={!!editing}
         onClose={() => setEditing(null)}
-        title={editing?.refundOf ? "Edit refund" : "Edit transaction"}
+        title={editing?.refundOf ? t("Edit refund") : t("Edit transaction")}
       >
         {editing &&
           (editing.refundOf ? (
@@ -383,8 +386,7 @@ export default function TransactionsPage() {
               />
             ) : (
               <p className="text-sm text-fg-muted">
-                The expense this refund belongs to was deleted. Restore it from
-                Recently deleted to edit the refund, or delete the refund.
+                {t("The expense this refund belongs to was deleted. Restore it from Recently deleted to edit the refund, or delete the refund.")}
               </p>
             )
           ) : (
@@ -401,7 +403,7 @@ export default function TransactionsPage() {
       <Modal
         open={!!refunding}
         onClose={() => setRefunding(null)}
-        title="Record refund"
+        title={t("Record refund")}
       >
         {refunding && (
           <RefundForm
@@ -461,11 +463,11 @@ function TagSummary({
   const fmt = (usd: number) => formatCurrency(convertUsd(usd), displayCurrency);
 
   return (
-    <section className="surface p-5 flex flex-col gap-3" aria-label={`Summary for #${tag}`}>
+    <section className="surface p-5 flex flex-col gap-3" aria-label={t("Summary for #{tag}", { tag })}>
       <div className="flex items-baseline justify-between gap-3">
         <span className="kicker">#{tag}</span>
         <span className="text-xs text-fg-subtle">
-          {transactions.length} entr{transactions.length === 1 ? "y" : "ies"}
+          {tn("{count} entry", "{count} entries", transactions.length)}
           {summary.first && summary.last
             ? ` · ${formatDate(summary.first)}${summary.first !== summary.last ? ` – ${formatDate(summary.last)}` : ""}`
             : ""}
@@ -473,16 +475,16 @@ function TagSummary({
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-medium tracking-tight">{fmt(summary.spent)}</span>
-        <span className="text-sm text-fg-muted">spent</span>
+        <span className="text-sm text-fg-muted">{t("spent")}</span>
         {summary.income > 0 && (
-          <span className="text-sm text-income ml-auto">+{fmt(summary.income)} in</span>
+          <span className="text-sm text-income ml-auto">{t("+{amount} in", { amount: fmt(summary.income) })}</span>
         )}
       </div>
       {summary.categories.length > 0 && (
         <ul className="flex flex-col gap-1 text-sm">
           {summary.categories.map(([id, usd]) => (
             <li key={id} className="flex justify-between gap-3">
-              <span className="text-fg-muted">{categoriesById[id]?.name ?? "Other"}</span>
+              <span className="text-fg-muted">{categoriesById[id]?.name ?? t("Other")}</span>
               <span>{fmt(usd)}</span>
             </li>
           ))}

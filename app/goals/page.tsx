@@ -16,6 +16,8 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useGoals } from "@/hooks/useGoals";
 import type { Goal, NewGoal, NewGoalContribution } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/utils/format";
 type Mode =
   | { kind: "closed" }
   | { kind: "create" }
@@ -77,13 +79,13 @@ export default function GoalsPage() {
 
   const modalTitle =
     mode.kind === "create"
-      ? "New goal"
+      ? t("New goal")
       : mode.kind === "edit"
-        ? "Edit goal"
+        ? t("Edit goal")
         : mode.kind === "contribute"
-          ? `Contribute to ${mode.goal.name}`
+          ? t("Contribute to {name}", { name: mode.goal.name })
           : mode.kind === "withdraw"
-            ? `Withdraw from ${mode.goal.name}`
+            ? t("Withdraw from {name}", { name: mode.goal.name })
             : "";
 
   const totalsByCurrency = useMemo(() => {
@@ -109,11 +111,11 @@ export default function GoalsPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Plan"
-        title="Saving goals"
+        kicker={t("Plan")}
+        title={t("Saving goals")}
         actions={
           <Button size="md" onClick={() => setMode({ kind: "create" })}>
-            + Add
+            {t("+ Add")}
           </Button>
         }
       />
@@ -125,13 +127,14 @@ export default function GoalsPage() {
           {goals.length > 0 && (
             <section
               className="flex flex-col"
-              aria-label="Total saved across goals"
+              aria-label={t("Total saved across goals")}
             >
               <div className="section-head">
-                <span className="section-head-title">Total saved</span>
+                <span className="section-head-title">{t("Total saved")}</span>
                 <span className="section-head-meta">
-                  {goals.length} goal{goals.length === 1 ? "" : "s"} · {totalsByCurrency.length} currenc
-                  {totalsByCurrency.length === 1 ? "y" : "ies"}
+                  {tn("{count} goal", "{count} goals", goals.length)}
+                  {" · "}
+                  {tn("{count} currency", "{count} currencies", totalsByCurrency.length)}
                 </span>
               </div>
               <div className="rooms">
@@ -147,7 +150,7 @@ export default function GoalsPage() {
                           className="font-serif"
                         />
                         <span className="text-[11px] text-fg-muted uppercase tracking-[0.14em]">
-                          of {row.target.toLocaleString("en-US")} {row.currency}
+                          {t("of {amount}", { amount: formatCurrency(row.target, row.currency) })}
                         </span>
                       </div>
                       <span className="figure text-xs text-fg-muted shrink-0">
@@ -157,7 +160,7 @@ export default function GoalsPage() {
                     <ProgressBar
                       value={row.percent}
                       tone="accent"
-                      ariaLabel={`${row.currency} saved progress`}
+                      ariaLabel={t("{currency} saved progress", { currency: row.currency })}
                     />
                   </div>
                 ))}
@@ -165,10 +168,10 @@ export default function GoalsPage() {
             </section>
           )}
 
-          <section className="flex flex-col" aria-label="Goals">
+          <section className="flex flex-col" aria-label={t("Goals")}>
             <div className="section-head">
-              <span className="section-head-title">Goals</span>
-              <span className="section-head-meta">Saving toward</span>
+              <span className="section-head-title">{t("Goals")}</span>
+              <span className="section-head-meta">{t("Saving toward")}</span>
             </div>
             <GoalList
               goals={goals}
@@ -179,9 +182,9 @@ export default function GoalsPage() {
               onDeleteContribution={removeContribution}
               onEdit={(goal) => setMode({ kind: "edit", goal })}
               onDelete={(goal) => setPendingDelete(goal)}
-              emptyTitle="No goals yet."
-              emptyDescription="Name something you're saving for and Perch will track your monthly pace toward it."
-              emptyActionLabel="Create a goal"
+              emptyTitle={t("No goals yet.")}
+              emptyDescription={t("Name something you're saving for and Perch will track your monthly pace toward it.")}
+              emptyActionLabel={t("Create a goal")}
               emptyActionOnClick={() => setMode({ kind: "create" })}
             />
           </section>
@@ -218,20 +221,19 @@ export default function GoalsPage() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete goal?"
+        title={t("Delete goal?")}
         message={
           pendingDelete && (
             <>
-              This deletes{" "}
+              {t("This deletes")}{" "}
               <span className="text-fg font-medium">
-                &ldquo;{pendingDelete.name}&rdquo;
+                “{pendingDelete.name}”
               </span>{" "}
-              and all of its contributions. You can restore it from Recently
-              deleted for 30 days.
+              {t("and all of its contributions. You can restore it from Recently deleted for 30 days.")}
             </>
           )
         }
-        confirmLabel="Delete"
+        confirmLabel={t("Delete")}
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
         submitting={deleting}

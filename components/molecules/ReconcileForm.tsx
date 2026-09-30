@@ -6,6 +6,7 @@ import Input from "@/components/atoms/Input";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Account } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface ReconcileFormProps {
   account: Account;
   // Balance Perch computes, in the account's currency (negative = owed).
@@ -42,7 +43,7 @@ export default function ReconcileForm({
     try {
       await onSubmit(actual);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save.");
+      setError(err instanceof Error ? err.message : t("Couldn't save."));
     } finally {
       setSubmitting(false);
     }
@@ -54,17 +55,17 @@ export default function ReconcileForm({
       ? null
       : isCard
         ? diff < 0
-          ? `The bank shows ${formatCurrency(-diff, account.currency)} more owed than Perch.`
-          : `The bank shows ${formatCurrency(diff, account.currency)} less owed than Perch.`
+          ? t("The bank shows {0} more owed than Perch.", { "0": formatCurrency(-diff, account.currency) })
+          : t("The bank shows {0} less owed than Perch.", { "0": formatCurrency(diff, account.currency) })
         : diff > 0
-          ? `The bank shows ${formatCurrency(diff, account.currency)} more than Perch.`
-          : `The bank shows ${formatCurrency(-diff, account.currency)} less than Perch.`;
+          ? t("The bank shows {0} more than Perch.", { "0": formatCurrency(diff, account.currency) })
+          : t("The bank shows {0} less than Perch.", { "0": formatCurrency(-diff, account.currency) });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="surface-2 px-4 py-3 flex items-center justify-between gap-3 text-sm">
         <span className="text-fg-subtle">
-          {isCard ? "Perch says you owe" : "Perch balance"}
+          {isCard ? t("Perch says you owe") : t("Perch balance")}
         </span>
         <span className="text-fg font-medium tabular-nums">
           {formatCurrency(shown, account.currency)}
@@ -72,7 +73,7 @@ export default function ReconcileForm({
       </div>
 
       <Input
-        label={isCard ? `Amount owed per the bank (${account.currency})` : `Balance per the bank (${account.currency})`}
+        label={isCard ? t("Amount owed per the bank ({currency})", { currency: account.currency }) : t("Balance per the bank ({currency})", { currency: account.currency })}
         name="actual-balance"
         type="number"
         inputMode="decimal"
@@ -83,20 +84,18 @@ export default function ReconcileForm({
         onChange={(e) => setValue(e.target.value)}
         hint={
           account.reconciledAt
-            ? `Last reconciled ${formatDate(account.reconciledAt)}.`
+            ? t("Last reconciled {0}.", { "0": formatDate(account.reconciledAt) })
             : undefined
         }
       />
 
       {matches && (
-        <p className="text-sm text-income">They match. Nothing to adjust.</p>
+        <p className="text-sm text-income">{t("They match. Nothing to adjust.")}</p>
       )}
       {diffCopy && (
         <p className="text-sm text-fg-muted">
           {diffCopy}{" "}
-          Saving adds a balance adjustment for the difference. It
-          won&apos;t count as income or spending. If you find the missing
-          transaction later, delete the adjustment and add it instead.
+          {t("Saving adds a balance adjustment for the difference. It won't count as income or spending. If you find the missing transaction later, delete the adjustment and add it instead.")}
         </p>
       )}
 
@@ -104,10 +103,10 @@ export default function ReconcileForm({
 
       <Button type="submit" size="lg" fullWidth disabled={!valid || submitting}>
         {submitting
-          ? "Saving…"
+          ? t("Saving…")
           : matches || !valid
-            ? "Mark as reconciled"
-            : `Adjust by ${diff! > 0 ? "+" : "−"}${formatCurrency(Math.abs(diff!), account.currency)}`}
+            ? t("Mark as reconciled")
+            : t("Adjust by {0}{1}", { "0": diff! > 0 ? "+" : "−", "1": formatCurrency(Math.abs(diff!), account.currency) })}
       </Button>
     </form>
   );

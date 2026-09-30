@@ -18,6 +18,7 @@ import type {
   RecurringTransaction,
 } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 type Mode =
   | { kind: "closed" }
   | { kind: "create" }
@@ -53,7 +54,7 @@ export default function RecurringPage() {
       }
       close();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save recurring");
+      setError(err instanceof Error ? err.message : t("Could not save recurring"));
     }
   }
 
@@ -73,14 +74,14 @@ export default function RecurringPage() {
   const pendingDeleteName = pendingDelete
     ? pendingDelete.description ||
       categoriesById[pendingDelete.categoryId]?.name ||
-      "this recurring"
+      t("this recurring")
     : "";
 
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Automations"
-        title="Recurring"
+        kicker={t("Automations")}
+        title={t("Recurring")}
         actions={
           <>
             {holdings.length > 0 && (
@@ -89,11 +90,11 @@ export default function RecurringPage() {
                 variant="secondary"
                 onClick={() => setMode({ kind: "create-investment" })}
               >
-                + Investment
+                {t("+ Investment")}
               </Button>
             )}
             <Button size="md" onClick={() => setMode({ kind: "create" })}>
-              + Add
+              {t("+ Add")}
             </Button>
           </>
         }
@@ -106,10 +107,10 @@ export default function RecurringPage() {
           <section className="flex flex-col" aria-labelledby="recurring-active">
             <div className="section-head">
               <span id="recurring-active" className="section-head-title">
-                Active
+                {t("Active")}
               </span>
               <span className="section-head-meta">
-                {active.length} rule{active.length === 1 ? "" : "s"}
+                {tn("{count} rule", "{count} rules", active.length)}
               </span>
             </div>
             <RecurringList
@@ -121,9 +122,9 @@ export default function RecurringPage() {
                 setPendingDelete(recurring.find((r) => r.id === id) ?? null)
               }
               onToggleActive={toggleActive}
-              emptyTitle="No recurring rules yet."
-              emptyDescription="Automate the shape of a normal month — salary, rent, subscriptions — so you only enter the surprises."
-              emptyActionLabel="Add a recurring rule"
+              emptyTitle={t("No recurring rules yet.")}
+              emptyDescription={t("Automate the shape of a normal month — salary, rent, subscriptions — so you only enter the surprises.")}
+              emptyActionLabel={t("Add a recurring rule")}
               emptyActionOnClick={() => setMode({ kind: "create" })}
             />
           </section>
@@ -135,10 +136,10 @@ export default function RecurringPage() {
             >
               <div className="section-head">
                 <span id="recurring-paused" className="section-head-title">
-                  Paused
+                  {t("Paused")}
                 </span>
                 <span className="section-head-meta">
-                  {paused.length} rule{paused.length === 1 ? "" : "s"}
+                  {tn("{count} rule", "{count} rules", paused.length)}
                 </span>
               </div>
               <RecurringList
@@ -161,10 +162,10 @@ export default function RecurringPage() {
         onClose={close}
         title={
           mode.kind === "create-investment"
-            ? "New recurring contribution"
+            ? t("New recurring contribution")
             : mode.kind === "edit"
-              ? "Edit recurring"
-              : "New recurring"
+              ? t("Edit recurring")
+              : t("New recurring")
         }
       >
         <>
@@ -191,15 +192,14 @@ export default function RecurringPage() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete recurring?"
+        title={t("Delete recurring?")}
         message={
           <>
             <span className="text-fg font-medium">{pendingDeleteName}</span>{" "}
-            will stop creating future transactions. Past generated transactions
-            are not touched.
+            {t("will stop creating future transactions. Past generated transactions are not touched.")}
           </>
         }
-        confirmLabel="Delete"
+        confirmLabel={t("Delete")}
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
         submitting={deleting}

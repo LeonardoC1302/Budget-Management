@@ -2,6 +2,7 @@ import type { Category, Transaction } from "@/lib/types";
 import { monthKeyOf } from "@/lib/utils/budgets";
 import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 
+import { getLocale } from "@/lib/i18n";
 export interface MonthlyTotal {
   income: number;
   expense: number;
@@ -24,8 +25,8 @@ export function monthLabel(monthKey: string, short = true): string {
   const [year, month] = monthKey.split("-").map(Number);
   const d = new Date(year, month - 1, 1);
   return short
-    ? d.toLocaleDateString("en-US", { month: "short" })
-    : d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    ? d.toLocaleDateString(getLocale(), { month: "short" })
+    : d.toLocaleDateString(getLocale(), { month: "long", year: "numeric" });
 }
 
 export function getMonthlyTotals(

@@ -8,6 +8,7 @@ import Modal from "@/components/atoms/Modal";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface TransactionDetailsModalProps {
   transaction: Transaction | null;
   account?: Account;
@@ -51,19 +52,29 @@ export default function TransactionDetailsModal({
     isIncome ||
     (isTransfer && transaction?.transferDirection === "in");
 
-  const noun = isAdjustment
+  const kind = isAdjustment
     ? "adjustment"
     : isCardPayment
-    ? "card payment"
-    : isTransfer
-      ? "transfer"
-      : isInvestment
-        ? "investment"
-        : isRefund
-          ? "refund"
-          : isIncome
-            ? "income entry"
-            : "expense";
+      ? "card payment"
+      : isTransfer
+        ? "transfer"
+        : isInvestment
+          ? "investment"
+          : isRefund
+            ? "refund"
+            : isIncome
+              ? "income entry"
+              : "expense";
+  // Whole sentences per kind so each language can agree on gender.
+  const DELETE_TITLES: Record<typeof kind, string> = {
+    adjustment: "Delete this adjustment?",
+    "card payment": "Delete this card payment?",
+    transfer: "Delete this transfer?",
+    investment: "Delete this investment?",
+    refund: "Delete this refund?",
+    "income entry": "Delete this income entry?",
+    expense: "Delete this expense?",
+  };
 
   async function handleConfirmDelete() {
     if (!transaction || !onDelete) return;
@@ -80,7 +91,7 @@ export default function TransactionDetailsModal({
   const summaryLabel = transaction
     ? transaction.description ||
       category?.name ||
-      (isTransfer ? "this transfer" : `this ${noun}`)
+      (isTransfer ? t("this transfer") : t("this " + kind))
     : "";
 
   return (
@@ -88,12 +99,12 @@ export default function TransactionDetailsModal({
       <Modal
         open={!!transaction && !confirmOpen}
         onClose={onClose}
-        title="Transaction details"
+        title={t("Transaction details")}
       >
         {transaction && (
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3 rounded-[10px] bg-surface-2 px-4 py-3">
-              <span className="text-sm text-fg-subtle">Amount</span>
+              <span className="text-sm text-fg-subtle">{t("Amount")}</span>
               <Amount
                 value={transaction.amount}
                 tone={
@@ -115,75 +126,77 @@ export default function TransactionDetailsModal({
             </div>
 
             <dl className="flex flex-col divide-y divide-border">
-              <Row label="Type">
+              <Row label={t("Type")}>
                 {isCardPayment ? (
-                  <span className="text-fg">Card payment</span>
+                  <span className="text-fg">{t("Card payment")}</span>
                 ) : isTransfer ? (
-                  <span className="text-fg">Transfer</span>
+                  <span className="text-fg">{t("Transfer")}</span>
                 ) : isInvestment ? (
-                  <span className="text-invest">Investment</span>
+                  <span className="text-invest">{t("Investment")}</span>
                 ) : isAdjustment ? (
-                  <span className="text-fg">Balance adjustment</span>
+                  <span className="text-fg">{t("Balance adjustment")}</span>
                 ) : (
                   <span className={isIncome ? "text-income" : "text-expense"}>
-                    {isRefund ? "Refund" : isIncome ? "Income" : "Expense"}
+                    {isRefund ? t("Refund") : isIncome ? t("Income") : t("Expense")}
                   </span>
                 )}
               </Row>
               {isTransfer ? (
                 <>
-                  <Row label="From">
+                  <Row label={t("From")}>
                     {transaction.transferDirection === "out"
                       ? (account?.name ?? "—")
                       : (linkedAccount?.name ?? "—")}
                   </Row>
-                  <Row label="To">
+                  <Row label={t("To")}>
                     {transaction.transferDirection === "out"
                       ? (linkedAccount?.name ?? "—")
                       : (account?.name ?? "—")}
                   </Row>
                   {typeof transaction.fee === "number" && transaction.fee > 0 && (
-                    <Row label="Fee">
+                    <Row label={t("Fee")}>
                       {formatCurrency(transaction.fee, transaction.currency)}
                     </Row>
                   )}
                 </>
               ) : (
                 <>
-                  <Row label="Category">{category?.name ?? "—"}</Row>
-                  <Row label="Account">{account?.name ?? "—"}</Row>
+                  <Row label={t("Category")}>{category?.name ?? "—"}</Row>
+                  <Row label={t("Account")}>{account?.name ?? "—"}</Row>
                 </>
               )}
-              <Row label="Date">{formatDate(transaction.date)}</Row>
+              <Row label={t("Date")}>{formatDate(transaction.date)}</Row>
               {transaction.description && (
-                <Row label="Description">{transaction.description}</Row>
+                <Row label={t("Description")}>{transaction.description}</Row>
               )}
               {isRefund && (
-                <Row label="Refund of">
+                <Row label={t("Refund of")}>
                   {refundOf
-                    ? `${refundOf.description || "Expense"} · ${formatDate(refundOf.date)}`
-                    : "A deleted expense"}
+                    ? `${refundOf.description || t("Expense")} · ${formatDate(refundOf.date)}`
+                    : t("A deleted expense")}
                 </Row>
               )}
               {isExpense && refunded > 0 && (
-                <Row label="Refunded">
+                <Row label={t("Refunded")}>
                   <span className="text-income">
                     {formatCurrency(refunded, transaction.currency)}
                   </span>
                   {refunded + 0.005 < transaction.amount
                     ? ` of ${formatCurrency(transaction.amount, transaction.currency)}`
-                    : " (full)"}
+                    : t(" (full)")}
                 </Row>
               )}
               {transaction.installment && (
-                <Row label="Installment">
-                  {transaction.installment.index} of {transaction.installment.count}
-                  {" · "}
-                  {formatCurrency(transaction.installment.total, transaction.currency)} total
+                <Row label={t("Installment")}>
+                  {t("{index} of {count} · {total} total", {
+                    index: transaction.installment.index,
+                    count: transaction.installment.count,
+                    total: formatCurrency(transaction.installment.total, transaction.currency),
+                  })}
                 </Row>
               )}
               {transaction.tags && transaction.tags.length > 0 && (
-                <Row label="Tags">
+                <Row label={t("Tags")}>
                   {transaction.tags.map((t) => `#${t}`).join(" ")}
                 </Row>
               )}
@@ -198,7 +211,7 @@ export default function TransactionDetailsModal({
                     fullWidth
                     onClick={() => onRefund(transaction)}
                   >
-                    Record refund
+                    {t("Record refund")}
                   </Button>
                 )}
                 {onEdit && !isTransfer && !isInvestment && !isAdjustment && (
@@ -208,7 +221,7 @@ export default function TransactionDetailsModal({
                     fullWidth
                     onClick={() => onEdit(transaction)}
                   >
-                    Edit
+                    {t("Edit")}
                   </Button>
                 )}
                 {onDelete && (
@@ -219,7 +232,7 @@ export default function TransactionDetailsModal({
                     onClick={() => setConfirmOpen(true)}
                     className="text-expense hover:text-bg hover:bg-expense"
                   >
-                    Delete
+                    {t("Delete")}
                   </Button>
                 )}
               </div>
@@ -230,18 +243,18 @@ export default function TransactionDetailsModal({
 
       <ConfirmDialog
         open={confirmOpen}
-        title={`Delete this ${noun}?`}
+        title={t(DELETE_TITLES[kind])}
         message={
           <>
             <span className="text-fg font-medium">{summaryLabel}</span>
             {transaction?.installment
-              ? ` and all ${transaction.installment.count} of its installments will be removed.`
-              : " will be removed."}{" "}
-            Balances and monthly totals recalculate automatically.
+              ? t(" and all {count} of its installments will be removed.", { count: transaction.installment.count })
+              : t(" will be removed.")}{" "}
+            {t("Balances and monthly totals recalculate automatically.")}
           </>
         }
-        confirmLabel="Delete"
-        cancelLabel="Keep it"
+        confirmLabel={t("Delete")}
+        cancelLabel={t("Keep it")}
         tone="danger"
         submitting={deleting}
         onConfirm={handleConfirmDelete}

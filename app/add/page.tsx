@@ -10,6 +10,7 @@ import { useTransactions, type AddOptions } from "@/hooks/useTransactions";
 import { formatCurrency } from "@/lib/utils/format";
 import type { NewTransaction } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface SessionEntry {
   amount: number;
   currency: string;
@@ -59,12 +60,12 @@ export default function AddTransactionPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="New"
-        title="Add transaction"
+        kicker={t("New")}
+        title={t("Add transaction")}
         actions={
           <Link href="/">
             <Button variant="secondary" size="sm">
-              Done
+              {t("Done")}
             </Button>
           </Link>
         }
@@ -81,22 +82,22 @@ export default function AddTransactionPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm text-fg">
-                <span className="font-medium text-income">Logged</span>{" "}
+                <span className="font-medium text-income">{t("Logged")}</span>{" "}
                 <span className="font-medium">
                   {formatCurrency(last.amount, last.currency)}
                 </span>{" "}
-                <span className="text-fg-muted">· {TYPE_LABEL[last.type]}</span>
+                <span className="text-fg-muted">· {t(TYPE_LABEL[last.type])}</span>
               </p>
               {last.description && (
                 <p className="lede text-xs mt-1 truncate">{last.description}</p>
               )}
             </div>
             <span className="kicker shrink-0">
-              {session.length} this session
+              {t("{count} this session", { count: session.length })}
             </span>
           </div>
           <p className="lede text-xs">
-            The form&apos;s ready for the next one. Tap <em>Done</em> when you&apos;re finished.
+            {t("The form's ready for the next one. Tap")}{" "}<em>{t("Done")}</em>{" "}{t("when you're finished.")}
           </p>
         </section>
       )}

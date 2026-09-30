@@ -14,6 +14,7 @@ import { getRate } from "@/lib/services/exchangeRates";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { NewTransfer, RateSource } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface TransferFormProps {
   onSubmit: (input: NewTransfer) => void | Promise<void>;
   onCancel?: () => void;
@@ -128,7 +129,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
           setFallbackRate({
             key: pairKey,
             rate: null,
-            error: err instanceof Error ? err.message : "Rate unavailable",
+            error: err instanceof Error ? err.message : t("Rate unavailable"),
           });
         }
       });
@@ -209,7 +210,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
       setFee("");
       setDescription("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Transfer failed");
+      setError(err instanceof Error ? err.message : t("Transfer failed"));
     } finally {
       setSubmitting(false);
     }
@@ -229,7 +230,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-fg-muted">
-          You need at least two accounts to transfer money.
+          {t("You need at least two accounts to transfer money.")}
         </p>
         {onCancel && (
           <Button
@@ -239,7 +240,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
             fullWidth
             onClick={onCancel}
           >
-            Close
+            {t("Close")}
           </Button>
         )}
       </div>
@@ -249,7 +250,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Select
-        label="From"
+        label={t("From")}
         name="from"
         value={effectiveFromId}
         onChange={setFromId}
@@ -261,7 +262,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
       />
 
       <Select
-        label="To"
+        label={t("To")}
         name="to"
         value={effectiveToId}
         onChange={setToId}
@@ -300,13 +301,15 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
           />
           {hasFee && hasAmount && parsedFee >= parsedAmount && (
             <p className="text-xs text-expense">
-              Fee must be less than the amount.
+              {t("Fee must be less than the amount.")}
             </p>
           )}
           {hasFee && hasAmount && parsedFee < parsedAmount && (
             <p className="text-xs text-fg-subtle">
-              {toAccount?.name ?? "Destination"} receives{" "}
-              {formatCurrency(parsedAmount - parsedFee, toCurrency)}.
+              {t("{name} receives {amount}.", {
+                name: toAccount?.name ?? t("Destination"),
+                amount: formatCurrency(parsedAmount - parsedFee, toCurrency),
+              })}
             </p>
           )}
         </div>
@@ -314,7 +317,7 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
 
       {differentCurrencies && customActive && (
         <Input
-          label={`Exchange rate (${quoteTarget} per 1 ${quoteBase})`}
+          label={t("Exchange rate ({quoteTarget} per 1 {quoteBase})", { quoteTarget, quoteBase })}
           name="customRate"
           type="number"
           inputMode="decimal"
@@ -342,16 +345,19 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
       {differentCurrencies && (
         <div className="flex flex-col gap-1 text-xs text-fg-subtle">
           {customActive && rate === null ? (
-            <span>Enter a rate above 0.</span>
+            <span>{t("Enter a rate above 0.")}</span>
           ) : rateError ? (
             <span className="text-expense">{rateError}</span>
           ) : rate === null ? (
-            <span>Fetching exchange rate…</span>
+            <span>{t("Fetching exchange rate…")}</span>
           ) : convertedAmount !== null ? (
             <span>
               {customActive ? "=" : "≈"}{" "}
-              {formatCurrency(convertedAmount, toCurrency)} at{" "}
-              {toQuote(rate).toFixed(4)} {quoteTarget}/{quoteBase}
+              {t("{amount} at {rate} {pair}", {
+                amount: formatCurrency(convertedAmount, toCurrency),
+                rate: toQuote(rate).toFixed(4),
+                pair: `${quoteTarget}/${quoteBase}`,
+              })}
             </span>
           ) : (
             <span>
@@ -368,23 +374,23 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
           >
             {customActive
               ? direction
-                ? "Use a bank rate instead"
-                : "Use the market rate instead"
-              : "Enter my own rate"}
+                ? t("Use a bank rate instead")
+                : t("Use the market rate instead")
+              : t("Enter my own rate")}
           </button>
         </div>
       )}
 
       <Input
-        label="Description"
+        label={t("Description")}
         name="description"
-        placeholder="Optional"
+        placeholder={t("Optional")}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
       <DatePicker
-        label="Date"
+        label={t("Date")}
         name="date"
         required
         value={date}
@@ -402,11 +408,11 @@ export default function TransferForm({ onSubmit, onCancel }: TransferFormProps) 
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={!canSubmit}>
-          {submitting ? "Transferring…" : "Transfer"}
+          {submitting ? t("Transferring…") : t("Transfer")}
         </Button>
       </div>
     </form>

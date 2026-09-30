@@ -3,6 +3,7 @@
 import { useMode } from "@/components/atoms/ThemeProvider";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface ThemeToggleProps {
   className?: string;
   ariaLabel?: string;
@@ -25,9 +26,9 @@ export default function ThemeToggle({ className, ariaLabel }: ThemeToggleProps) 
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
         className,
       )}
-      aria-label={ariaLabel ?? `Switch to ${isDark ? "light" : "dark"} mode`}
+      aria-label={ariaLabel ?? (isDark ? t("Switch to light mode") : t("Switch to dark mode"))}
       aria-pressed={isDark}
-      title={ariaLabel ?? `Switch to ${isDark ? "light" : "dark"} mode`}
+      title={ariaLabel ?? (isDark ? t("Switch to light mode") : t("Switch to dark mode"))}
     >
       <svg
         width="18"

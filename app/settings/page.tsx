@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { updateLanguage } from "@/lib/firebase/seed";
 
+import { LANGUAGES, t, type Language } from "@/lib/i18n";
 interface SettingsLink {
   href: string;
   title: string;
@@ -17,6 +21,16 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
         href: "/settings/connections",
         title: "Connections",
         description: "Manage the people you share your money with.",
+      },
+    ],
+  },
+  {
+    heading: "Privacy",
+    links: [
+      {
+        href: "/settings/security",
+        title: "App lock",
+        description: "Ask for a PIN or fingerprint when Perch opens on this device.",
       },
     ],
   },
@@ -38,13 +52,38 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
 ];
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const { language, setLanguage } = useLanguage();
+
+  function chooseLanguage(next: Language) {
+    setLanguage(next);
+    if (user) updateLanguage(user.uid, next).catch(() => {});
+  }
+
   return (
     <div className="flex flex-col gap-8">
-      <RouteMasthead kicker="Perch" title="Settings" />
+      <RouteMasthead kicker={t("Perch")} title={t("Settings")} />
+
+      <section className="flex flex-col gap-3">
+        <h2 className="label-sm">{t("Language")}</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.value}
+              type="button"
+              aria-pressed={language === l.value}
+              onClick={() => chooseLanguage(l.value)}
+              className={language === l.value ? "btn btn-primary" : "btn btn-secondary"}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {SECTIONS.map((section) => (
         <section key={section.heading} className="flex flex-col gap-3">
-          <h2 className="label-sm">{section.heading}</h2>
+          <h2 className="label-sm">{t(section.heading)}</h2>
           <ul className="rooms">
             {section.links.map((link) => (
               <li key={link.href}>
@@ -53,9 +92,9 @@ export default function SettingsPage() {
                   className="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition-colors"
                 >
                   <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                    <span className="text-sm text-fg">{link.title}</span>
+                    <span className="text-sm text-fg">{t(link.title)}</span>
                     <span className="text-xs text-fg-subtle">
-                      {link.description}
+                      {t(link.description)}
                     </span>
                   </div>
                   <span aria-hidden className="text-fg-subtle">

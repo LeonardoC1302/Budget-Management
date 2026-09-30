@@ -8,6 +8,7 @@ import CategoryManageModal from "@/components/molecules/CategoryManageModal";
 import { useCategories } from "@/hooks/useCategories";
 import type { Category, NewCategory } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface CategoryPickerProps {
   type: Category["type"];
   value: string;
@@ -19,7 +20,7 @@ export default function CategoryPicker({
   type,
   value,
   onChange,
-  label = "Category",
+  label = t("Category"),
 }: CategoryPickerProps) {
   const { filterByType, add } = useCategories();
   const [createOpen, setCreateOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function CategoryPicker({
               }}
               className="w-full text-left px-3 py-2 rounded-[8px] text-sm text-accent hover:bg-surface-2 transition-colors"
             >
-              + New category
+              {t("+ New category")}
             </button>
             <button
               type="button"
@@ -64,7 +65,7 @@ export default function CategoryPicker({
               }}
               className="w-full text-left px-3 py-2 rounded-[8px] text-sm text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors"
             >
-              Manage categories
+              {t("Manage categories")}
             </button>
           </div>
         )}
@@ -73,7 +74,7 @@ export default function CategoryPicker({
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="New category"
+        title={t("New category")}
       >
         <CategoryForm
           type={type}

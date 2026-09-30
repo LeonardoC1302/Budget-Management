@@ -157,7 +157,11 @@ export function planImport(
     const typeCell = cell(r, "type");
     const declared = typeCell ? typeFrom(typeCell) : null;
     if (declared === "transfer" || declared === "investment") {
-      return skip(`${declared === "transfer" ? "Transfers" : "Investments"} aren't imported`);
+      return skip(
+        declared === "transfer"
+          ? "Transfers aren't imported"
+          : "Investments aren't imported",
+      );
     }
 
     if (columns.debit >= 0 || columns.credit >= 0) {
@@ -196,7 +200,9 @@ export function planImport(
     const category =
       (categoryName && categoryByKey.get(`${type}:${fold(categoryName)}`)) ||
       categories.find((c) => c.id === options.fallbackCategory[type]);
-    if (!category) return skip(`No ${type} category to use`);
+    if (!category) {
+      return skip(type === "income" ? "No income category to use" : "No expense category to use");
+    }
 
     const tags = cell(r, "tags")
       .split(/[\s,;|]+/)

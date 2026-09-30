@@ -14,6 +14,7 @@ import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged"
 import { announceRemoval } from "@/lib/events/undo";
 import type { Category, NewCategory, TransactionType } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 interface CategoriesContextValue {
   categories: Category[];
   byId: Record<string, Category>;
@@ -76,12 +77,12 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     async (id: string) => {
       const target = categories.find((c) => c.id === id);
       if (target?.isDefault) {
-        throw new Error("Default categories cannot be deleted.");
+        throw new Error(t("Default categories cannot be deleted."));
       }
       const count = usage[id] ?? 0;
       if (count > 0) {
         throw new Error(
-          `This category is used by ${count} transaction${count === 1 ? "" : "s"}.`,
+          tn("This category is used by {count} transaction.", "This category is used by {count} transactions.", count),
         );
       }
       const budgets = await budgetStore.list();

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { BccrSnapshot } from "@/lib/services/bccrRates";
 
+import { t } from "@/lib/i18n";
 interface Cache {
   snapshot: BccrSnapshot | null;
   error: string | null;
@@ -69,14 +70,14 @@ async function loadOnce(force: boolean): Promise<void> {
         const message =
           "error" in data && data.error
             ? data.error
-            : `BCCR unavailable (${res.status})`;
+            : t("BCCR unavailable ({status})", { status: res.status });
         failWith(message);
       } else {
         cache = { snapshot: data, error: null, storedAt: Date.now() };
         storeSnapshot(data);
       }
     } catch (err) {
-      failWith(err instanceof Error ? err.message : "Network error");
+      failWith(err instanceof Error ? err.message : t("Network error"));
     } finally {
       inFlight = null;
       emit();

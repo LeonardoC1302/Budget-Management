@@ -21,6 +21,7 @@ import { getMonthlyTotals, monthKeyOffset } from "@/lib/utils/analytics";
 import { isUpcomingInstallment } from "@/lib/utils/installments";
 import { todayISODate } from "@/lib/utils/format";
 
+import { t } from "@/lib/i18n";
 export default function HomePage() {
   const { transactions, loading } = useTransactions();
   const { byId: accountsById } = useAccounts();
@@ -67,14 +68,14 @@ export default function HomePage() {
       <section className="flex flex-col" aria-labelledby="recent-heading">
         <div className="section-head">
           <span id="recent-heading" className="section-head-title">
-            Recent activity
+            {t("Recent activity")}
           </span>
           {hasTransactions ? (
             <Link href="/transactions" className="section-head-link">
-              See the ledger →
+              {t("See the ledger →")}
             </Link>
           ) : (
-            <span className="section-head-meta">Once you begin logging</span>
+            <span className="section-head-meta">{t("Once you begin logging")}</span>
           )}
         </div>
 
@@ -82,9 +83,9 @@ export default function HomePage() {
           <RowSkeleton count={3} />
         ) : !hasTransactions ? (
           <EmptyState
-            title="No transactions yet."
-            description="Add your first entry — income or expense — to start seeing the shape of the month."
-            actionLabel="Add a transaction"
+            title={t("No transactions yet.")}
+            description={t("Add your first entry — income or expense — to start seeing the shape of the month.")}
+            actionLabel={t("Add a transaction")}
             actionHref="/add"
           />
         ) : (
@@ -100,18 +101,18 @@ export default function HomePage() {
       <section className="flex flex-col" aria-labelledby="budgets-heading">
         <div className="section-head">
           <span id="budgets-heading" className="section-head-title">
-            Under caps
+            {t("Under caps")}
           </span>
           <Link href="/budgets" className="section-head-link">
-            All budgets →
+            {t("All budgets →")}
           </Link>
         </div>
 
         {previewBudgets.length === 0 ? (
           <EmptyState
-            title="No caps set."
-            description="Set a monthly cap on a category so you can catch trends before the end of the month."
-            actionLabel="Add a budget"
+            title={t("No caps set.")}
+            description={t("Set a monthly cap on a category so you can catch trends before the end of the month.")}
+            actionLabel={t("Add a budget")}
             actionHref="/budgets"
           />
         ) : (
@@ -140,18 +141,18 @@ export default function HomePage() {
       <section className="flex flex-col" aria-labelledby="goals-heading">
         <div className="section-head">
           <span id="goals-heading" className="section-head-title">
-            Saving toward
+            {t("Saving toward")}
           </span>
           <Link href="/goals" className="section-head-link">
-            All goals →
+            {t("All goals →")}
           </Link>
         </div>
 
         {previewGoals.length === 0 ? (
           <EmptyState
-            title="Nothing being saved for."
-            description="Name something you're saving for and we'll track your pace toward it."
-            actionLabel="Create a goal"
+            title={t("Nothing being saved for.")}
+            description={t("Name something you're saving for and we'll track your pace toward it.")}
+            actionLabel={t("Create a goal")}
             actionHref="/goals"
           />
         ) : (
@@ -175,7 +176,7 @@ export default function HomePage() {
 
       <Link href="/add" className="sm:hidden">
         <Button size="lg" fullWidth>
-          + Add transaction
+          {t("+ Add transaction")}
         </Button>
       </Link>
     </div>

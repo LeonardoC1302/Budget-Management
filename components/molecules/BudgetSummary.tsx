@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/format";
 import type { BudgetTotals } from "@/lib/utils/budgets";
 
+import { t } from "@/lib/i18n";
 interface BudgetSummaryProps {
   totals: BudgetTotals;
   currency?: string;
@@ -15,7 +16,7 @@ interface BudgetSummaryProps {
 export default function BudgetSummary({
   totals,
   currency = "USD",
-  label = "Spent this month",
+  label = t("Spent this month"),
 }: BudgetSummaryProps) {
   const { totalCap, totalSpent, uncappedSpend } = totals;
   const percent = totalCap > 0 ? totalSpent / totalCap : 0;
@@ -34,11 +35,11 @@ export default function BudgetSummary({
             currency={currency}
           />
           <p className="text-xs text-fg-subtle tabular-nums">
-            of {formatCurrency(totalCap, currency)} capped
+            {t("of {amount} capped", { amount: formatCurrency(totalCap, currency) })}
           </p>
         </div>
         <div className="sm:text-right flex flex-col gap-1 min-w-0">
-          <span className="label-sm">{over ? "Over" : "Left"}</span>
+          <span className="label-sm">{over ? t("Over") : t("Left")}</span>
           <p
             className={cn(
               "text-lg font-semibold tabular-nums leading-tight",
@@ -50,7 +51,7 @@ export default function BudgetSummary({
               : formatCurrency(remaining, currency)}
           </p>
           <p className="text-[11px] text-fg-subtle uppercase tracking-wide">
-            {Math.round(percent * 100)}% used
+            {t("{percent}% used", { percent: Math.round(percent * 100) })}
           </p>
         </div>
       </div>
@@ -58,16 +59,16 @@ export default function BudgetSummary({
       <ProgressBar
         value={percent}
         tone={over ? "expense" : "accent"}
-        ariaLabel="Overall budget progress"
+        ariaLabel={t("Overall budget progress")}
       />
 
       {uncappedSpend > 0 && (
         <p className="text-xs text-fg-subtle">
-          Plus{" "}
+          {t("Plus")}{" "}
           <span className="text-fg font-medium">
             {formatCurrency(uncappedSpend, currency)}
           </span>{" "}
-          spent in categories without a budget.
+          {t("spent in categories without a budget.")}
         </p>
       )}
     </section>

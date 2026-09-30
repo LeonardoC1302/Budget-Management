@@ -8,6 +8,7 @@ import PerchMark from "@/components/atoms/PerchMark";
 import ThemeToggle from "@/components/atoms/ThemeToggle";
 import { usePreferences } from "@/contexts/PreferencesContext";
 
+import { getLocale, t } from "@/lib/i18n";
 function partOfDay(hour: number): string {
   if (hour >= 5 && hour < 12) return "morning";
   if (hour >= 12 && hour < 17) return "afternoon";
@@ -16,11 +17,16 @@ function partOfDay(hour: number): string {
 }
 
 function buildCaption(now: Date, currency: string): string {
-  const weekday = new Intl.DateTimeFormat("en-US", {
+  const weekday = new Intl.DateTimeFormat(getLocale(), {
     weekday: "long",
   }).format(now);
-  const month = new Intl.DateTimeFormat("en-US", { month: "long" }).format(now);
-  return `${weekday} ${partOfDay(now.getHours())}, ${month} · all figures in ${currency}`;
+  const month = new Intl.DateTimeFormat(getLocale(), { month: "long" }).format(now);
+  return t("{weekday} {part}, {month} · all figures in {currency}", {
+    weekday,
+    part: t(partOfDay(now.getHours())),
+    month,
+    currency,
+  });
 }
 
 const NO_SUB = () => () => {};
@@ -50,7 +56,7 @@ export default function Masthead({ balance }: MastheadProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 text-fg">
           <PerchMark size={26} />
-          <span className="text-lg font-semibold tracking-tight">Perch</span>
+          <span className="text-lg font-semibold tracking-tight">{t("Perch")}</span>
         </div>
         <div className="flex items-center gap-1">
           <CurrencyToggle />
@@ -69,7 +75,7 @@ export default function Masthead({ balance }: MastheadProps) {
       <div className="border-t border-border" aria-hidden />
 
       <div className="masthead-balance surface p-6 flex flex-col gap-2">
-        <span className="label-sm">Balance of the month</span>
+        <span className="label-sm">{t("Balance of the month")}</span>
         <Amount
           value={displayBalance}
           tone={displayBalance >= 0 ? "income" : "expense"}

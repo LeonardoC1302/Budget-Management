@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n";
+
 export const BASE_CURRENCY = "USD";
 
 export interface CurrencyEntry {
@@ -22,5 +24,5 @@ const NAME_BY_CODE: Record<string, string> = Object.fromEntries(
 
 export function currencyLabel(code: string): string {
   const name = NAME_BY_CODE[code];
-  return name ? `${code} — ${name}` : code;
+  return name ? `${code} — ${t(name)}` : code;
 }

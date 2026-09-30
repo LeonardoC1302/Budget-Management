@@ -7,6 +7,7 @@ import type { Budget, Category } from "@/lib/types";
 import type { BudgetProgress } from "@/lib/utils/budgets";
 import { monthLabel } from "@/lib/utils/analytics";
 
+import { t } from "@/lib/i18n";
 interface BudgetRowProps {
   budget: Budget;
   category?: Category;
@@ -51,22 +52,22 @@ export default function BudgetRow({
   const over = progress.status === "over";
   const cap = progress.cap;
   const currency = progress.currency;
-  const categoryName = category?.name ?? "Unknown category";
+  const categoryName = category?.name ?? t("Unknown category");
   const pct = Math.max(0, Math.min(100, progress.percent * 100));
   const projected = isCurrentMonth ? projectMonthEnd(progress.spent) : null;
 
   const paceLine =
     !over && projected !== null
       ? projected <= cap
-        ? `On pace: ${formatCurrency(cap - projected, currency)} under.`
-        : `On pace: ${formatCurrency(projected - cap, currency)} over.`
+        ? t("On pace: {0} under.", { "0": formatCurrency(cap - projected, currency) })
+        : t("On pace: {0} over.", { "0": formatCurrency(projected - cap, currency) })
       : null;
 
   const noteText = over
-    ? `Over cap by ${formatCurrency(-progress.remaining, currency)}.`
+    ? t("Over cap by {0}.", { "0": formatCurrency(-progress.remaining, currency) })
     : isCurrentMonth
-      ? `${formatCurrency(progress.remaining, currency)} left this month.`
-      : `Finished ${formatCurrency(progress.remaining, currency)} under.`;
+      ? t("{0} left this month.", { "0": formatCurrency(progress.remaining, currency) })
+      : t("Finished {0} under.", { "0": formatCurrency(progress.remaining, currency) });
 
   return (
     <article className="px-4 py-4 flex flex-col gap-3">
@@ -129,12 +130,12 @@ export default function BudgetRow({
         <div className="flex gap-2 pt-2 border-t border-border">
           {onEdit && (
             <Button variant="ghost" size="sm" onClick={() => onEdit(budget)}>
-              Edit
+              {t("Edit")}
             </Button>
           )}
           {onDelete && (
             <Button variant="ghost" size="sm" onClick={() => onDelete(budget)}>
-              Delete
+              {t("Delete")}
             </Button>
           )}
         </div>
@@ -160,13 +161,13 @@ function BudgetTrend({
   const overMonths = trend
     .filter((m) => m.progress?.status === "over")
     .map((m) => monthLabel(m.monthKey));
-  const label = `Last ${trend.length} months: ${trend
+  const label = t("Last {length} months: {0}", { length: trend.length, "0": trend
     .map((m) =>
       m.progress
         ? `${monthLabel(m.monthKey)} ${Math.round(m.progress.percent * 100)}%`
-        : `${monthLabel(m.monthKey)} no cap`,
+        : t("{month} no cap", { month: monthLabel(m.monthKey) }),
     )
-    .join(", ")}`;
+    .join(", ") });
   return (
     <div className="flex items-end gap-3">
       <svg
@@ -195,7 +196,7 @@ function BudgetTrend({
               }
               opacity={i === trend.length - 1 ? 1 : 0.55}
             >
-              <title>{`${monthLabel(m.monthKey)}: ${Math.round(p.percent * 100)}% of cap`}</title>
+              <title>{t("{0}: {1}% of cap", { "0": monthLabel(m.monthKey), "1": Math.round(p.percent * 100) })}</title>
             </rect>
           );
         })}
@@ -211,8 +212,8 @@ function BudgetTrend({
       </svg>
       <span className="text-[11px] text-fg-subtle">
         {overMonths.length === 0
-          ? "Under cap every month shown"
-          : `Over in ${overMonths.join(", ")}`}
+          ? t("Under cap every month shown")
+          : t("Over in {0}", { "0": overMonths.join(", ") })}
       </span>
     </div>
   );

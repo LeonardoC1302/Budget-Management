@@ -11,6 +11,7 @@ import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { Holding, NewTransaction } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface HoldingContributionFormProps {
   holding: Holding;
   onSubmit: (input: NewTransaction) => void | Promise<void>;
@@ -191,16 +192,16 @@ export default function HoldingContributionForm({
   const priceLine = (() => {
     if (!isMarket) return null;
     if (manualMode) return null;
-    if (effectivePrice.status === "loading") return "Fetching price…";
+    if (effectivePrice.status === "loading") return t("Fetching price…");
     if (effectivePrice.status === "unavailable")
-      return "Market data unavailable — the contribution will save without pricing.";
+      return t("Market data unavailable — the contribution will save without pricing.");
     if (effectivePrice.status === "no-data")
-      return "No price data for that date — the contribution will save without pricing.";
+      return t("No price data for that date — the contribution will save without pricing.");
     if (effectivePrice.status === "ok" && preview && Number.isFinite(preview.shares)) {
-      return `≈ ${preview.shares.toFixed(4)} shares at ${formatCurrency(effectivePrice.closeUSD, "USD")} (close ${effectivePrice.date}).`;
+      return t("≈ {0} shares at {1} (close {date}).", { "0": preview.shares.toFixed(4), "1": formatCurrency(effectivePrice.closeUSD, "USD"), date: effectivePrice.date });
     }
     if (effectivePrice.status === "ok" && preview) {
-      return `Latest close ${formatCurrency(effectivePrice.closeUSD, "USD")} on ${effectivePrice.date}. Shares calculated in USD equivalent at save.`;
+      return t("Latest close {0} on {date}. Shares calculated in USD equivalent at save.", { "0": formatCurrency(effectivePrice.closeUSD, "USD"), date: effectivePrice.date });
     }
     return null;
   })();
@@ -218,7 +219,7 @@ export default function HoldingContributionForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="rounded-[10px] bg-surface-2 border border-border px-4 py-3">
-        <p className="text-xs text-fg-subtle">Contributing to</p>
+        <p className="text-xs text-fg-subtle">{t("Contributing to")}</p>
         <p className="text-sm font-medium text-fg">
           {isMarket && holding.symbol ? `${holding.symbol} · ` : ""}
           {holding.name}
@@ -229,15 +230,15 @@ export default function HoldingContributionForm({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-fg-muted">
             {manualMode
-              ? "Enter shares and price directly."
-              : "Auto-priced from today's close."}
+              ? t("Enter shares and price directly.")
+              : t("Auto-priced from today's close.")}
           </span>
           <button
             type="button"
             onClick={() => setManualMode((v) => !v)}
             className="text-xs text-fg-muted hover:text-fg underline underline-offset-2"
           >
-            {manualMode ? "Use amount instead" : "Enter shares instead"}
+            {manualMode ? t("Use amount instead") : t("Enter shares instead")}
           </button>
         </div>
       )}
@@ -245,7 +246,7 @@ export default function HoldingContributionForm({
       {isMarket && manualMode ? (
         <div className="grid grid-cols-2 gap-3 items-end">
           <Input
-            label="Shares"
+            label={t("Shares")}
             name="shares"
             type="number"
             inputMode="decimal"
@@ -255,7 +256,7 @@ export default function HoldingContributionForm({
             onChange={(e) => setManualShares(e.target.value)}
           />
           <Input
-            label="Price USD"
+            label={t("Price USD")}
             name="price"
             type="number"
             inputMode="decimal"
@@ -285,7 +286,7 @@ export default function HoldingContributionForm({
       )}
 
       <Select
-        label="From account"
+        label={t("From account")}
         name="account"
         value={accountId}
         onChange={setSelectedAccountId}
@@ -294,7 +295,7 @@ export default function HoldingContributionForm({
       />
 
       <DatePicker
-        label="Date"
+        label={t("Date")}
         name="date"
         required
         value={date}
@@ -302,18 +303,16 @@ export default function HoldingContributionForm({
       />
 
       <Input
-        label="Description"
+        label={t("Description")}
         name="description"
-        placeholder="Optional"
+        placeholder={t("Optional")}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
       {isManualHolding && (
         <p className="text-xs text-fg-subtle">
-          This holding tracks value from balance entries — record the current
-          statement value under &quot;Update balance&quot; once your contribution
-          is reflected.
+          {t("This holding tracks value from balance entries — record the current statement value under \"Update balance\" once your contribution is reflected.")}
         </p>
       )}
 
@@ -326,11 +325,11 @@ export default function HoldingContributionForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={submitDisabled}>
-          {submitting ? "Adding…" : "Add contribution"}
+          {submitting ? t("Adding…") : t("Add contribution")}
         </Button>
       </div>
     </form>

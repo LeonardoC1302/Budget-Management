@@ -21,6 +21,7 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 
+import { t } from "@/lib/i18n";
 const CODE_LENGTH = 6;
 
 interface ActiveCode {
@@ -64,48 +65,44 @@ export default function ConnectionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Settings"
-        title="Connections"
+        kicker={t("Settings")}
+        title={t("Connections")}
         actions={
           <Button size="md" variant="secondary" onClick={() => setClaimOpen(true)}>
-            Enter code
+            {t("Enter code")}
           </Button>
         }
       />
 
       <p className="lede text-sm">
-        Team up with someone to manage the same budget together — accounts,
-        transactions, cards, goals, all shared. Either side can add or edit,
-        and both apps show the merged view.
+        {t("Team up with someone to manage the same budget together — accounts, transactions, cards, goals, all shared. Either side can add or edit, and both apps show the merged view.")}
       </p>
 
-      <section className="flex flex-col" aria-label="Connected accounts">
+      <section className="flex flex-col" aria-label={t("Connected accounts")}>
         <div className="section-head">
-          <span className="section-head-title">Connected accounts</span>
+          <span className="section-head-title">{t("Connected accounts")}</span>
           <button
             type="button"
             onClick={() => setGenerateOpen(true)}
             className="section-head-link"
           >
-            + Generate code
+            {t("+ Generate code")}
           </button>
         </div>
         <div className="rooms">
           {pendingCodes.length > 0 && (
             <div className="px-4 py-3 flex flex-col gap-2">
-              <span className="kicker">Pending codes</span>
+              <span className="kicker">{t("Pending codes")}</span>
               {pendingCodes.map((c) => (
                 <PendingCodeRow key={c.code} code={c} />
               ))}
             </div>
           )}
           {loading ? (
-            <div className="px-4 py-3 text-sm text-fg-muted">Loading…</div>
+            <div className="px-4 py-3 text-sm text-fg-muted">{t("Loading…")}</div>
           ) : grantsReceived.length === 0 && pendingCodes.length === 0 ? (
             <div className="px-4 py-3 text-sm text-fg-muted">
-              You&apos;re not connected to anyone yet. Generate a code and
-              share it, or click <em>Enter code</em> if someone shared one
-              with you.
+              {t("You're not connected to anyone yet. Generate a code and share it, or click")}{" "}<em>{t("Enter code")}</em>{" "}{t("if someone shared one with you.")}
             </div>
           ) : (
             grantsReceived.map((g) => (
@@ -118,7 +115,7 @@ export default function ConnectionsPage() {
                     {g.ownerNickname}
                   </span>
                   <span className="text-xs text-fg-muted">
-                    Shared budget · both can add and edit
+                    {t("Shared budget · both can add and edit")}
                   </span>
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -134,7 +131,7 @@ export default function ConnectionsPage() {
                       })
                     }
                   >
-                    Rename
+                    {t("Rename")}
                   </Button>
                   <Button
                     size="sm"
@@ -147,7 +144,7 @@ export default function ConnectionsPage() {
                       })
                     }
                   >
-                    Disconnect
+                    {t("Disconnect")}
                   </Button>
                 </div>
               </div>
@@ -159,7 +156,7 @@ export default function ConnectionsPage() {
       <Modal
         open={generateOpen}
         onClose={() => setGenerateOpen(false)}
-        title="Generate connection code"
+        title={t("Generate connection code")}
       >
         <GenerateCodePanel onClose={() => setGenerateOpen(false)} />
       </Modal>
@@ -167,7 +164,7 @@ export default function ConnectionsPage() {
       <Modal
         open={claimOpen}
         onClose={() => setClaimOpen(false)}
-        title="Enter a connection code"
+        title={t("Enter a connection code")}
       >
         <ClaimCodePanel onClose={() => setClaimOpen(false)} />
       </Modal>
@@ -175,7 +172,7 @@ export default function ConnectionsPage() {
       <Modal
         open={renameTarget !== null}
         onClose={() => setRenameTarget(null)}
-        title="Rename connection"
+        title={t("Rename connection")}
       >
         {renameTarget && (
           <RenamePanel
@@ -187,20 +184,19 @@ export default function ConnectionsPage() {
 
       <ConfirmDialog
         open={confirmRevoke !== null}
-        title="End this connection?"
+        title={t("End this connection?")}
         message={
           confirmRevoke && (
             <>
               <span className="text-fg font-medium">
                 {confirmRevoke.label}
               </span>{" "}
-              will no longer share data with you (or vice versa). You can
-              reconnect any time with a new code.
+              {t("will no longer share data with you (or vice versa). You can reconnect any time with a new code.")}
             </>
           )
         }
-        confirmLabel="End connection"
-        cancelLabel="Keep it"
+        confirmLabel={t("End connection")}
+        cancelLabel={t("Keep it")}
         tone="danger"
         onConfirm={handleRevoke}
         onCancel={() => setConfirmRevoke(null)}
@@ -232,7 +228,7 @@ function PendingCodeRow({ code }: { code: ConnectionCodeDoc }) {
       <div className="flex flex-col">
         <span className="font-mono tracking-widest text-lg">{code.code}</span>
         <span className="text-xs text-fg-muted">
-          Expires in {remaining} min
+          {t("Expires in {minutes} min", { minutes: remaining })}
         </span>
       </div>
       <Button
@@ -248,7 +244,7 @@ function PendingCodeRow({ code }: { code: ConnectionCodeDoc }) {
           }
         }}
       >
-        Cancel
+        {t("Cancel")}
       </Button>
     </div>
   );
@@ -271,11 +267,11 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
         (profile.data() as { nickname?: string })?.nickname ||
         user.displayName ||
         user.email ||
-        "Someone";
+        t("Someone");
       const code = await generateConnectionCode(nickname);
       setActive({ code: code.code, expiresAt: code.expiresAt });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not generate code");
+      setError(err instanceof Error ? err.message : t("Could not generate code"));
     } finally {
       setSubmitting(false);
     }
@@ -285,11 +281,10 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-fg-muted">
-          Share this code with the person you&apos;re inviting. It expires in
-          10 minutes and can only be used once.
+          {t("Share this code with the person you're inviting. It expires in 10 minutes and can only be used once.")}
         </p>
         <div className="surface p-5 flex flex-col items-center gap-2">
-          <span className="kicker">Connection code</span>
+          <span className="kicker">{t("Connection code")}</span>
           <span className="font-mono tracking-[0.4em] text-3xl">
             {active.code}
           </span>
@@ -306,7 +301,7 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
               setTimeout(() => setCopied(false), 1500);
             }}
           >
-            {copied ? "Copied ✓" : "Copy code"}
+            {copied ? t("Copied ✓") : t("Copy code")}
           </Button>
           <Button
             type="button"
@@ -315,7 +310,7 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
             fullWidth
             onClick={onClose}
           >
-            Done
+            {t("Done")}
           </Button>
         </div>
       </div>
@@ -325,9 +320,7 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-fg-muted">
-        Anyone who accepts your code will share the same budget as you — same
-        accounts, same transactions, same everything. Both of you can add and
-        edit.
+        {t("Anyone who accepts your code will share the same budget as you — same accounts, same transactions, same everything. Both of you can add and edit.")}
       </p>
       {error && <span className="field-error">{error}</span>}
       <div className="flex gap-2">
@@ -339,7 +332,7 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
           onClick={onClose}
           disabled={submitting}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="button"
@@ -348,7 +341,7 @@ function GenerateCodePanel({ onClose }: { onClose: () => void }) {
           disabled={submitting}
           onClick={handleGenerate}
         >
-          {submitting ? "Generating…" : "Generate code"}
+          {submitting ? t("Generating…") : t("Generate code")}
         </Button>
       </div>
     </div>
@@ -374,14 +367,14 @@ function ClaimCodePanel({ onClose }: { onClose: () => void }) {
         (profile.data() as { nickname?: string })?.nickname ||
         user.displayName ||
         user.email ||
-        "Someone";
+        t("Someone");
       const conn = await claimConnectionCode(trimmed, guestNickname);
       void conn;
       setSuccess(
-        "Accounts connected. From now on both of you see and edit the same budget.",
+        t("Accounts connected. From now on both of you see and edit the same budget."),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not accept code");
+      setError(err instanceof Error ? err.message : t("Could not accept code"));
       setCode("");
     } finally {
       setSubmitting(false);
@@ -398,7 +391,7 @@ function ClaimCodePanel({ onClose }: { onClose: () => void }) {
       <div className="flex flex-col gap-4">
         <p className="text-sm">{success}</p>
         <Button type="button" size="lg" fullWidth onClick={onClose}>
-          Done
+          {t("Done")}
         </Button>
       </div>
     );
@@ -407,11 +400,11 @@ function ClaimCodePanel({ onClose }: { onClose: () => void }) {
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <p className="text-sm text-fg-muted">
-        Enter the 6-character code someone shared with you.
+        {t("Enter the 6-character code someone shared with you.")}
       </p>
       <OtpInput
         length={CODE_LENGTH}
-        label="Connection code"
+        label={t("Connection code")}
         value={code}
         onChange={setCode}
         onComplete={(v) => void attempt(v)}
@@ -428,7 +421,7 @@ function ClaimCodePanel({ onClose }: { onClose: () => void }) {
           onClick={onClose}
           disabled={submitting}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="submit"
@@ -436,7 +429,7 @@ function ClaimCodePanel({ onClose }: { onClose: () => void }) {
           fullWidth
           disabled={submitting || code.length !== CODE_LENGTH}
         >
-          {submitting ? "Connecting…" : "Accept"}
+          {submitting ? t("Connecting…") : t("Accept")}
         </Button>
       </div>
     </form>
@@ -480,11 +473,11 @@ function RenamePanel({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-sm text-fg-muted">
         {target.side === "owner"
-          ? "How this guest appears in your list."
-          : "How the account owner appears in your data."}
+          ? t("How this guest appears in your list.")
+          : t("How the account owner appears in your data.")}
       </p>
       <Input
-        label="Nickname"
+        label={t("Nickname")}
         name="nickname"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -499,10 +492,10 @@ function RenamePanel({
           onClick={onClose}
           disabled={submitting}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
-          {submitting ? "Saving…" : "Save"}
+          {submitting ? t("Saving…") : t("Save")}
         </Button>
       </div>
     </form>

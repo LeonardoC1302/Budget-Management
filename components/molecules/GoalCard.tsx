@@ -16,6 +16,7 @@ import {
 } from "@/lib/utils/goals";
 import type { Goal, GoalContribution } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 interface GoalCardProps {
   goal: Goal;
   contributions: GoalContribution[];
@@ -41,36 +42,34 @@ function EstimateLine({
 
   if (estimate.kind === "reached") {
     return (
-      <p className="lede text-income">Goal reached — nice work.</p>
+      <p className="lede text-income">{t("Goal reached — nice work.")}</p>
     );
   }
   if (estimate.kind === "no-data") {
     return (
       <p className="lede">
-        Add a few weeks of transactions and we&apos;ll estimate how long this
-        goal will take.
+        {t("Add a few weeks of transactions and we'll estimate how long this goal will take.")}
       </p>
     );
   }
   if (estimate.kind === "negative") {
     return (
       <p className="lede">
-        This month you&apos;re spending more than you earn, so the estimate
-        pauses. It&apos;ll resume as soon as savings turn positive.
+        {t("This month you're spending more than you earn, so the estimate pauses. It'll resume as soon as savings turn positive.")}
       </p>
     );
   }
   return (
     <p className="lede leading-snug">
-      At{" "}
+      {t("At")}{" "}
       <span className="text-fg font-medium not-italic figure">
         {formatCurrency(convertUsd(estimate.monthlyRate), displayCurrency)}
       </span>
-      {" "}per month, you&apos;ll reach it in{" "}
+{" "}{t("per month, you'll reach it in")}{" "}
       <span className="text-fg font-medium not-italic">
         {formatMonthsRough(estimate.months)}
       </span>
-      {" — around "}
+      {t(" — around ")}
       <span className="text-fg font-medium not-italic">
         {formatTargetMonth(estimate.targetDate)}
       </span>
@@ -114,13 +113,13 @@ export default function GoalCard({
           </h3>
           {goal.targetDate && (
             <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
-              Target · {formatTargetMonth(new Date(goal.targetDate))}
+              {t("Target · {month}", { month: formatTargetMonth(new Date(goal.targetDate)) })}
             </p>
           )}
         </div>
         <div className="text-right shrink-0">
           <div className="kicker mb-1">
-            {progress.reached ? "Complete" : "To go"}
+            {progress.reached ? t("Complete") : t("To go")}
           </div>
           <div
             className={cn(
@@ -138,7 +137,7 @@ export default function GoalCard({
       <div className="flex flex-col gap-2">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0 flex flex-col gap-1">
-            <span className="kicker">Saved</span>
+            <span className="kicker">{t("Saved")}</span>
             <Amount
               value={progress.saved}
               size="lg"
@@ -147,16 +146,16 @@ export default function GoalCard({
             />
           </div>
           <span className="figure text-xs text-fg-muted whitespace-nowrap">
-            of {formatCurrency(goal.targetAmount, goal.currency)}
+            {t("of {amount}", { amount: formatCurrency(goal.targetAmount, goal.currency) })}
           </span>
         </div>
         <ProgressBar
           value={progress.percent}
           tone={progress.reached ? "income" : "accent"}
-          ariaLabel={`${goal.name} progress`}
+          ariaLabel={t("{name} progress", { name: goal.name })}
         />
         <div className="flex items-center justify-between text-[11px] text-fg-muted uppercase tracking-[0.14em]">
-          <span>{Math.round(progress.percent * 100)}% laid by</span>
+          <span>{t("{percent}% laid by", { percent: Math.round(progress.percent * 100) })}</span>
           {history.length > 0 && (
             <button
               type="button"
@@ -164,10 +163,9 @@ export default function GoalCard({
               aria-expanded={showHistory}
               className="uppercase tracking-[0.14em] hover:text-fg"
             >
-              {contributionCount} contribution
-              {contributionCount === 1 ? "" : "s"}
+              {tn("{count} contribution", "{count} contributions", contributionCount)}
               {history.length > contributionCount
-                ? ` · ${history.length - contributionCount} withdrawn`
+                ? t(" · {0} withdrawn", { "0": history.length - contributionCount })
                 : ""}{" "}
               {showHistory ? "▴" : "▾"}
             </button>
@@ -181,7 +179,7 @@ export default function GoalCard({
             <li key={c.id} className="flex items-center gap-3 py-2">
               <div className="flex-1 min-w-0">
                 <p className="text-fg truncate">
-                  {c.note || (c.withdrawal ? "Withdrawal" : "Contribution")}
+                  {c.note || (c.withdrawal ? t("Withdrawal") : t("Contribution"))}
                 </p>
                 <p className="text-xs text-fg-subtle">{formatDate(c.date)}</p>
               </div>
@@ -198,7 +196,7 @@ export default function GoalCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label="Delete entry"
+                  aria-label={t("Delete entry")}
                   onClick={() => onDeleteContribution(c.id)}
                   className="px-2"
                 >
@@ -220,12 +218,12 @@ export default function GoalCard({
         <div className="flex items-center gap-2 pt-3 border-t border-border">
           {onContribute && !progress.reached && (
             <Button size="sm" onClick={() => onContribute(goal)}>
-              + Contribute
+              {t("+ Contribute")}
             </Button>
           )}
           {onWithdraw && progress.saved > 0 && (
             <Button variant="secondary" size="sm" onClick={() => onWithdraw(goal)}>
-              Withdraw
+              {t("Withdraw")}
             </Button>
           )}
           <div className="ml-auto flex gap-1">

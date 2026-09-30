@@ -29,6 +29,7 @@ import type {
   Transaction,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface TransactionFormProps {
   onSubmit: (
     input: NewTransaction,
@@ -143,7 +144,7 @@ export default function TransactionForm({
           setRateEntry({
             key: pairKey,
             rate: null,
-            error: err instanceof Error ? err.message : "Rate unavailable",
+            error: err instanceof Error ? err.message : t("Rate unavailable"),
           });
         }
       });
@@ -228,34 +229,34 @@ export default function TransactionForm({
     parsedAmount > 0 &&
     !!budget &&
     wouldExceed(categoryId, parsedAmount, currency)
-      ? `This would push ${categoriesById[categoryId]?.name ?? "this category"} over its ${formatCurrency(budget.amount, budget.currency)} cap.`
+      ? t("This would push {0} over its {1} cap.", { "0": categoriesById[categoryId]?.name ?? "this category", "1": formatCurrency(budget.amount, budget.currency) })
       : null;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div
         role="tablist"
-        aria-label="Transaction type"
+        aria-label={t("Transaction type")}
         className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income"] as const).map((t) => {
+        {(["expense", "income"] as const).map((kind) => {
           const activeClass =
-            t === "income"
+            kind === "income"
               ? "bg-income-soft text-income"
               : "bg-expense-soft text-expense";
           return (
             <button
-              key={t}
+              key={kind}
               type="button"
               role="tab"
-              aria-selected={type === t}
-              onClick={() => setType(t)}
+              aria-selected={type === kind}
+              onClick={() => setType(kind)}
               className={cn(
                 "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
-                type === t ? activeClass : "text-fg-muted hover:text-fg",
+                type === kind ? activeClass : "text-fg-muted hover:text-fg",
               )}
             >
-              {t}
+              {t(kind)}
             </button>
           );
         })}
@@ -281,13 +282,13 @@ export default function TransactionForm({
         ) : amount.trim() !== "" &&
           (!Number.isFinite(parsedAmount) || parsedAmount <= 0) ? (
           <p role="status" className="text-xs text-fg-subtle">
-            Enter an amount greater than zero to enable the save button.
+            {t("Enter an amount greater than zero to enable the save button.")}
           </p>
         ) : null}
       </div>
 
       <Select
-        label="Account"
+        label={t("Account")}
         name="account"
         value={accountId}
         onChange={setSelectedAccountId}
@@ -297,7 +298,7 @@ export default function TransactionForm({
 
       <div className="flex flex-col gap-1.5">
         <CurrencySelect
-          label="Currency"
+          label={t("Currency")}
           name="currency"
           value={currency}
           onChange={(next) =>
@@ -315,10 +316,10 @@ export default function TransactionForm({
         {hasCurrencyMismatch && (
           <p role="status" className="text-xs text-fg-subtle">
             {convertedPreview !== null
-              ? `≈ ${formatCurrency(convertedPreview, accountCurrency)} on the ${accountCurrency} account`
+              ? t("≈ {0} on the {accountCurrency} account", { "0": formatCurrency(convertedPreview, accountCurrency), accountCurrency })
               : rateEntry.error
-                ? `Rate unavailable (${rateEntry.error}).`
-                : `Fetching ${currency} → ${accountCurrency} rate…`}
+                ? t("Rate unavailable ({error}).", { error: rateEntry.error })
+                : t("Fetching {currency} → {accountCurrency} rate…", { currency, accountCurrency })}
           </p>
         )}
       </div>
@@ -330,15 +331,15 @@ export default function TransactionForm({
       />
 
       <Input
-        label="Description"
+        label={t("Description")}
         name="description"
-        placeholder="Optional"
+        placeholder={t("Optional")}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
       <DatePicker
-        label="Date"
+        label={t("Date")}
         name="date"
         required
         value={date}
@@ -355,12 +356,12 @@ export default function TransactionForm({
               checked={splitInstallments}
               onChange={(e) => setSplitInstallments(e.target.checked)}
             />
-            Pay in monthly installments
+            {t("Pay in monthly installments")}
           </label>
           {splitInstallments && (
             <>
               <Input
-                label="Number of installments"
+                label={t("Number of installments")}
                 name="installments"
                 type="number"
                 inputMode="numeric"
@@ -373,10 +374,10 @@ export default function TransactionForm({
                 Number.isFinite(parsedAmount) &&
                 parsedAmount > 0 && (
                   <p className="text-xs text-fg-subtle">
-                    {installments} charges of about{" "}
-                    {formatCurrency(parsedAmount / installments, currency)}, one a
-                    month starting on the purchase date. Budgets count each
-                    month&apos;s charge; the card owes the full amount now.
+                    {t("{count} charges of about {amount}, one a month starting on the purchase date. Budgets count each month's charge; the card owes the full amount now.", {
+                      count: installments,
+                      amount: formatCurrency(parsedAmount / installments, currency),
+                    })}
                   </p>
                 )}
             </>
@@ -391,8 +392,8 @@ export default function TransactionForm({
         disabled={submitting || loading || !accountId || !categoryId}
       >
         {submitting
-          ? isEditing ? "Saving…" : "Adding…"
-          : submitLabel ?? (isEditing ? "Save changes" : "Add transaction")}
+          ? isEditing ? t("Saving…") : t("Adding…")
+          : submitLabel ?? (isEditing ? t("Save changes") : t("Add transaction"))}
       </Button>
     </form>
   );

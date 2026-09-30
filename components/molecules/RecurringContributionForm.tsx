@@ -15,6 +15,7 @@ import {
   type RecurringTransaction,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface RecurringContributionFormProps {
   holdings: Holding[];
   initial?: RecurringTransaction;
@@ -86,7 +87,7 @@ export default function RecurringContributionForm({
         holdingId: holding.id,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save.");
+      setError(err instanceof Error ? err.message : t("Couldn't save."));
     } finally {
       setSubmitting(false);
     }
@@ -95,8 +96,7 @@ export default function RecurringContributionForm({
   if (fundingAccounts.length === 0) {
     return (
       <p className="text-sm text-fg-muted">
-        Add a debit, savings or cash account first; contributions are paid
-        from one.
+        {t("Add a debit, savings or cash account first; contributions are paid from one.")}
       </p>
     );
   }
@@ -105,7 +105,7 @@ export default function RecurringContributionForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {!lockedHoldingId && (
         <Select
-          label="Holding"
+          label={t("Holding")}
           value={holdingId}
           onChange={setHoldingId}
           options={holdings.map((h) => ({
@@ -116,7 +116,7 @@ export default function RecurringContributionForm({
       )}
 
       <Select
-        label="Paid from"
+        label={t("Paid from")}
         value={effectiveAccountId}
         onChange={setAccountId}
         options={fundingAccounts.map((a) => ({
@@ -126,7 +126,7 @@ export default function RecurringContributionForm({
       />
 
       <Input
-        label={`Amount each time (${account?.currency ?? ""})`}
+        label={t("Amount each time ({currency})", { currency: account?.currency ?? "" })}
         name="recurring-amount"
         type="number"
         inputMode="decimal"
@@ -138,24 +138,23 @@ export default function RecurringContributionForm({
       />
 
       <Select
-        label="How often"
+        label={t("How often")}
         value={frequency}
         onChange={(v) => setFrequency(v as RecurrenceFrequency)}
         options={FREQUENCIES.map((f) => ({
           value: f,
-          label: RECURRENCE_FREQUENCY_LABELS[f],
+          label: t(RECURRENCE_FREQUENCY_LABELS[f]),
         }))}
       />
 
       <div className="grid grid-cols-2 gap-3">
-        <DatePicker label="Starts" name="recurring-start" required value={startDate} onChange={setStartDate} />
-        <DatePicker label="Ends (optional)" name="recurring-end" value={endDate} onChange={setEndDate} />
+        <DatePicker label={t("Starts")} name="recurring-start" required value={startDate} onChange={setStartDate} />
+        <DatePicker label={t("Ends (optional)")} name="recurring-end" value={endDate} onChange={setEndDate} />
       </div>
 
       {holding?.kind === "market" && (
         <p className="text-xs text-fg-subtle">
-          Each buy is priced at that day&apos;s close. If no price is
-          available it&apos;s saved unpriced and counts toward cost basis only.
+          {t("Each buy is priced at that day's close. If no price is available it's saved unpriced and counts toward cost basis only.")}
         </p>
       )}
 
@@ -164,11 +163,11 @@ export default function RecurringContributionForm({
       <div className="flex gap-2 pt-2">
         {onCancel && (
           <Button type="button" variant="secondary" size="lg" fullWidth onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={!valid || submitting}>
-          {submitting ? "Saving…" : initial ? "Save" : "Start contributions"}
+          {submitting ? t("Saving…") : initial ? t("Save") : t("Start contributions")}
         </Button>
       </div>
     </form>

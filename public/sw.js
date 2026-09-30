@@ -29,6 +29,7 @@ const APP_ROUTES = [
   "/settings/connections",
   "/settings/trash",
   "/settings/data",
+  "/settings/security",
 ];
 
 const STATIC_PREFIXES = ["/_next/static/"];

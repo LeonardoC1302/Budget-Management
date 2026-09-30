@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -47,7 +48,7 @@ export default function Modal({
     >
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t("Close")}
         onClick={onClose}
         className="absolute inset-0 bg-black/60"
       />
@@ -66,7 +67,7 @@ export default function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("Close")}
             className="w-9 h-9 flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
             style={{ borderRadius: "var(--radius-control)" }}
           >

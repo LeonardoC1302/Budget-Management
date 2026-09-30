@@ -8,6 +8,7 @@ import Input from "@/components/atoms/Input";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import type { Goal, NewGoal } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface GoalFormProps {
   initial?: Goal;
   onSubmit: (input: NewGoal) => void | Promise<void>;
@@ -47,9 +48,9 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
-        label="Name"
+        label={t("Name")}
         name="name"
-        placeholder="e.g. Trip to Japan"
+        placeholder={t("e.g. Trip to Japan")}
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -57,7 +58,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
 
       <div className="grid grid-cols-[1fr_9rem] gap-3 items-end">
         <Input
-          label={`Target amount (${currency})`}
+          label={t("Target amount ({currency})", { currency })}
           name="targetAmount"
           type="number"
           inputMode="decimal"
@@ -69,15 +70,15 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
           onChange={(e) => setTargetAmount(e.target.value)}
         />
         <CurrencySelect
-          label="Currency"
+          label={t("Currency")}
           value={currency}
           onChange={setCurrency}
         />
       </div>
 
       <Input
-        label={`Initial progress (${currency})`}
-        hint="Money you already have toward this goal."
+        label={t("Initial progress ({currency})", { currency })}
+        hint={t("Money you already have toward this goal.")}
         name="initialAmount"
         type="number"
         inputMode="decimal"
@@ -88,7 +89,7 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
       />
 
       <DatePicker
-        label="Target date (optional)"
+        label={t("Target date (optional)")}
         name="targetDate"
         value={targetDate}
         onChange={setTargetDate}
@@ -103,11 +104,11 @@ export default function GoalForm({ initial, onSubmit, onCancel }: GoalFormProps)
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
-          {submitting ? "Saving…" : initial ? "Save changes" : "Create goal"}
+          {submitting ? t("Saving…") : initial ? t("Save changes") : t("Create goal")}
         </Button>
       </div>
     </form>

@@ -7,9 +7,10 @@ import RouteMasthead from "@/components/molecules/RouteMasthead";
 import { useBccrRates } from "@/hooks/useBccrRates";
 import type { BccrEntityRate } from "@/lib/services/bccrRates";
 
+import { getLocale, t, tn } from "@/lib/i18n";
 function fmtRate(value: number | null): string {
   if (value === null) return "—";
-  return value.toLocaleString("en-US", {
+  return value.toLocaleString(getLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -21,13 +22,13 @@ function fmtRelative(iso: string): string {
   const diff = now - then;
   if (Number.isNaN(then)) return iso;
   const seconds = Math.round(diff / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("just now");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return t("{minutes} min ago", { minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
+  if (hours < 24) return t("{hours} hr ago", { hours });
   const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return tn("{count} day ago", "{count} days ago", days);
 }
 
 export default function RatesPage() {
@@ -69,7 +70,7 @@ export default function RatesPage() {
     const order: string[] = [];
     const groups = new Map<string, BccrEntityRate[]>();
     for (const entity of snapshot.entities) {
-      const key = entity.category ?? "Other";
+      const key = entity.category ?? t("Other");
       if (!groups.has(key)) {
         order.push(key);
         groups.set(key, []);
@@ -85,8 +86,8 @@ export default function RatesPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Exchange rates"
-        title="Costa Rica window"
+        kicker={t("Exchange rates")}
+        title={t("Costa Rica window")}
         actions={
           <Button
             type="button"
@@ -95,24 +96,22 @@ export default function RatesPage() {
             onClick={() => void refresh()}
             disabled={loading}
           >
-            {loading ? "Refreshing…" : "Refresh"}
+            {loading ? t("Refreshing…") : t("Refresh")}
           </Button>
         }
       />
 
       <p className="lede">
-        The rate each entity posts at its window for USD ↔ CRC.{" "}
-        <em className="not-italic text-fg">Buy</em> is where the bank buys USD
-        (the rate that applies when you move USD → CRC).{" "}
-        <em className="not-italic text-fg">Sell</em> is where the bank sells
-        USD (applies to CRC → USD). Sourced from{" "}
+        {t("The rate each entity posts at its window for USD ↔ CRC.")}{" "}
+        <em className="not-italic text-fg">{t("Buy")}</em>{" "}{t("is where the bank buys USD (the rate that applies when you move USD → CRC).")}{" "}
+        <em className="not-italic text-fg">{t("Sell")}</em>{" "}{t("is where the bank sells USD (applies to CRC → USD). Sourced from")}{" "}
         <a
           className="text-fg not-italic underline decoration-dotted underline-offset-4"
           href="https://gee.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmConsultaTCVentanilla.aspx"
           target="_blank"
           rel="noreferrer"
         >
-          BCCR
+          {t("BCCR")}
         </a>
         .
       </p>
@@ -122,15 +121,15 @@ export default function RatesPage() {
           className="surface p-4 text-sm text-expense"
           style={{ borderColor: "var(--color-expense)" }}
         >
-          Could not load rates: {error}
+          {t("Could not load rates: {error}", { error })}
         </div>
       )}
 
       {loading && !snapshot && (
         <div className="empty">
-          <p className="empty-title">Loading rates…</p>
+          <p className="empty-title">{t("Loading rates…")}</p>
           <p className="empty-body">
-            Fetching the latest window rates from every entity.
+            {t("Fetching the latest window rates from every entity.")}
           </p>
         </div>
       )}
@@ -138,11 +137,11 @@ export default function RatesPage() {
       {summary && (
         <section
           className="courtyard p-6 flex flex-col gap-5"
-          aria-label="Market at a glance"
+          aria-label={t("Market at a glance")}
         >
           <div className="flex items-baseline justify-between gap-3">
             <span className="courtyard-kicker mb-0">
-              USD → CRC · today
+              {t("USD → CRC · today")}
             </span>
             {snapshot && (
               <span className="kicker">{fmtRelative(snapshot.fetchedAt)}</span>
@@ -152,7 +151,7 @@ export default function RatesPage() {
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-1.5">
               <span className="kicker" style={{ color: "var(--color-income)" }}>
-                Best buy
+                {t("Best buy")}
               </span>
               <span
                 className="font-serif tabular-nums leading-none"
@@ -165,12 +164,12 @@ export default function RatesPage() {
                 {fmtRate(summary.bestBuy)}
               </span>
               <span className="lede text-xs mt-1">
-                at {summary.bestBuyEntity}
+                {t("at {name}", { name: summary.bestBuyEntity })}
               </span>
             </div>
             <div className="flex flex-col gap-1.5">
               <span className="kicker" style={{ color: "var(--color-expense)" }}>
-                Best sell
+                {t("Best sell")}
               </span>
               <span
                 className="font-serif tabular-nums leading-none"
@@ -183,7 +182,7 @@ export default function RatesPage() {
                 {fmtRate(summary.bestSell)}
               </span>
               <span className="lede text-xs mt-1">
-                at {summary.bestSellEntity}
+                {t("at {name}", { name: summary.bestSellEntity })}
               </span>
             </div>
           </div>
@@ -192,10 +191,10 @@ export default function RatesPage() {
             className="grid grid-cols-3 gap-4 pt-4 border-t"
             style={{ borderColor: "var(--color-border)" }}
           >
-            <StatCol label="Median buy" value={fmtRate(summary.medianBuy)} />
-            <StatCol label="Median sell" value={fmtRate(summary.medianSell)} />
+            <StatCol label={t("Median buy")} value={fmtRate(summary.medianBuy)} />
+            <StatCol label={t("Median sell")} value={fmtRate(summary.medianSell)} />
             <StatCol
-              label="Spread"
+              label={t("Spread")}
               value={`₡${fmtRate(summary.spread)}`}
               tone="var(--color-invest)"
             />
@@ -208,9 +207,9 @@ export default function RatesPage() {
           {groupedEntities.map(({ category, entities }) => (
             <div key={category} className="flex flex-col">
               <div className="section-head">
-                <span className="section-head-title">{category}</span>
+                <span className="section-head-title">{t(category)}</span>
                 <span className="section-head-meta">
-                  {entities.length} · CRC per 1 USD
+                  {t("{count} · CRC per 1 USD", { count: entities.length })}
                 </span>
               </div>
               <div className="rooms" role="list">
@@ -302,7 +301,7 @@ function EntityRow({
     <button
       type="button"
       onClick={onSelect}
-      aria-label={`View rate details for ${name}`}
+      aria-label={t("View rate details for {name}", { name })}
       className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_auto] sm:gap-4 sm:items-center px-4 py-4 w-full text-left hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-fg transition-colors"
     >
       <div className="min-w-0">
@@ -317,7 +316,7 @@ function EntityRow({
                 borderColor: "transparent",
               }}
             >
-              Best buy
+              {t("Best buy")}
             </span>
           )}
           {isBestSell && (
@@ -329,26 +328,26 @@ function EntityRow({
                 borderColor: "transparent",
               }}
             >
-              Best sell
+              {t("Best sell")}
             </span>
           )}
           {!isBestBuy && !isBestSell && (
             <span className="hidden sm:inline text-[11px] text-fg-muted uppercase tracking-[0.14em]">
-              Bank window
+              {t("Bank window")}
             </span>
           )}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:contents">
         <RateCell
-          label="Buy"
+          label={t("Buy")}
           value={buy}
           range={buyRange}
           isBest={isBestBuy}
           goodDirection="higher"
         />
         <RateCell
-          label="Sell"
+          label={t("Sell")}
           value={sell}
           range={sellRange}
           isBest={isBestSell}

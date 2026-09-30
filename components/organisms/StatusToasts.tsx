@@ -9,6 +9,7 @@ import {
 } from "@/lib/events/undo";
 import { cn } from "@/lib/utils/cn";
 
+import { t, tn } from "@/lib/i18n";
 const UNDO_WINDOW_MS = 6000;
 
 /**
@@ -51,7 +52,7 @@ export default function StatusToasts() {
       setNotice(null);
     } catch (err) {
       setUndoError(
-        err instanceof Error ? err.message : "Couldn't restore. Try Recently deleted.",
+        err instanceof Error ? err.message : t("Couldn't restore. Try Recently deleted."),
       );
       timer.current = setTimeout(() => setNotice(null), UNDO_WINDOW_MS);
     } finally {
@@ -62,10 +63,14 @@ export default function StatusToasts() {
   const unsynced = sync.pendingWrites > 0 || sync.queuedFromEarlier;
   const syncLine = !sync.online
     ? unsynced && sync.pendingWrites > 0
-      ? `Offline · ${sync.pendingWrites} change${sync.pendingWrites === 1 ? "" : "s"} saved on this device`
-      : "Offline · changes are saved on this device"
+      ? tn(
+          "Offline · {count} change saved on this device",
+          "Offline · {count} changes saved on this device",
+          sync.pendingWrites,
+        )
+      : t("Offline · changes are saved on this device")
     : unsynced
-      ? "Syncing changes…"
+      ? t("Syncing changes…")
       : null;
 
   if (!notice && !syncLine) return null;
@@ -84,7 +89,7 @@ export default function StatusToasts() {
           )}
         >
           <span className="flex-1 min-w-0 truncate">
-            {undoError ?? notice.message}
+            {undoError ?? t(notice.message)}
           </span>
           {!undoError && (
             <button
@@ -93,7 +98,7 @@ export default function StatusToasts() {
               disabled={undoing}
               className="font-medium text-accent hover:text-accent-hover disabled:opacity-60"
             >
-              {undoing ? "Restoring…" : "Undo"}
+              {undoing ? t("Restoring…") : t("Undo")}
             </button>
           )}
         </div>

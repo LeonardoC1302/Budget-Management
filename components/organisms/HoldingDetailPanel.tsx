@@ -34,6 +34,7 @@ import type {
   HoldingValueSnapshot,
 } from "@/lib/utils/holdings";
 
+import { getLocale, t } from "@/lib/i18n";
 interface HoldingDetailPanelProps {
   holding: Holding;
   position?: HoldingPosition;
@@ -63,7 +64,7 @@ const CHART_PAD_Y = 10;
 function LineChart({ values }: { values: { date: string; value: number }[] }) {
   if (values.length < 2) {
     return (
-      <p className="text-sm text-fg-subtle">Not enough data yet to plot.</p>
+      <p className="text-sm text-fg-subtle">{t("Not enough data yet to plot.")}</p>
     );
   }
   const min = Math.min(...values.map((v) => v.value));
@@ -86,7 +87,7 @@ function LineChart({ values }: { values: { date: string; value: number }[] }) {
       viewBox={`0 0 ${CHART_W} ${CHART_H}`}
       className="w-full h-[160px]"
       role="img"
-      aria-label="Price history"
+      aria-label={t("Price history")}
     >
       <defs>
         <linearGradient id="holding-area" x1="0" y1="0" x2="0" y2="1">
@@ -174,15 +175,15 @@ export default function HoldingDetailPanel({
         <div className="min-w-0 flex-1">
           <p className="label-sm">
             {isMarket
-              ? `${holding.symbol ?? ""}${holding.quoteCurrency && holding.quoteCurrency !== "USD" ? ` · quoted in ${holding.quoteCurrency}` : ""}`
+              ? `${holding.symbol ?? ""}${holding.quoteCurrency && holding.quoteCurrency !== "USD" ? t(" · quoted in {quoteCurrency}", { quoteCurrency: holding.quoteCurrency }) : ""}`
               : holding.symbol
-                ? `${holding.symbol} · Manual position`
-                : "Manual position"}
+                ? t("{symbol} · Manual position", { symbol: holding.symbol })
+                : t("Manual position")}
           </p>
           <h3 className="heading-lg truncate">{holding.name}</h3>
           {snapshot.asOf && (
             <p className="text-xs text-fg-subtle">
-              As of {formatDate(snapshot.asOf)}
+              {t("As of {date}", { date: formatDate(snapshot.asOf) })}
             </p>
           )}
         </div>
@@ -225,20 +226,19 @@ export default function HoldingDetailPanel({
             </div>
             {quote?.priceUSD && (
               <span className="text-xs text-fg-subtle tabular-nums">
-                {formatCurrency(convertUsd(quote.priceUSD), displayCurrency)} last
+                {t("{price} last", { price: formatCurrency(convertUsd(quote.priceUSD), displayCurrency) })}
               </span>
             )}
           </div>
           {historyStatus === "unavailable" ? (
             <p className="text-sm text-fg-subtle">
-              Market data unavailable — set TWELVEDATA_API_KEY to enable
-              price history.
+              {t("Market data unavailable — set TWELVEDATA_API_KEY to enable price history.")}
             </p>
           ) : historyStatus === "loading" ? (
-            <p className="text-sm text-fg-subtle">Loading price history…</p>
+            <p className="text-sm text-fg-subtle">{t("Loading price history…")}</p>
           ) : historyStatus === "error" ? (
             <p className="text-sm text-fg-subtle">
-              Could not load price history right now.
+              {t("Could not load price history right now.")}
             </p>
           ) : (
             <LineChart values={chartValues} />
@@ -247,7 +247,7 @@ export default function HoldingDetailPanel({
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-xs text-fg-subtle">
-            Balance history from your valuation entries.
+            {t("Balance history from your valuation entries.")}
           </p>
           <LineChart values={chartValues} />
         </div>
@@ -255,24 +255,24 @@ export default function HoldingDetailPanel({
 
       <dl className="grid grid-cols-2 gap-3">
         <Stat
-          label="Cost basis"
+          label={t("Cost basis")}
           value={formatCurrency(convertUsd(position?.costBasisUSD ?? 0), displayCurrency)}
         />
         <Stat
-          label="Current value"
+          label={t("Current value")}
           value={formatCurrency(convertUsd(snapshot.currentValueUSD), displayCurrency)}
         />
         {isMarket && (position?.shares ?? 0) > 0 && (
           <>
             <Stat
-              label="Shares"
-              value={(position?.shares ?? 0).toLocaleString("en-US", {
+              label={t("Shares")}
+              value={(position?.shares ?? 0).toLocaleString(getLocale(), {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 4,
               })}
             />
             <Stat
-              label="Avg cost"
+              label={t("Avg cost")}
               value={formatCurrency(convertUsd(position?.avgCostUSD ?? 0), displayCurrency)}
             />
           </>
@@ -281,8 +281,7 @@ export default function HoldingDetailPanel({
 
       {position?.hasUnpriced && (
         <p className="text-xs text-fg-subtle">
-          Some contributions were migrated from a legacy investment category and
-          have no price on file — they count toward cost basis only.
+          {t("Some contributions were migrated from a legacy investment category and have no price on file — they count toward cost basis only.")}
         </p>
       )}
 
@@ -291,7 +290,7 @@ export default function HoldingDetailPanel({
           size="sm"
           onClick={() => setModal({ kind: "contribute" })}
         >
-          Contribute
+          {t("Contribute")}
         </Button>
         {onAddRecurring && (
           <Button
@@ -299,7 +298,7 @@ export default function HoldingDetailPanel({
             size="sm"
             onClick={() => setModal({ kind: "recurring" })}
           >
-            Repeat
+            {t("Repeat")}
           </Button>
         )}
         {!isMarket && (
@@ -308,7 +307,7 @@ export default function HoldingDetailPanel({
             size="sm"
             onClick={() => setModal({ kind: "valuation" })}
           >
-            Update balance
+            {t("Update balance")}
           </Button>
         )}
         <Button
@@ -317,7 +316,7 @@ export default function HoldingDetailPanel({
           onClick={() => setModal({ kind: "edit" })}
         >
           <EditIcon aria-hidden />
-          <span className="ml-1">Edit</span>
+          <span className="ml-1">{t("Edit")}</span>
         </Button>
         <Button
           variant="ghost"
@@ -326,13 +325,13 @@ export default function HoldingDetailPanel({
           disabled={!canDelete}
           title={
             canDelete
-              ? "Delete this position"
-              : "Delete or move this position's contributions first"
+              ? t("Delete this position")
+              : t("Delete or move this position's contributions first")
           }
           className="text-expense hover:text-bg hover:bg-expense"
         >
           <DeleteIcon aria-hidden />
-          <span className="ml-1">Delete</span>
+          <span className="ml-1">{t("Delete")}</span>
         </Button>
         <Button
           variant="ghost"
@@ -340,13 +339,13 @@ export default function HoldingDetailPanel({
           onClick={onClose}
           className="ml-auto"
         >
-          Close
+          {t("Close")}
         </Button>
       </div>
 
       {!isMarket && valuations.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h4 className="label-sm">Balance history</h4>
+          <h4 className="label-sm">{t("Balance history")}</h4>
           <ul className="surface divide-y divide-border">
             {valuations.map((v) => (
               <li
@@ -365,7 +364,7 @@ export default function HoldingDetailPanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label="Delete valuation"
+                  aria-label={t("Delete valuation")}
                   onClick={() => onDeleteValuation(v.id)}
                   className="px-2"
                 >
@@ -378,7 +377,7 @@ export default function HoldingDetailPanel({
       )}
 
       <div className="flex flex-col gap-2">
-        <h4 className="label-sm">Contributions</h4>
+        <h4 className="label-sm">{t("Contributions")}</h4>
         <TransactionList
           transactions={contributions}
           accountsById={accountsById as Record<string, Account>}
@@ -389,8 +388,8 @@ export default function HoldingDetailPanel({
               shares: t.sharesDelta,
             })
           }
-          emptyTitle="No contributions yet"
-          emptyDescription="Use Contribute to log your first buy."
+          emptyTitle={t("No contributions yet")}
+          emptyDescription={t("Use Contribute to log your first buy.")}
         />
       </div>
 
@@ -403,15 +402,15 @@ export default function HoldingDetailPanel({
             return (
               <li key={r.id}>
                 {formatCurrency(r.amount, r.currency)}{" "}
-                {RECURRENCE_FREQUENCY_LABELS[r.frequency].toLowerCase()}
+                {t(RECURRENCE_FREQUENCY_LABELS[r.frequency]).toLowerCase()}
                 {r.active
                   ? next
-                    ? ` · next ${formatDate(next)}`
-                    : " · ended"
-                  : " · paused"}
+                    ? t(" · next {0}", { "0": formatDate(next) })
+                    : t(" · ended")
+                  : t(" · paused")}
                 {" · "}
                 <a href="/recurring" className="underline underline-offset-2 hover:text-fg">
-                  manage
+                  {t("manage")}
                 </a>
               </li>
             );
@@ -423,7 +422,7 @@ export default function HoldingDetailPanel({
         <Modal
           open={modal.kind === "recurring"}
           onClose={() => setModal({ kind: "none" })}
-          title={`Repeat a contribution to ${holding.name}`}
+          title={t("Repeat a contribution to {name}", { name: holding.name })}
         >
           <RecurringContributionForm
             holdings={[holding]}
@@ -440,7 +439,7 @@ export default function HoldingDetailPanel({
       <Modal
         open={modal.kind === "contribute"}
         onClose={() => setModal({ kind: "none" })}
-        title={`Contribute to ${holding.name}`}
+        title={t("Contribute to {name}", { name: holding.name })}
       >
         <HoldingContributionForm
           holding={holding}
@@ -455,7 +454,7 @@ export default function HoldingDetailPanel({
       <Modal
         open={modal.kind === "edit"}
         onClose={() => setModal({ kind: "none" })}
-        title="Edit position"
+        title={t("Edit position")}
       >
         <HoldingForm
           initial={holding}
@@ -470,7 +469,7 @@ export default function HoldingDetailPanel({
       <Modal
         open={modal.kind === "valuation"}
         onClose={() => setModal({ kind: "none" })}
-        title="Record balance"
+        title={t("Record balance")}
       >
         <ValuationForm
           holdingId={holding.id}
@@ -484,27 +483,27 @@ export default function HoldingDetailPanel({
 
       <ConfirmDialog
         open={modal.kind === "confirm-delete-tx"}
-        title="Remove this contribution?"
+        title={t("Remove this contribution?")}
         message={
           modal.kind === "confirm-delete-tx" ? (
             <>
-              This removes{" "}
+              {t("This removes")}{" "}
               {typeof modal.shares === "number" && modal.shares > 0 ? (
                 <>
-                  <span className="text-fg font-medium">
-                    {modal.shares.toFixed(4)} shares
-                  </span>{" "}
-                  from your {holding.name} position.
+                  {t("{shares} shares from your {name} position.", {
+                    shares: modal.shares.toFixed(4),
+                    name: holding.name,
+                  })}
                 </>
               ) : (
-                <>this contribution from your {holding.name} position.</>
+                <>{t("this contribution from your {name} position.", { name: holding.name })}</>
               )}{" "}
-              The originating account outflow is deleted too.
+              {t("The originating account outflow is deleted too.")}
             </>
           ) : null
         }
-        confirmLabel="Delete"
-        cancelLabel="Keep it"
+        confirmLabel={t("Delete")}
+        cancelLabel={t("Keep it")}
         tone="danger"
         onConfirm={async () => {
           if (modal.kind !== "confirm-delete-tx") return;
@@ -516,15 +515,14 @@ export default function HoldingDetailPanel({
 
       <ConfirmDialog
         open={confirmDeleteHolding}
-        title="Delete this position?"
+        title={t("Delete this position?")}
         message={
           <>
-            <span className="text-fg font-medium">{holding.name}</span> will be
-            removed. Contributions must be deleted or moved first.
+            <span className="text-fg font-medium">{holding.name}</span>{" "}{t("will be removed. Contributions must be deleted or moved first.")}
           </>
         }
-        confirmLabel="Delete"
-        cancelLabel="Keep it"
+        confirmLabel={t("Delete")}
+        cancelLabel={t("Keep it")}
         tone="danger"
         onConfirm={async () => {
           setConfirmDeleteHolding(false);

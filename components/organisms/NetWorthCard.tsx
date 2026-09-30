@@ -7,6 +7,7 @@ import { monthLabel } from "@/lib/utils/analytics";
 import { cn } from "@/lib/utils/cn";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils/format";
 
+import { t } from "@/lib/i18n";
 const W = 320;
 const H = 140;
 const PAD_X = 10;
@@ -55,7 +56,7 @@ export default function NetWorthCard() {
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <div className="flex flex-col gap-0.5">
           <span id="net-worth-title" className="chart-title">
-            Net worth
+            {t("Net worth")}
           </span>
           <span className="font-serif text-2xl tabular-nums leading-tight">
             {fmt(last.netWorth)}
@@ -69,23 +70,23 @@ export default function NetWorthCard() {
             )}
           >
             {change >= 0 ? "+" : "−"}
-            {fmt(Math.abs(change))} since {monthLabel(prev.monthKey)}
+            {t("{amount} since {month}", { amount: fmt(Math.abs(change)), month: monthLabel(prev.monthKey) })}
           </span>
         )}
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted" aria-live="polite">
         <span className="text-fg">{monthLabel(focus.monthKey, false)}</span>
-        <span>Accounts {fmt(focus.cash)}</span>
-        <span>Invested {fmt(focus.investments)}</span>
-        {focus.liabilities > 0 && <span>Cards owed {fmt(focus.liabilities)}</span>}
+        <span>{t("Accounts {amount}", { amount: fmt(focus.cash) })}</span>
+        <span>{t("Invested {amount}", { amount: fmt(focus.investments) })}</span>
+        {focus.liabilities > 0 && <span>{t("Cards owed {amount}", { amount: fmt(focus.liabilities) })}</span>}
       </div>
 
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-[140px]"
         role="img"
-        aria-label={`Net worth over the last ${series.length} months, from ${fmt(series[0].netWorth)} to ${fmt(last.netWorth)}`}
+        aria-label={t("Net worth over the last {length} months, from {0} to {1}", { length: series.length, "0": fmt(series[0].netWorth), "1": fmt(last.netWorth) })}
         onMouseLeave={() => setHovered(null)}
       >
         {min < 0 && (
@@ -156,21 +157,21 @@ export default function NetWorthCard() {
       </svg>
 
       <p className="text-[11px] text-fg-subtle">
-        Month-end balances at today&apos;s exchange rates.
+        {t("Month-end balances at today's exchange rates.")}
         {anyEstimated
-          ? " Holdings without price history are counted at what you put in."
+          ? t(" Holdings without price history are counted at what you put in.")
           : ""}
       </p>
 
       <table className="sr-only">
-        <caption>Net worth by month</caption>
+        <caption>{t("Net worth by month")}</caption>
         <thead>
           <tr>
-            <th scope="col">Month</th>
-            <th scope="col">Accounts</th>
-            <th scope="col">Invested</th>
-            <th scope="col">Cards owed</th>
-            <th scope="col">Net worth</th>
+            <th scope="col">{t("Month")}</th>
+            <th scope="col">{t("Accounts")}</th>
+            <th scope="col">{t("Invested")}</th>
+            <th scope="col">{t("Cards owed")}</th>
+            <th scope="col">{t("Net worth")}</th>
           </tr>
         </thead>
         <tbody>

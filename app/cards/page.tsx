@@ -17,6 +17,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { computeCardHistory } from "@/lib/credit/statement";
 import type { Account, NewAccount, NewTransfer } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 export default function CardsPage() {
   const {
     accounts,
@@ -92,7 +93,7 @@ export default function CardsPage() {
       await remove(pendingDelete.id);
       setPendingDelete(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not delete card");
+      setError(err instanceof Error ? err.message : t("Could not delete card"));
     } finally {
       setDeleting(false);
     }
@@ -103,11 +104,11 @@ export default function CardsPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Manage"
-        title="Cards"
+        kicker={t("Manage")}
+        title={t("Cards")}
         actions={
           <Button size="md" onClick={openCreate}>
-            + Add
+            {t("+ Add")}
           </Button>
         }
       />
@@ -122,9 +123,9 @@ export default function CardsPage() {
         <RowSkeleton count={2} />
       ) : cards.length === 0 ? (
         <EmptyState
-          title="No credit cards yet"
-          description="Add a card with its cut and payment days and Perch will track statements, unbilled charges, and what to pay when."
-          actionLabel="Add a card"
+          title={t("No credit cards yet")}
+          description={t("Add a card with its cut and payment days and Perch will track statements, unbilled charges, and what to pay when.")}
+          actionLabel={t("Add a card")}
           actionOnClick={openCreate}
         />
       ) : (
@@ -151,7 +152,7 @@ export default function CardsPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Edit card" : "New card"}
+        title={editing ? t("Edit card") : t("New card")}
       >
         <CardForm
           initial={editing ?? undefined}
@@ -163,7 +164,7 @@ export default function CardsPage() {
       <Modal
         open={!!payingCard && !!payingTotals}
         onClose={() => setPayingCard(null)}
-        title={payingCard ? `Pay ${payingCard.name}` : "Pay card"}
+        title={payingCard ? `Pay ${payingCard.name}` : t("Pay card")}
       >
         {payingCard && payingTotals && (
           <PayCardForm
@@ -179,7 +180,7 @@ export default function CardsPage() {
       <Modal
         open={!!reconciling}
         onClose={() => setReconciling(null)}
-        title={reconciling ? `Reconcile ${reconciling.name}` : "Reconcile"}
+        title={reconciling ? `Reconcile ${reconciling.name}` : t("Reconcile")}
       >
         {reconciling && (
           <ReconcileForm
@@ -195,18 +196,17 @@ export default function CardsPage() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete this card?"
+        title={t("Delete this card?")}
         message={
           pendingDelete && (
             <>
               <span className="text-fg font-medium">{pendingDelete.name}</span>{" "}
-              will be removed. Its transactions stay in the ledger, unassigned —
-              you can reassign them later.
+              {t("will be removed. Its transactions stay in the ledger, unassigned — you can reassign them later.")}
             </>
           )
         }
-        confirmLabel="Delete card"
-        cancelLabel="Keep it"
+        confirmLabel={t("Delete card")}
+        cancelLabel={t("Keep it")}
         tone="danger"
         submitting={deleting}
         onConfirm={confirmDelete}

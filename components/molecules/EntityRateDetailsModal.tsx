@@ -3,6 +3,7 @@
 import Modal from "@/components/atoms/Modal";
 import type { BccrEntityRate } from "@/lib/services/bccrRates";
 
+import { getLocale, t, tn } from "@/lib/i18n";
 interface EntityRateDetailsModalProps {
   entity: BccrEntityRate | null;
   bestBuy: number;
@@ -13,7 +14,7 @@ interface EntityRateDetailsModalProps {
 
 function fmtRate(value: number | null): string {
   if (value === null) return "—";
-  return value.toLocaleString("en-US", {
+  return value.toLocaleString(getLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -25,13 +26,13 @@ function fmtRelative(iso: string): string {
   const diff = now - then;
   if (Number.isNaN(then)) return iso;
   const seconds = Math.round(diff / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("just now");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return t("{minutes} min ago", { minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
+  if (hours < 24) return t("{hours} hr ago", { hours });
   const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return tn("{count} day ago", "{count} days ago", days);
 }
 
 export default function EntityRateDetailsModal({
@@ -55,11 +56,11 @@ export default function EntityRateDetailsModal({
     entity && entity.sell !== null ? entity.sell - bestSell : null;
 
   return (
-    <Modal open={!!entity} onClose={onClose} title="Rate details">
+    <Modal open={!!entity} onClose={onClose} title={t("Rate details")}>
       {entity && (
         <div className="flex flex-col gap-4">
           <div className="rounded-[10px] bg-surface-2 px-4 py-3">
-            <span className="kicker">Entity</span>
+            <span className="kicker">{t("Entity")}</span>
             <p className="font-serif text-lg text-fg mt-1 break-words">
               {entity.name}
             </p>
@@ -73,7 +74,7 @@ export default function EntityRateDetailsModal({
                     borderColor: "transparent",
                   }}
                 >
-                  Best buy
+                  {t("Best buy")}
                 </span>
               )}
               {isBestSell && (
@@ -85,12 +86,12 @@ export default function EntityRateDetailsModal({
                     borderColor: "transparent",
                   }}
                 >
-                  Best sell
+                  {t("Best sell")}
                 </span>
               )}
               {!isBestBuy && !isBestSell && (
                 <span className="text-[11px] text-fg-muted uppercase tracking-[0.14em]">
-                  {entity.category ?? "Bank window"}
+                  {entity.category ?? t("Bank window")}
                 </span>
               )}
             </div>
@@ -98,12 +99,12 @@ export default function EntityRateDetailsModal({
 
           <dl className="flex flex-col divide-y divide-border">
             <Row
-              label="Buy"
+              label={t("Buy")}
               hint={
                 buyGap !== null && buyGap > 0
-                  ? `₡${fmtRate(buyGap)} short of best`
+                  ? t("₡{0} short of best", { "0": fmtRate(buyGap) })
                   : buyGap === 0
-                    ? "At the best"
+                    ? t("At the best")
                     : undefined
               }
             >
@@ -117,12 +118,12 @@ export default function EntityRateDetailsModal({
               </span>
             </Row>
             <Row
-              label="Sell"
+              label={t("Sell")}
               hint={
                 sellGap !== null && sellGap > 0
-                  ? `₡${fmtRate(sellGap)} above best`
+                  ? t("₡{0} above best", { "0": fmtRate(sellGap) })
                   : sellGap === 0
-                    ? "At the best"
+                    ? t("At the best")
                     : undefined
               }
             >
@@ -136,13 +137,13 @@ export default function EntityRateDetailsModal({
               </span>
             </Row>
             {spread !== null && (
-              <Row label="Spread">
+              <Row label={t("Spread")}>
                 <span className="figure text-sm text-fg">
                   ₡{fmtRate(spread)}
                 </span>
               </Row>
             )}
-            <Row label="Updated">
+            <Row label={t("Updated")}>
               <span className="text-fg">{fmtRelative(fetchedAt)}</span>
             </Row>
           </dl>

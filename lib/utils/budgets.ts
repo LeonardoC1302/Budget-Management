@@ -1,6 +1,7 @@
 import type { Budget, BudgetCapChange, Transaction } from "@/lib/types";
 import { spendSign } from "@/lib/utils/refunds";
 
+import { getLocale } from "@/lib/i18n";
 export type BudgetStatus = "on-track" | "warning" | "over";
 
 export interface BudgetProgress {
@@ -34,7 +35,7 @@ export function monthKeyOf(dateISO: string): string {
 
 export function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);
-  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+  return new Date(year, month - 1, 1).toLocaleDateString(getLocale(), {
     month: "long",
     year: "numeric",
   });

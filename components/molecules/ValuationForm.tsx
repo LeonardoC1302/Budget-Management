@@ -10,6 +10,7 @@ import type {
   NewHoldingValuation,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface ValuationFormProps {
   holdingId: string;
   initial?: HoldingValuation;
@@ -51,7 +52,7 @@ export default function ValuationForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
-        label="Balance (USD)"
+        label={t("Balance (USD)")}
         name="valueUSD"
         type="number"
         inputMode="decimal"
@@ -64,7 +65,7 @@ export default function ValuationForm({
       />
 
       <DatePicker
-        label="As of"
+        label={t("As of")}
         name="asOfDate"
         required
         value={asOfDate}
@@ -72,9 +73,9 @@ export default function ValuationForm({
       />
 
       <Input
-        label="Note"
+        label={t("Note")}
         name="note"
-        placeholder="e.g. Q3 statement"
+        placeholder={t("e.g. Q3 statement")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
@@ -88,13 +89,13 @@ export default function ValuationForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
           {submitting
-            ? isEditing ? "Saving…" : "Recording…"
-            : isEditing ? "Save valuation" : "Record valuation"}
+            ? isEditing ? t("Saving…") : t("Recording…")
+            : isEditing ? t("Save valuation") : t("Record valuation")}
         </Button>
       </div>
     </form>

@@ -13,6 +13,7 @@ import type {
   NewGoalContribution,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface GoalWithdrawalFormProps {
   goal: Goal;
   contributions: GoalContribution[];
@@ -52,11 +53,11 @@ export default function GoalWithdrawalForm({
       .filter(([, amount]) => amount > 0.005)
       .map(([id, amount]) => ({
         value: id,
-        label: accountsById[id]?.name ?? "Deleted account",
+        label: accountsById[id]?.name ?? t("Deleted account"),
         amount,
       }));
     if (unassigned > 0.005) {
-      list.push({ value: UNASSIGNED, label: "Not tied to an account", amount: unassigned });
+      list.push({ value: UNASSIGNED, label: t("Not tied to an account"), amount: unassigned });
     }
     return list;
   }, [goal.initialAmount, contributions, accountsById]);
@@ -91,13 +92,13 @@ export default function GoalWithdrawalForm({
   }
 
   if (sources.length === 0) {
-    return <p className="text-sm text-fg-muted">There&apos;s nothing saved in this goal yet.</p>;
+    return <p className="text-sm text-fg-muted">{t("There's nothing saved in this goal yet.")}</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Select
-        label="Take it from"
+        label={t("Take it from")}
         value={selected?.value ?? ""}
         onChange={setSource}
         options={sources.map((s) => ({
@@ -118,34 +119,33 @@ export default function GoalWithdrawalForm({
         onChange={(e) => setAmount(e.target.value)}
         error={
           tooMuch && selected
-            ? `Only ${formatCurrency(selected.amount, goal.currency)} of this goal is there.`
+            ? t("Only {0} of this goal is there.", { "0": formatCurrency(selected.amount, goal.currency) })
             : undefined
         }
       />
 
       <Input
-        label="Note"
+        label={t("Note")}
         name="withdraw-note"
-        placeholder="Optional, e.g. car repair"
+        placeholder={t("Optional, e.g. car repair")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
 
-      <DatePicker label="Date" name="withdraw-date" required value={date} onChange={setDate} />
+      <DatePicker label={t("Date")} name="withdraw-date" required value={date} onChange={setDate} />
 
       <p className="text-xs text-fg-subtle">
-        This frees the money on the account for other use; it doesn&apos;t move
-        it. If you spent it, add that expense as usual.
+        {t("This frees the money on the account for other use; it doesn't move it. If you spent it, add that expense as usual.")}
       </p>
 
       <div className="flex gap-2 pt-2">
         {onCancel && (
           <Button type="button" variant="secondary" size="lg" fullWidth onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={!valid || submitting}>
-          {submitting ? "Saving…" : "Withdraw"}
+          {submitting ? t("Saving…") : t("Withdraw")}
         </Button>
       </div>
     </form>

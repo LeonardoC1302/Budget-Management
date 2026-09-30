@@ -23,6 +23,9 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Cloud persistence** — All data is stored per-user in Firebase Firestore. A local-storage store implementation is also included and can be swapped in for offline-only use.
 - **Offline** — The app opens and records transactions with no connection. Firestore keeps a copy of your data on the device and syncs queued changes when the connection returns; a status line shows what's still waiting. Last known exchange and bank rates are reused while offline.
 - **Undo and Recently deleted** — Deletes can be undone for a few seconds, and anything deleted stays restorable under Settings → Recently deleted for 30 days before it's removed for good.
+- **English and Spanish** — Switch language in Settings; the choice follows you across devices. Spanish formats money and dates the Costa Rican way. Strings live in `lib/i18n/es.ts`, keyed by the English text passed to `t()`.
+- **App lock** — Optional PIN, plus fingerprint or face unlock where the device supports it (WebAuthn), set per device under Settings → App lock. It's a screen lock, not encryption.
+- **Onboarding** — New users pick a language and display currency and add their own accounts; there's no default cash account any more. Existing users never see it.
 - **Mobile-first UI** — Responsive layout with bottom-anchored actions on small screens.
 
 ## Tech stack

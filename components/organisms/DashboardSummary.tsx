@@ -11,6 +11,7 @@ import {
   marketSnapshot,
 } from "@/lib/utils/holdings";
 
+import { t } from "@/lib/i18n";
 interface DashboardSummaryProps {
   income: number;
   expense: number;
@@ -86,22 +87,22 @@ export default function DashboardSummary({
   return (
     <section
       className="surface grid grid-cols-2 sm:grid-cols-3"
-      aria-label="Month summary"
+      aria-label={t("Month summary")}
     >
       <Tile
-        label="Income"
+        label={t("Income")}
         value={formatCurrencyCompact(convertUsd(income), displayCurrency)}
         tone="text-income"
       />
       <Tile
-        label="Expenses"
+        label={t("Expenses")}
         value={formatCurrencyCompact(convertUsd(expense), displayCurrency)}
         tone="text-expense"
         className="border-l border-border"
       />
       {showPortfolio && portfolio && (
         <Tile
-          label="Portfolio"
+          label={t("Portfolio")}
           value={formatCurrencyCompact(convertUsd(portfolio.currentValue), displayCurrency)}
           tone="text-invest"
           hint={

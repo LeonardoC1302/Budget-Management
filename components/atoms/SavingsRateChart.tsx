@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { monthLabel, type MonthlyPoint } from "@/lib/utils/analytics";
 
+import { t } from "@/lib/i18n";
 interface SavingsRateChartProps {
   data: MonthlyPoint[];
 }
@@ -46,9 +47,9 @@ export default function SavingsRateChart({ data }: SavingsRateChartProps) {
       viewBox={`0 0 ${W} ${H}`}
       className="w-full h-[120px]"
       role="img"
-      aria-label={`Savings rate by month: ${data
-        .map((p, i) => `${monthLabel(p.monthKey)} ${rates[i] === null ? "no income" : pct(rates[i]!)}`)
-        .join(", ")}`}
+      aria-label={t("Savings rate by month: {0}", { "0": data
+        .map((p, i) => `${monthLabel(p.monthKey)} ${rates[i] === null ? t("no income") : pct(rates[i]!)}`)
+        .join(", ") })}
       onMouseLeave={() => setHovered(null)}
     >
       <line

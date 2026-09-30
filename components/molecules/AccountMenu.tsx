@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { hasUnsyncedChanges } from "@/lib/offline/syncStatus";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 function initialsOf(name: string): string {
   const parts = name
     .split(/\s+/)
@@ -51,7 +52,7 @@ export default function AccountMenu() {
   if (!user) return null;
 
   const name =
-    user.displayName?.trim() || user.email?.split("@")[0] || "You";
+    user.displayName?.trim() || user.email?.split("@")[0] || t("You");
   const email = user.email ?? "";
   const initials = initialsOf(name);
 
@@ -75,7 +76,7 @@ export default function AccountMenu() {
       <button
         ref={buttonRef}
         type="button"
-        aria-label={`Account menu for ${name}`}
+        aria-label={t("Account menu for {name}", { name })}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -109,7 +110,7 @@ export default function AccountMenu() {
       {open && (
         <div
           role="menu"
-          aria-label="Account"
+          aria-label={t("Account")}
           className={cn(
             "absolute right-0 top-full mt-2 z-40 min-w-[16rem]",
             "surface p-1.5 shadow-2xl",
@@ -142,7 +143,7 @@ export default function AccountMenu() {
               "transition-colors",
             )}
           >
-            Settings
+            {t("Settings")}
           </Link>
 
           <button
@@ -160,21 +161,21 @@ export default function AccountMenu() {
               "transition-colors",
             )}
           >
-            Sign out
+            {t("Sign out")}
           </button>
         </div>
       )}
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Sign out of Perch?"
+        title={t("Sign out of Perch?")}
         message={
           unsynced
-            ? "Some changes on this device haven't synced yet. Connect to the internet and wait for “Syncing changes” to finish, or they'll be lost."
-            : "Your data stays where it is. You'll need to sign in with Google again to open it."
+            ? t("Some changes on this device haven't synced yet. Connect to the internet and wait for “Syncing changes” to finish, or they'll be lost.")
+            : t("Your data stays where it is. You'll need to sign in with Google again to open it.")
         }
-        confirmLabel="Sign out"
-        cancelLabel="Stay signed in"
+        confirmLabel={t("Sign out")}
+        cancelLabel={t("Stay signed in")}
         tone="danger"
         submitting={submitting}
         onConfirm={handleSignOut}

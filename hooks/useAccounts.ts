@@ -14,6 +14,7 @@ import type {
   Transaction,
 } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 function computeDerived(accounts: Account[], transactions: Transaction[]) {
   const balances: Record<string, number> = {};
   const counts: Record<string, number> = {};
@@ -80,7 +81,7 @@ function computeReservations(
     out[accountId] = Object.entries(perGoal)
       .map(([goalId, amount]) => ({
         goalId,
-        goalName: goalsById[goalId]?.name ?? "Goal",
+        goalName: goalsById[goalId]?.name ?? t("Goal"),
         amount,
       }))
       .filter((r) => r.amount > 0)
@@ -164,7 +165,11 @@ export function useAccounts() {
       const count = txCountByAccount[id] ?? 0;
       if (count > 0) {
         throw new Error(
-          `This account has ${count} transaction${count === 1 ? "" : "s"}. Delete or reassign them before deleting the account.`,
+          tn(
+            "This account has {count} transaction. Delete or reassign it before deleting the account.",
+            "This account has {count} transactions. Delete or reassign them before deleting the account.",
+            count,
+          ),
         );
       }
       const target = accounts.find((a) => a.id === id);
@@ -185,7 +190,7 @@ export function useAccounts() {
   const reconcile = useCallback(
     async (id: string, actualBalance: number) => {
       const target = accounts.find((a) => a.id === id);
-      if (!target) throw new Error("Account not found.");
+      if (!target) throw new Error(t("Account not found."));
       const ownerUid = target._owner?.uid;
       const current = balances[id] ?? target.initialBalance;
       const diff = Math.round((actualBalance - current) * 100) / 100;
@@ -197,7 +202,8 @@ export function useAccounts() {
             currency: target.currency,
             accountId: id,
             categoryId: "",
-            description: "Balance adjustment",
+            // Left blank so the list shows a label in the reader's language.
+            description: "",
             date: todayISODate(),
             adjustment: true,
           },

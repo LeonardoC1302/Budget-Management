@@ -10,6 +10,7 @@ import {
 } from "@/lib/nav/items";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface MobileNavMenuProps {
   open: boolean;
   onClose: () => void;
@@ -19,16 +20,16 @@ export default function MobileNavMenu({ open, onClose }: MobileNavMenuProps) {
   const pathname = usePathname();
 
   return (
-    <Modal open={open} onClose={onClose} title="Navigate">
+    <Modal open={open} onClose={onClose} title={t("Navigate")}>
       <div className="flex flex-col gap-6">
         <NavGroup
-          heading="Everyday"
+          heading={t("Everyday")}
           items={PRIMARY_ITEMS}
           pathname={pathname}
           onClose={onClose}
         />
         <NavGroup
-          heading="Reference"
+          heading={t("Reference")}
           items={SECONDARY_ITEMS}
           pathname={pathname}
           onClose={onClose}
@@ -78,7 +79,7 @@ function NavGroup({ heading, items, pathname, onClose }: NavGroupProps) {
                 />
               )}
               <Icon width={20} height={20} aria-hidden />
-              <span className="text-sm">{item.label}</span>
+              <span className="text-sm">{t(item.label)}</span>
             </Link>
           );
         })}

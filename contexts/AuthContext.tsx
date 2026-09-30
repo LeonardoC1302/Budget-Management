@@ -16,11 +16,18 @@ import {
   signOutUser,
   type TesterId,
 } from "@/lib/firebase/auth";
-import { ensureUserSeed, upsertUserProfile } from "@/lib/firebase/seed";
+import {
+  completeOnboarding,
+  ensureUserSeed,
+  upsertUserProfile,
+} from "@/lib/firebase/seed";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  // True for a brand-new user until they finish (or skip) onboarding.
+  needsOnboarding: boolean;
+  finishOnboarding: () => Promise<void>;
   signIn: () => Promise<void>;
   // Dev-only. Throws unless the app is running against the local emulator.
   signInTester: (id: TesterId) => Promise<void>;
@@ -32,6 +39,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (nextUser) => {
@@ -43,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The profile refresh isn't needed to render, so it doesn't hold up
       // sign-in (it may be waiting on a slow or missing connection).
       ensureUserSeed(nextUser.uid)
+        .then((state) => setNeedsOnboarding(state === "pending"))
         .catch((err) => {
           console.error("Failed to seed user data", err);
         })
@@ -67,12 +76,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInAsTester(id);
   }, []);
 
+  const finishOnboarding = useCallback(async () => {
+    const uid = auth.currentUser?.uid;
+    if (uid) await completeOnboarding(uid);
+    setNeedsOnboarding(false);
+  }, []);
+
   const signOut = useCallback(async () => {
     await signOutUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signInTester, signOut }}>
+    <AuthContext.Provider value={{
+        user,
+        loading,
+        needsOnboarding,
+        finishOnboarding,
+        signIn,
+        signInTester,
+        signOut,
+      }}>
       {children}
     </AuthContext.Provider>
   );

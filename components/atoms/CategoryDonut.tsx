@@ -3,6 +3,7 @@
 import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryBreakdown } from "@/lib/utils/analytics";
 
+import { t } from "@/lib/i18n";
 interface CategoryDonutProps {
   breakdown: CategoryBreakdown;
   currency?: string;
@@ -24,6 +25,11 @@ const STROKE = 18;
 const R = (SIZE - STROKE) / 2;
 const CIRCUM = 2 * Math.PI * R;
 
+// The catch-all slice is named in code, so it follows the UI language.
+function sliceName(slice: { categoryId: string; name: string }): string {
+  return slice.categoryId === "__other__" ? t("Other") : slice.name;
+}
+
 export default function CategoryDonut({
   breakdown,
   currency = "USD",
@@ -33,7 +39,7 @@ export default function CategoryDonut({
   if (total === 0) {
     return (
       <p className="text-sm text-fg-subtle">
-        No expenses recorded this month yet.
+        {t("No expenses recorded this month yet.")}
       </p>
     );
   }
@@ -61,7 +67,7 @@ export default function CategoryDonut({
         transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
       >
         <title>
-          {`${slice.name}: ${formatCurrency(slice.amount, currency)} (${Math.round(slice.share * 100)}%)`}
+          {`${sliceName(slice)}: ${formatCurrency(slice.amount, currency)} (${Math.round(slice.share * 100)}%)`}
         </title>
       </circle>
     );
@@ -75,7 +81,7 @@ export default function CategoryDonut({
           width={SIZE}
           height={SIZE}
           role="img"
-          aria-label="Category spending breakdown"
+          aria-label={t("Category spending breakdown")}
         >
           <circle
             cx={SIZE / 2}
@@ -88,7 +94,7 @@ export default function CategoryDonut({
           {segments}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="label-sm">Total</span>
+          <span className="label-sm">{t("Total")}</span>
           <span className="mt-1 text-base font-medium text-fg tabular-nums font-serif">
             {formatCurrency(total, currency)}
           </span>
@@ -107,7 +113,7 @@ export default function CategoryDonut({
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
               />
-              <span className="text-fg truncate">{slice.name}</span>
+              <span className="text-fg truncate">{sliceName(slice)}</span>
             </div>
             <div className="flex items-center gap-2 text-fg-muted tabular-nums shrink-0">
               <span>{formatCurrency(slice.amount, currency)}</span>

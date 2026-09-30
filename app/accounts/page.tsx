@@ -16,6 +16,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { TransferIcon } from "@/lib/action/icons";
 import type { Account, NewAccount, NewTransfer } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 export default function AccountsPage() {
   const {
     accounts,
@@ -81,7 +82,7 @@ export default function AccountsPage() {
       await remove(pendingDelete.id);
       setPendingDelete(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not delete account");
+      setError(err instanceof Error ? err.message : t("Could not delete account"));
     } finally {
       setDeleting(false);
     }
@@ -101,11 +102,11 @@ export default function AccountsPage() {
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
-        kicker="Manage"
-        title="Accounts"
+        kicker={t("Manage")}
+        title={t("Accounts")}
         actions={
           <Button size="md" onClick={openCreate}>
-            + Add
+            {t("+ Add")}
           </Button>
         }
       />
@@ -123,14 +124,14 @@ export default function AccountsPage() {
           {nonCreditAccounts.length > 0 && (
             <section
               className="flex flex-col"
-              aria-label="Net across accounts"
+              aria-label={t("Net across accounts")}
             >
               <div className="section-head">
-                <span className="section-head-title">Net across accounts</span>
+                <span className="section-head-title">{t("Net across accounts")}</span>
                 <span className="section-head-meta">
-                  {nonCreditAccounts.length} account
-                  {nonCreditAccounts.length === 1 ? "" : "s"} · {balancesByCurrency.length} currenc
-                  {balancesByCurrency.length === 1 ? "y" : "ies"}
+                  {tn("{count} account", "{count} accounts", nonCreditAccounts.length)}
+                  {" · "}
+                  {tn("{count} currency", "{count} currencies", balancesByCurrency.length)}
                 </span>
               </div>
               <div className="rooms">
@@ -151,14 +152,14 @@ export default function AccountsPage() {
                 ))}
               </div>
               <p className="lede text-xs mt-3">
-                Balances are shown in each account&apos;s own currency — no conversion.
+                {t("Balances are shown in each account's own currency — no conversion.")}
               </p>
             </section>
           )}
 
-          <section className="flex flex-col" aria-label="Accounts">
+          <section className="flex flex-col" aria-label={t("Accounts")}>
             <div className="section-head">
-              <span className="section-head-title">All accounts</span>
+              <span className="section-head-title">{t("All accounts")}</span>
               {canTransfer ? (
                 <button
                   type="button"
@@ -166,10 +167,10 @@ export default function AccountsPage() {
                   className="section-head-link inline-flex items-center gap-1.5"
                 >
                   <TransferIcon aria-hidden />
-                  <span>Move money</span>
+                  <span>{t("Move money")}</span>
                 </button>
               ) : (
-                <span className="section-head-meta">Managed by hand</span>
+                <span className="section-head-meta">{t("Managed by hand")}</span>
               )}
             </div>
             <AccountList
@@ -180,23 +181,27 @@ export default function AccountsPage() {
               onEdit={openEdit}
               onDelete={setPendingDelete}
               onReconcile={setReconciling}
-              emptyTitle="No accounts yet."
-              emptyDescription="Add your first account so transactions have somewhere to land."
-              emptyActionLabel="Add an account"
+              emptyTitle={t("No accounts yet.")}
+              emptyDescription={t("Add your first account so transactions have somewhere to land.")}
+              emptyActionLabel={t("Add an account")}
               emptyActionOnClick={openCreate}
             />
           </section>
 
           {creditCardCount > 0 && (
             <p className="lede text-xs text-center">
-              {creditCardCount} credit card{creditCardCount === 1 ? "" : "s"} live on the{" "}
+              {tn(
+                "{count} credit card lives on the",
+                "{count} credit cards live on the",
+                creditCardCount,
+              )}{" "}
               <a
                 href="/cards"
                 className="text-fg hover:text-accent underline decoration-dotted underline-offset-4"
               >
-                Cards
+                {t("Cards")}
               </a>{" "}
-              tab.
+              {t("tab.")}
             </p>
           )}
         </>
@@ -205,7 +210,7 @@ export default function AccountsPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Edit account" : "New account"}
+        title={editing ? t("Edit account") : t("New account")}
       >
         <AccountForm
           initial={editing ?? undefined}
@@ -217,7 +222,7 @@ export default function AccountsPage() {
       <Modal
         open={!!reconciling}
         onClose={() => setReconciling(null)}
-        title={reconciling ? `Reconcile ${reconciling.name}` : "Reconcile"}
+        title={reconciling ? `Reconcile ${reconciling.name}` : t("Reconcile")}
       >
         {reconciling && (
           <ReconcileForm
@@ -234,7 +239,7 @@ export default function AccountsPage() {
       <Modal
         open={transferOpen}
         onClose={() => setTransferOpen(false)}
-        title="Transfer between accounts"
+        title={t("Transfer between accounts")}
       >
         <TransferForm
           onSubmit={handleTransfer}
@@ -244,18 +249,17 @@ export default function AccountsPage() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete this account?"
+        title={t("Delete this account?")}
         message={
           pendingDelete && (
             <>
               <span className="text-fg font-medium">{pendingDelete.name}</span>{" "}
-              will be removed. Its transactions stay in the ledger, unassigned
-              — you can reassign them later.
+              {t("will be removed. Its transactions stay in the ledger, unassigned — you can reassign them later.")}
             </>
           )
         }
-        confirmLabel="Delete account"
-        cancelLabel="Keep it"
+        confirmLabel={t("Delete account")}
+        cancelLabel={t("Keep it")}
         tone="danger"
         submitting={deleting}
         onConfirm={confirmDelete}

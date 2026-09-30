@@ -12,9 +12,11 @@ import RouteMasthead from "@/components/molecules/RouteMasthead";
 import BudgetList from "@/components/organisms/BudgetList";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
+import { monthLabel } from "@/lib/utils/analytics";
 import { currentMonthKey, formatMonthLabel } from "@/lib/utils/budgets";
 import type { Budget, NewBudget } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 type Mode =
   | { kind: "closed" }
   | { kind: "create" }
@@ -64,7 +66,7 @@ export default function BudgetsPage() {
       }
       close();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save budget");
+      setError(err instanceof Error ? err.message : t("Could not save budget"));
     }
   }
 
@@ -81,17 +83,17 @@ export default function BudgetsPage() {
 
   const usedCategoryIds = budgets.map((b) => b.categoryId);
   const pendingDeleteName = pendingDelete
-    ? categoriesById[pendingDelete.categoryId]?.name ?? "this budget"
+    ? categoriesById[pendingDelete.categoryId]?.name ?? t("this budget")
     : "";
 
   return (
     <div className="flex flex-col gap-6">
       <RouteMasthead
         kicker={formatMonthLabel(monthKey)}
-        title="Budgets"
+        title={t("Budgets")}
         actions={
           <Button size="md" onClick={() => setMode({ kind: "create" })}>
-            + Add
+            {t("+ Add")}
           </Button>
         }
       />
@@ -102,16 +104,16 @@ export default function BudgetsPage() {
         <>
           {budgets.length > 0 && (
             <nav
-              aria-label="Choose month"
+              aria-label={t("Choose month")}
               className="flex items-center justify-between gap-3"
             >
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMonth(shiftMonth(viewMonth, -1))}
-                aria-label="Previous month"
+                aria-label={t("Previous month")}
               >
-                ← {formatMonthLabel(shiftMonth(viewMonth, -1)).split(" ")[0]}
+                ← {monthLabel(shiftMonth(viewMonth, -1))}
               </Button>
               <span className="text-sm text-fg font-medium">
                 {formatMonthLabel(monthKey)}
@@ -125,11 +127,11 @@ export default function BudgetsPage() {
                   )
                 }
                 disabled={isCurrentMonth}
-                aria-label="Next month"
+                aria-label={t("Next month")}
               >
                 {isCurrentMonth
-                  ? "Now"
-                  : `${formatMonthLabel(shiftMonth(viewMonth, 1)).split(" ")[0]} →`}
+                  ? t("Now")
+                  : `${monthLabel(shiftMonth(viewMonth, 1))} →`}
               </Button>
             </nav>
           )}
@@ -138,13 +140,17 @@ export default function BudgetsPage() {
             <BudgetSummary
               totals={totals}
               currency={summaryCurrency}
-              label={isCurrentMonth ? "Spent this month" : `Spent in ${formatMonthLabel(monthKey)}`}
+              label={
+                isCurrentMonth
+                  ? t("Spent this month")
+                  : t("Spent in {month}", { month: formatMonthLabel(monthKey) })
+              }
             />
           )}
 
           {budgets.length > 0 && (
-            <section className="surface p-5 flex flex-col gap-3" aria-label="Budget history">
-              <span className="label-sm">Last {history.length} months</span>
+            <section className="surface p-5 flex flex-col gap-3" aria-label={t("Budget history")}>
+              <span className="label-sm">{t("Last {count} months", { count: history.length })}</span>
               <BudgetHistoryChart
                 data={history.map((h) => ({
                   monthKey: h.monthKey,
@@ -157,9 +163,7 @@ export default function BudgetsPage() {
               />
               {budgets.some((b) => b.capHistory?.length) ? null : (
                 <p className="text-[11px] text-fg-subtle">
-                  Earlier months are compared with your caps as they are
-                  today. From now on, changing a cap keeps the old amount for
-                  past months.
+                  {t("Earlier months are compared with your caps as they are today. From now on, changing a cap keeps the old amount for past months.")}
                 </p>
               )}
             </section>
@@ -173,9 +177,9 @@ export default function BudgetsPage() {
             history={history}
             onEdit={(budget) => setMode({ kind: "edit", budget })}
             onDelete={(budget) => setPendingDelete(budget)}
-            emptyTitle="No budgets yet"
-            emptyDescription="Set a monthly cap on a category so you can catch trends before the end of the month."
-            emptyActionLabel="Add a monthly cap"
+            emptyTitle={t("No budgets yet")}
+            emptyDescription={t("Set a monthly cap on a category so you can catch trends before the end of the month.")}
+            emptyActionLabel={t("Add a monthly cap")}
             emptyActionOnClick={() => setMode({ kind: "create" })}
           />
         </>
@@ -184,7 +188,7 @@ export default function BudgetsPage() {
       <Modal
         open={mode.kind !== "closed"}
         onClose={close}
-        title={mode.kind === "edit" ? "Edit budget" : "New budget"}
+        title={mode.kind === "edit" ? t("Edit budget") : t("New budget")}
       >
         <>
           {error && (
@@ -203,15 +207,15 @@ export default function BudgetsPage() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete budget?"
+        title={t("Delete budget?")}
         message={
           <>
-            The monthly cap for{" "}
+            {t("The monthly cap for")}{" "}
             <span className="text-fg font-medium">{pendingDeleteName}</span>{" "}
-            will be removed. Your transactions won&apos;t be touched.
+            {t("will be removed. Your transactions won't be touched.")}
           </>
         }
-        confirmLabel="Delete"
+        confirmLabel={t("Delete")}
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
         submitting={deleting}

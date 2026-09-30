@@ -6,6 +6,7 @@ import type { Budget, Category } from "@/lib/types";
 import type { BudgetProgress } from "@/lib/utils/budgets";
 import type { BudgetMonth } from "@/hooks/useBudgets";
 
+import { t } from "@/lib/i18n";
 interface BudgetListProps {
   budgets: Budget[];
   categoriesById: Record<string, Category>;
@@ -35,7 +36,7 @@ export default function BudgetList({
   emptyActionLabel,
   emptyActionOnClick,
   emptyActionHref,
-  emptyMessage = "No budgets yet.",
+  emptyMessage = t("No budgets yet."),
 }: BudgetListProps) {
   if (budgets.length === 0) {
     return (

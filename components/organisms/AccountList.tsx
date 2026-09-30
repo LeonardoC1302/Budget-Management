@@ -5,6 +5,7 @@ import AccountCard from "@/components/molecules/AccountCard";
 import type { GoalReservation } from "@/hooks/useAccounts";
 import type { Account } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface AccountListProps {
   accounts: Account[];
   balances: Record<string, number>;
@@ -34,7 +35,7 @@ export default function AccountList({
   emptyActionLabel,
   emptyActionOnClick,
   emptyActionHref,
-  emptyMessage = "No accounts yet.",
+  emptyMessage = t("No accounts yet."),
 }: AccountListProps) {
   if (accounts.length === 0) {
     return (
