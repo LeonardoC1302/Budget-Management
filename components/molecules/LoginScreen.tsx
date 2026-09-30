@@ -3,17 +3,20 @@
 import { useState } from "react";
 import Button from "@/components/atoms/Button";
 import { useAuth } from "@/contexts/AuthContext";
+import { TESTERS, type TesterId } from "@/lib/firebase/auth";
+import { usingEmulator } from "@/lib/firebase/client";
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInTester } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSignIn() {
+  async function handleSignIn(tester?: TesterId) {
     setError(null);
     setSubmitting(true);
     try {
-      await signIn();
+      if (tester) await signInTester(tester);
+      else await signIn();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not sign in. Try again.",
@@ -42,11 +45,31 @@ export default function LoginScreen() {
         <Button
           size="lg"
           fullWidth
-          onClick={handleSignIn}
+          onClick={() => handleSignIn()}
           disabled={submitting}
         >
           {submitting ? "Signing in…" : "Continue with Google"}
         </Button>
+
+        {usingEmulator && (
+          <div className="flex flex-col gap-2 border-t border-border pt-5">
+            <span className="label-sm text-center">
+              Local emulator · test data only
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(TESTERS) as TesterId[]).map((id) => (
+                <Button
+                  key={id}
+                  variant="secondary"
+                  onClick={() => handleSignIn(id)}
+                  disabled={submitting}
+                >
+                  {TESTERS[id].name}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

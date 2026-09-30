@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:emulator": "node scripts/dev-emulator.mjs",
+    "emulator:reset": "node -e \"require('fs').rmSync('.emulator-data',{recursive:true,force:true})\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -22,6 +24,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "firebase-tools": "^15.32.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -10,13 +10,20 @@ import {
 } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { signInWithGoogle, signOutUser } from "@/lib/firebase/auth";
+import {
+  signInAsTester,
+  signInWithGoogle,
+  signOutUser,
+  type TesterId,
+} from "@/lib/firebase/auth";
 import { ensureUserSeed, upsertUserProfile } from "@/lib/firebase/seed";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   signIn: () => Promise<void>;
+  // Dev-only. Throws unless the app is running against the local emulator.
+  signInTester: (id: TesterId) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -50,12 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithGoogle();
   }, []);
 
+  const signInTester = useCallback(async (id: TesterId) => {
+    await signInAsTester(id);
+  }, []);
+
   const signOut = useCallback(async () => {
     await signOutUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signInTester, signOut }}>
       {children}
     </AuthContext.Provider>
   );

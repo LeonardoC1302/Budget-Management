@@ -76,6 +76,17 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 
    Open [http://localhost:3000](http://localhost:3000) and sign in with Google. On first sign-in, a set of default categories is seeded for your user.
 
+## Local testing without a Firebase account
+
+`npm run dev:emulator` runs the app against the Firebase Emulator Suite (Auth + Firestore) on your machine instead of the real project. The login screen then shows **Tester A** and **Tester B** buttons under "Local emulator · test data only". Two testers exist so you can try Connections between them.
+
+- Requires Java 11+ (`winget install EclipseAdoptium.Temurin.21.JRE`). The first run downloads the emulator binaries.
+- Uses the `demo-perch` project ID. Firebase treats `demo-` projects as emulator-only, so nothing reaches the real project even if `.env.local` is filled in.
+- Test data is saved to `.emulator-data/` when you stop the server and loaded on the next run. `npm run emulator:reset` wipes it.
+- The Emulator UI at [http://localhost:4000](http://localhost:4000) lets you browse and edit the test data.
+- `firestore.rules` is loaded by the emulator, so rule changes can be tested locally first.
+- The tester buttons never render in production builds or under plain `npm run dev`.
+
 ## Environment variables
 
 All variables are read at build time and must be prefixed with `NEXT_PUBLIC_` because they are consumed by the client-side Firebase SDK. These values are considered public Firebase config, not secrets — but Firestore access is still gated by Auth and security rules, so keep those tight.
