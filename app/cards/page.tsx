@@ -8,6 +8,7 @@ import Modal from "@/components/atoms/Modal";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
 import CardForm from "@/components/molecules/CardForm";
 import PayCardForm from "@/components/molecules/PayCardForm";
+import ReconcileForm from "@/components/molecules/ReconcileForm";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import CardDetailPanel from "@/components/organisms/CardDetailPanel";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -22,12 +23,15 @@ export default function CardsPage() {
     byId: accountsById,
     txCountByAccount,
     creditTotalsByAccount,
+    balances,
     loading,
     add,
     update,
     remove,
+    reconcile,
     refresh: refreshAccounts,
   } = useAccounts();
+  const [reconciling, setReconciling] = useState<Account | null>(null);
   const { byId: categoriesById } = useCategories();
   const { transactions, addTransfer } = useTransactions();
 
@@ -137,6 +141,7 @@ export default function CardsPage() {
                 onEdit={openEdit}
                 onDelete={setPendingDelete}
                 onPay={setPayingCard}
+                onReconcile={setReconciling}
               />
             </li>
           ))}
@@ -167,6 +172,23 @@ export default function CardsPage() {
             transactions={transactions}
             onSubmit={handlePay}
             onCancel={() => setPayingCard(null)}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        open={!!reconciling}
+        onClose={() => setReconciling(null)}
+        title={reconciling ? `Reconcile ${reconciling.name}` : "Reconcile"}
+      >
+        {reconciling && (
+          <ReconcileForm
+            account={reconciling}
+            balance={balances[reconciling.id] ?? reconciling.initialBalance}
+            onSubmit={async (actual) => {
+              await reconcile(reconciling.id, actual);
+              setReconciling(null);
+            }}
           />
         )}
       </Modal>

@@ -61,3 +61,12 @@ export const RefreshIcon: ComponentType<IconProps> = (props) => (
     <path d="M7 21v-4h4" />
   </svg>
 );
+
+// Two opposed arrows around a check: "line these two numbers up".
+export const ReconcileIcon: ComponentType<IconProps> = (props) => (
+  <svg {...base(props)}>
+    <path d="M4 8h13l-3-3" />
+    <path d="M20 16H7l3 3" />
+    <path d="M9.5 12l1.8 1.8L15 10" />
+  </svg>
+);

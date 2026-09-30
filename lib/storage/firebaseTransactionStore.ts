@@ -239,6 +239,25 @@ export const firebaseTransactionStore: TransactionStore = {
     const uid = requireWriteUid(ownerUid);
     const snap = await readDoc(ownerDoc(uid, COL, id));
     const data = snap.data() as Partial<Transaction> | undefined;
+    // An installment slice takes its whole plan with it: deleting one month
+    // of a split purchase would leave the card owing the wrong total.
+    if (data?.installment?.planId) {
+      const slices = (
+        await readDocs(
+          query(
+            ownerCollection(uid, COL),
+            where("installment.planId", "==", data.installment.planId),
+          ),
+        )
+      ).docs.filter((d) => !isSoftDeleted(d.data()));
+      return softDelete(uid, {
+        kind: "transaction",
+        label: `${data.description || "Purchase"} (${data.installment.count} installments)`,
+        refs: slices.map((d) => ({ col: COL, id: d.id })),
+        amount: data.installment.total,
+        currency: data.currency,
+      });
+    }
     // Refunds of this expense go with it, and come back with it on restore.
     const refunds =
       data?.type === "expense"

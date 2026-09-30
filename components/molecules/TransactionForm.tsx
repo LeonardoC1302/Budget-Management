@@ -15,11 +15,12 @@ import EntityRatePicker, {
 import { useAccounts } from "@/hooks/useAccounts";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useTransactions, type AddOptions } from "@/hooks/useTransactions";
 import { getRate } from "@/lib/services/exchangeRates";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
+import { MAX_INSTALLMENTS } from "@/lib/utils/installments";
 import { collectTags } from "@/lib/utils/tags";
 import type {
   EntryType,
@@ -29,7 +30,10 @@ import type {
 } from "@/lib/types";
 
 interface TransactionFormProps {
-  onSubmit: (input: NewTransaction) => void | Promise<void>;
+  onSubmit: (
+    input: NewTransaction,
+    options?: AddOptions,
+  ) => void | Promise<void>;
   initial?: Transaction;
   submitLabel?: string;
 }
@@ -64,6 +68,8 @@ export default function TransactionForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [date, setDate] = useState(initial?.date ?? todayISODate());
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  const [splitInstallments, setSplitInstallments] = useState(false);
+  const [installmentCount, setInstallmentCount] = useState("3");
   const [submitting, setSubmitting] = useState(false);
   // Explicit user override for the transaction currency. `null` means "track
   // the account's currency", so switching accounts still auto-updates.
@@ -80,8 +86,15 @@ export default function TransactionForm({
       ? selectedAccountId
       : accounts[0]?.id ?? "";
 
-  const accountCurrency =
-    accounts.find((a) => a.id === accountId)?.currency ?? BASE_CURRENCY;
+  const selectedAccount = accounts.find((a) => a.id === accountId);
+  const accountCurrency = selectedAccount?.currency ?? BASE_CURRENCY;
+  const canSplit =
+    !isEditing && type === "expense" && selectedAccount?.type === "credit";
+  const parsedCount = parseInt(installmentCount, 10);
+  const installments =
+    canSplit && splitInstallments && parsedCount >= 2
+      ? Math.min(parsedCount, MAX_INSTALLMENTS)
+      : 1;
 
   const currency = currencyOverride ?? accountCurrency;
   const hasCurrencyMismatch = currency !== accountCurrency;
@@ -182,7 +195,8 @@ export default function TransactionForm({
     }
 
     setSubmitting(true);
-    await onSubmit({
+    await onSubmit(
+      {
       type,
       amount: parsed,
       currency,
@@ -195,7 +209,9 @@ export default function TransactionForm({
       // Send an empty list only when clearing tags an edit started with, so
       // untagged transactions don't gain a `tags` field.
       ...(tags.length > 0 || initial?.tags?.length ? { tags } : {}),
-    });
+      },
+      installments > 1 ? { installments } : undefined,
+    );
     if (!isEditing) {
       setAmount("");
       setDescription("");
@@ -330,6 +346,43 @@ export default function TransactionForm({
       />
 
       <TagInput value={tags} onChange={setTags} suggestions={knownTags} />
+
+      {canSplit && (
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm text-fg-muted">
+            <input
+              type="checkbox"
+              checked={splitInstallments}
+              onChange={(e) => setSplitInstallments(e.target.checked)}
+            />
+            Pay in monthly installments
+          </label>
+          {splitInstallments && (
+            <>
+              <Input
+                label="Number of installments"
+                name="installments"
+                type="number"
+                inputMode="numeric"
+                min="2"
+                max={String(MAX_INSTALLMENTS)}
+                value={installmentCount}
+                onChange={(e) => setInstallmentCount(e.target.value)}
+              />
+              {installments > 1 &&
+                Number.isFinite(parsedAmount) &&
+                parsedAmount > 0 && (
+                  <p className="text-xs text-fg-subtle">
+                    {installments} charges of about{" "}
+                    {formatCurrency(parsedAmount / installments, currency)}, one a
+                    month starting on the purchase date. Budgets count each
+                    month&apos;s charge; the card owes the full amount now.
+                  </p>
+                )}
+            </>
+          )}
+        </div>
+      )}
 
       <Button
         type="submit"

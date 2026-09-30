@@ -91,12 +91,20 @@ export default function TransactionItem({
     subtitle = [category?.name, account?.name].filter(Boolean).join(" · ");
     tone = "neutral";
     dotClass = "text-invest";
+  } else if (transaction.adjustment) {
+    title = transaction.description || "Balance adjustment";
+    subtitle = ["Adjustment", account?.name].filter(Boolean).join(" · ");
+    tone = isIncome ? "income" : "expense";
+    dotClass = "text-fg-subtle";
   } else {
     const isRefund = isIncome && !!transaction.refundOf;
     title =
       transaction.description ||
       (isRefund ? "Refund" : category?.name) ||
       "Untitled";
+    if (transaction.installment) {
+      title += ` · ${transaction.installment.index}/${transaction.installment.count}`;
+    }
     subtitle = [isRefund ? "Refund" : null, category?.name, account?.name]
       .filter(Boolean)
       .join(" · ");

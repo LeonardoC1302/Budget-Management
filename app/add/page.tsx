@@ -6,7 +6,7 @@ import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import TransactionForm from "@/components/molecules/TransactionForm";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useTransactions, type AddOptions } from "@/hooks/useTransactions";
 import { formatCurrency } from "@/lib/utils/format";
 import type { NewTransaction } from "@/lib/types";
 
@@ -39,8 +39,8 @@ export default function AddTransactionPage() {
     loggedRef.current?.focus({ preventScroll: true });
   }, [last]);
 
-  async function handleSubmit(input: NewTransaction) {
-    await add(input);
+  async function handleSubmit(input: NewTransaction, options?: AddOptions) {
+    await add(input, options);
     setSession((prev) => [
       ...prev,
       {

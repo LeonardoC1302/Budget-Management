@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
 import { announceRemoval } from "@/lib/events/undo";
 import { accountStore, goalStore, transactionStore } from "@/lib/storage";
 import { computeCardTotals, type CardTotals } from "@/lib/credit/statement";
+import { todayISODate } from "@/lib/utils/format";
 import type {
   Account,
   Goal,
@@ -175,6 +176,47 @@ export function useAccounts() {
     [accounts, refresh, txCountByAccount],
   );
 
+  /**
+   * Line Perch's balance up with the bank's. Posts an adjustment for any
+   * difference (neither income nor spending) and stamps the account as
+   * reconciled. `actualBalance` is in the account's currency; negative means
+   * owed, as with card balances.
+   */
+  const reconcile = useCallback(
+    async (id: string, actualBalance: number) => {
+      const target = accounts.find((a) => a.id === id);
+      if (!target) throw new Error("Account not found.");
+      const ownerUid = target._owner?.uid;
+      const current = balances[id] ?? target.initialBalance;
+      const diff = Math.round((actualBalance - current) * 100) / 100;
+      if (Math.abs(diff) >= 0.005) {
+        await transactionStore.add(
+          {
+            type: diff > 0 ? "income" : "expense",
+            amount: Math.abs(diff),
+            currency: target.currency,
+            accountId: id,
+            categoryId: "",
+            description: "Balance adjustment",
+            date: todayISODate(),
+            adjustment: true,
+          },
+          ownerUid,
+        );
+      }
+      await accountStore.update(
+        id,
+        {
+          reconciledAt: new Date().toISOString(),
+          reconciledBalance: actualBalance,
+        },
+        ownerUid,
+      );
+      emitDataChanged();
+    },
+    [accounts, balances],
+  );
+
   const byId = useMemo(() => {
     const map: Record<string, Account> = {};
     for (const a of accounts) map[a.id] = a;
@@ -202,6 +244,7 @@ export function useAccounts() {
     add,
     update,
     remove,
+    reconcile,
     refresh,
   };
 }

@@ -1,7 +1,8 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import OwnerBadge from "@/components/atoms/OwnerBadge";
-import { DeleteIcon, EditIcon } from "@/lib/action/icons";
+import { DeleteIcon, EditIcon, ReconcileIcon } from "@/lib/action/icons";
+import { formatDate } from "@/lib/utils/format";
 import { ACCOUNT_TYPE_LABELS, type Account } from "@/lib/types";
 import type { GoalReservation } from "@/hooks/useAccounts";
 
@@ -12,6 +13,7 @@ interface AccountCardProps {
   reservations?: GoalReservation[];
   onEdit?: (account: Account) => void;
   onDelete?: (account: Account) => void;
+  onReconcile?: (account: Account) => void;
 }
 
 export default function AccountCard({
@@ -21,6 +23,7 @@ export default function AccountCard({
   reservations = [],
   onEdit,
   onDelete,
+  onReconcile,
 }: AccountCardProps) {
   const canDelete = transactionCount === 0;
   const totalReserved = reservations.reduce((s, r) => s + r.amount, 0);
@@ -43,6 +46,7 @@ export default function AccountCard({
           </div>
           <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
             {ACCOUNT_TYPE_LABELS[account.type]} · {transactionCount} tx
+            {account.reconciledAt && ` · Reconciled ${formatDate(account.reconciledAt)}`}
           </p>
         </div>
 
@@ -54,8 +58,20 @@ export default function AccountCard({
           className="font-serif"
         />
 
-        {(onEdit || onDelete) && !readOnly && (
+        {(onEdit || onDelete || onReconcile) && !readOnly && (
           <div className="flex gap-1">
+            {onReconcile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={`Reconcile ${account.name}`}
+                title="Check this balance against your bank"
+                onClick={() => onReconcile(account)}
+                className="px-2"
+              >
+                <ReconcileIcon aria-hidden />
+              </Button>
+            )}
             {onEdit && (
               <Button
                 variant="ghost"

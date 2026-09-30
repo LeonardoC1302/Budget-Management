@@ -4,8 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { announceRemoval } from "@/lib/events/undo";
 import { transactionStore } from "@/lib/storage";
+import { expandInstallments } from "@/lib/utils/installments";
 import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
+
+export interface AddOptions {
+  // Split a card purchase into this many monthly slices.
+  installments?: number;
+}
 
 function sortByTransactionDate(items: Transaction[]): Transaction[] {
   return [...items].sort(
@@ -32,10 +38,19 @@ export function useTransactions() {
 
   useEffect(() => subscribeDataChanged(() => void refresh()), [refresh]);
 
-  const add = useCallback(async (input: NewTransaction) => {
-    const created = await transactionStore.add(input);
-    setTransactions((prev) => sortByTransactionDate([created, ...prev]));
-  }, []);
+  const add = useCallback(
+    async (input: NewTransaction, options: AddOptions = {}) => {
+      const count = options.installments ?? 1;
+      if (count > 1) {
+        await transactionStore.addMany(expandInstallments(input, count));
+        await refresh();
+        return;
+      }
+      const created = await transactionStore.add(input);
+      setTransactions((prev) => sortByTransactionDate([created, ...prev]));
+    },
+    [refresh],
+  );
 
   const addTransfer = useCallback(
     async (input: NewTransfer) => {

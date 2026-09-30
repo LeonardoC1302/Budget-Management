@@ -76,8 +76,8 @@ export default function TrashPage() {
       <RouteMasthead kicker="Settings" title="Recently deleted" />
 
       <p className="lede text-sm">
-        Deleted items stay here for {TRASH_RETENTION_DAYS} days, then they&apos;re
-        removed for good. Restoring puts an item back exactly as it was.
+        Deleted items stay here for {TRASH_RETENTION_DAYS}{" "}
+        days, then they&apos;re removed for good. Restoring puts an item back exactly as it was.
       </p>
 
       {error && <p className="text-sm text-expense">{error}</p>}

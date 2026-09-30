@@ -7,6 +7,7 @@ import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import Modal from "@/components/atoms/Modal";
 import RowSkeleton from "@/components/atoms/RowSkeleton";
 import AccountForm from "@/components/molecules/AccountForm";
+import ReconcileForm from "@/components/molecules/ReconcileForm";
 import RouteMasthead from "@/components/molecules/RouteMasthead";
 import TransferForm from "@/components/molecules/TransferForm";
 import AccountList from "@/components/organisms/AccountList";
@@ -25,8 +26,10 @@ export default function AccountsPage() {
     add,
     update,
     remove,
+    reconcile,
     refresh: refreshAccounts,
   } = useAccounts();
+  const [reconciling, setReconciling] = useState<Account | null>(null);
   const { addTransfer } = useTransactions();
 
   const nonCreditAccounts = useMemo(
@@ -176,6 +179,7 @@ export default function AccountsPage() {
               reservationsByAccount={reservationsByAccount}
               onEdit={openEdit}
               onDelete={setPendingDelete}
+              onReconcile={setReconciling}
               emptyTitle="No accounts yet."
               emptyDescription="Add your first account so transactions have somewhere to land."
               emptyActionLabel="Add an account"
@@ -208,6 +212,23 @@ export default function AccountsPage() {
           onSubmit={handleSubmit}
           onCancel={() => setModalOpen(false)}
         />
+      </Modal>
+
+      <Modal
+        open={!!reconciling}
+        onClose={() => setReconciling(null)}
+        title={reconciling ? `Reconcile ${reconciling.name}` : "Reconcile"}
+      >
+        {reconciling && (
+          <ReconcileForm
+            account={reconciling}
+            balance={balances[reconciling.id] ?? reconciling.initialBalance}
+            onSubmit={async (actual) => {
+              await reconcile(reconciling.id, actual);
+              setReconciling(null);
+            }}
+          />
+        )}
       </Modal>
 
       <Modal

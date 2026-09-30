@@ -18,6 +18,8 @@ import { useCategories } from "@/hooks/useCategories";
 import { useGoals } from "@/hooks/useGoals";
 import { useTransactions } from "@/hooks/useTransactions";
 import { getMonthlyTotals, monthKeyOffset } from "@/lib/utils/analytics";
+import { isUpcomingInstallment } from "@/lib/utils/installments";
+import { todayISODate } from "@/lib/utils/format";
 
 export default function HomePage() {
   const { transactions, loading } = useTransactions();
@@ -31,8 +33,14 @@ export default function HomePage() {
     [transactions],
   );
 
+  const today = todayISODate();
   const recent = transactions
-    .filter((t) => t.type !== "investment" && t.type !== "transfer")
+    .filter(
+      (t) =>
+        t.type !== "investment" &&
+        t.type !== "transfer" &&
+        !isUpcomingInstallment(t, today),
+    )
     .slice(0, 5);
   const previewGoals = goals.slice(0, 2);
   const previewBudgets = [...budgets]

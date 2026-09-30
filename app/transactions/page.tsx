@@ -15,7 +15,8 @@ import { useCategories } from "@/hooks/useCategories";
 import { useTransactions } from "@/hooks/useTransactions";
 import { monthKeyOffset } from "@/lib/utils/analytics";
 import { cn } from "@/lib/utils/cn";
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatCurrency, formatDate, todayISODate } from "@/lib/utils/format";
+import { isUpcomingInstallment } from "@/lib/utils/installments";
 import { countsAsIncome, refundedByExpense, spendSign } from "@/lib/utils/refunds";
 import { collectTags, normalizeTag } from "@/lib/utils/tags";
 import type { Account, Category, Transaction } from "@/lib/types";
@@ -95,9 +96,18 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState("");
   const filtersRef = useRef<HTMLDivElement>(null);
 
+  // Future installment slices live on the Cards page until their date.
+  const today = todayISODate();
   const nonInvestment = useMemo(
-    () => transactions.filter((t) => t.type !== "investment"),
-    [transactions],
+    () =>
+      transactions.filter(
+        (t) => t.type !== "investment" && !isUpcomingInstallment(t, today),
+      ),
+    [transactions, today],
+  );
+  const upcomingInstallmentCount = useMemo(
+    () => transactions.filter((t) => isUpcomingInstallment(t, today)).length,
+    [transactions, today],
   );
 
   const byId = useMemo(() => {
@@ -295,6 +305,15 @@ export default function TransactionsPage() {
           displayCurrency={displayCurrency}
           convertUsd={convertUsd}
         />
+      )}
+
+      {!loading && upcomingInstallmentCount > 0 && !anyFilter && (
+        <p className="text-xs text-fg-subtle">
+          {upcomingInstallmentCount === 1
+            ? "1 future installment charge will appear here on its date."
+            : `${upcomingInstallmentCount} future installment charges will appear here on their dates.`}{" "}
+          The Cards page lists them now.
+        </p>
       )}
 
       {loading ? (

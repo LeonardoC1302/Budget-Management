@@ -22,6 +22,8 @@ export interface CardTotals {
    *  Represents "how much of the credit line this cycle has actually taken", so
    *  utilization and available credit don't rebound just because the user pre-paid. */
   committed: number;
+  /** Installment slices dated after the next cut: owed, but on later statements. */
+  scheduled: number;
   availableCredit?: number;
   utilization?: number;
 }
@@ -140,6 +142,11 @@ export function computeCardTotals(
   const cycle = computeCardCycle(account.cutDay, account.paymentDay, today);
   const lastCut = cycle.lastCutDate;
 
+  // Charges dated after the next cut (future installment slices) are part
+  // of what's owed but belong to later statements, not this cycle.
+  const nextCutMs = cycle.nextCutDate.getTime();
+  let scheduled = 0;
+
   let runningBalance = account.initialBalance;
   let balanceAtCut = account.initialBalance;
   let paymentsSinceCut = 0;
@@ -154,6 +161,12 @@ export function computeCardTotals(
     const txDate = parseISODate(t.date);
     const beforeOrOnCut = txDate.getTime() <= lastCut.getTime();
     const amtInCardCcy = t.accountAmount ?? t.amount;
+    if (txDate.getTime() > nextCutMs) {
+      if (t.type === "expense" || t.type === "investment") {
+        scheduled += amtInCardCcy;
+      }
+      continue;
+    }
     if (beforeOrOnCut) {
       balanceAtCut += delta;
     } else if (t.type === "transfer" && t.transferDirection === "in") {
@@ -182,6 +195,7 @@ export function computeCardTotals(
     unbilledPurchases,
     paymentsBeforeCutBacklog,
     committed,
+    scheduled,
   };
 
   if (typeof account.creditLimit === "number" && account.creditLimit > 0) {
@@ -233,6 +247,7 @@ export function getUnbilledCharges(
         t.accountId === account.id &&
         (t.type === "expense" || t.type === "investment") &&
         parseISODate(t.date).getTime() > lastCutMs &&
+        parseISODate(t.date).getTime() <= cycle.nextCutDate.getTime() &&
         !paidChargeIds.has(t.id),
     )
     .sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -301,9 +316,12 @@ export interface CardCharge {
   currency: string;
   categoryId: string;
   description: string;
+  installment?: Transaction["installment"];
 }
 
 export interface CardHistory {
+  // Installment slices after the next cut, soonest first.
+  upcomingInstallments: CardCharge[];
   priorStatements: PriorStatement[];
   paymentHistory: CardPayment[];
   recentCharges: CardCharge[];
@@ -347,12 +365,14 @@ export function computeCardHistory(
     .map((t) => ({ tx: t, dt: parseISODate(t.date) }));
 
   const lastCutMs = cycle.lastCutDate.getTime();
+  const nextCutMs = cycle.nextCutDate.getTime();
 
   const recentCharges: CardCharge[] = cardTxs
     .filter(
       ({ tx, dt }) =>
         (tx.type === "expense" || tx.type === "investment") &&
-        dt.getTime() > lastCutMs,
+        dt.getTime() > lastCutMs &&
+        dt.getTime() <= nextCutMs,
     )
     .sort((a, b) => b.dt.getTime() - a.dt.getTime())
     .slice(0, chargeCount)
@@ -363,6 +383,7 @@ export function computeCardHistory(
       currency: tx.currency,
       categoryId: tx.categoryId,
       description: tx.description,
+      installment: tx.installment,
     }));
 
   const paymentHistory: CardPayment[] = cardTxs
@@ -384,7 +405,8 @@ export function computeCardHistory(
   for (const { tx, dt } of cardTxs) {
     if (
       (tx.type === "expense" || tx.type === "investment") &&
-      dt.getTime() > lastCutMs
+      dt.getTime() > lastCutMs &&
+      dt.getTime() <= nextCutMs
     ) {
       currentCycleByCategory[tx.categoryId] =
         (currentCycleByCategory[tx.categoryId] ?? 0) + (tx.accountAmount ?? tx.amount);
@@ -455,7 +477,22 @@ export function computeCardHistory(
       : 0;
   const peakCycleCharges = cycleCharges.reduce((a, b) => Math.max(a, b), 0);
 
+  const upcomingInstallments: CardCharge[] = cardTxs
+    .filter(({ tx, dt }) => !!tx.installment && dt.getTime() > nextCutMs)
+    .sort((a, b) => a.dt.getTime() - b.dt.getTime())
+    .slice(0, 12)
+    .map(({ tx }) => ({
+      id: tx.id,
+      date: tx.date,
+      amount: tx.amount,
+      currency: tx.currency,
+      categoryId: tx.categoryId,
+      description: tx.description,
+      installment: tx.installment,
+    }));
+
   return {
+    upcomingInstallments,
     priorStatements: priorStatements.filter(
       (s) => s.charges > 0 || s.paidByDue > 0,
     ),

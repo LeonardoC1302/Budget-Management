@@ -12,6 +12,7 @@ interface AccountListProps {
   reservationsByAccount?: Record<string, GoalReservation[]>;
   onEdit?: (account: Account) => void;
   onDelete?: (account: Account) => void;
+  onReconcile?: (account: Account) => void;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActionLabel?: string;
@@ -27,6 +28,7 @@ export default function AccountList({
   reservationsByAccount,
   onEdit,
   onDelete,
+  onReconcile,
   emptyTitle,
   emptyDescription,
   emptyActionLabel,
@@ -57,6 +59,7 @@ export default function AccountList({
           reservations={reservationsByAccount?.[account.id]}
           onEdit={onEdit}
           onDelete={onDelete}
+          onReconcile={onReconcile}
         />
       ))}
     </div>

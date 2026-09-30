@@ -4,7 +4,7 @@ import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import CategoryChip from "@/components/atoms/CategoryChip";
 import ProgressBar from "@/components/atoms/ProgressBar";
-import { DeleteIcon, EditIcon } from "@/lib/action/icons";
+import { DeleteIcon, EditIcon, ReconcileIcon } from "@/lib/action/icons";
 import type {
   CardHistory,
   CardTotals,
@@ -24,6 +24,7 @@ interface CardDetailPanelProps {
   onEdit: (card: Account) => void;
   onDelete: (card: Account) => void;
   onPay: (card: Account) => void;
+  onReconcile?: (card: Account) => void;
 }
 
 function isoFromDate(d: Date): string {
@@ -68,6 +69,7 @@ export default function CardDetailPanel({
   onEdit,
   onDelete,
   onPay,
+  onReconcile,
 }: CardDetailPanelProps) {
   const canDelete = transactionCount === 0;
 
@@ -84,6 +86,7 @@ export default function CardDetailPanel({
             canDelete={canDelete}
             onEdit={onEdit}
             onDelete={onDelete}
+            onReconcile={onReconcile}
           />
         </div>
         <p className="text-sm text-fg-muted">
@@ -119,6 +122,7 @@ export default function CardDetailPanel({
           <p className="text-sm font-medium text-fg truncate">{card.name}</p>
           <p className="text-xs text-fg-subtle">
             {card.currency} · Cut on day {card.cutDay} · Pay on day {card.paymentDay}
+            {card.reconciledAt && ` · Reconciled ${formatISOShort(card.reconciledAt)}`}
           </p>
         </div>
         <RowActions
@@ -126,6 +130,7 @@ export default function CardDetailPanel({
           canDelete={canDelete}
           onEdit={onEdit}
           onDelete={onDelete}
+          onReconcile={onReconcile}
         />
       </header>
 
@@ -223,6 +228,13 @@ export default function CardDetailPanel({
                 : undefined
           }
         />
+        {totals.scheduled > 0 && (
+          <MetricRow
+            label="Future installments"
+            value={formatCurrency(totals.scheduled, card.currency)}
+            subline="on later statements"
+          />
+        )}
         <MetricRow
           label="Last cut"
           value={formatLongDate(totals.cycle.lastCutDate)}
@@ -287,9 +299,40 @@ export default function CardDetailPanel({
                     {c.description ||
                       categoriesById[c.categoryId]?.name ||
                       "Charge"}
+                    {c.installment &&
+                      ` · ${c.installment.index}/${c.installment.count}`}
                   </p>
                   <p className="text-xs text-fg-subtle">
                     {categoriesById[c.categoryId]?.name ?? "—"} ·{" "}
+                    {formatISOShort(c.date)}
+                  </p>
+                </div>
+                <Amount
+                  value={c.amount}
+                  tone="expense"
+                  size="sm"
+                  currency={c.currency}
+                />
+              </li>
+            ))}
+          </ul>
+        </Group>
+      )}
+
+      {history && history.upcomingInstallments.length > 0 && (
+        <Group title="Upcoming installments">
+          <ul className="flex flex-col divide-y divide-border">
+            {history.upcomingInstallments.map((c) => (
+              <li key={c.id} className="flex items-center gap-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-fg truncate">
+                    {c.description ||
+                      categoriesById[c.categoryId]?.name ||
+                      "Purchase"}
+                    {c.installment &&
+                      ` · ${c.installment.index}/${c.installment.count}`}
+                  </p>
+                  <p className="text-xs text-fg-subtle">
                     {formatISOShort(c.date)}
                   </p>
                 </div>
@@ -423,14 +466,28 @@ function RowActions({
   canDelete,
   onEdit,
   onDelete,
+  onReconcile,
 }: {
   card: Account;
   canDelete: boolean;
   onEdit: (c: Account) => void;
   onDelete: (c: Account) => void;
+  onReconcile?: (c: Account) => void;
 }) {
   return (
     <div className="flex gap-1 shrink-0">
+      {onReconcile && (
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={`Reconcile ${card.name}`}
+          title="Check what you owe against your bank"
+          onClick={() => onReconcile(card)}
+          className="px-2"
+        >
+          <ReconcileIcon aria-hidden />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="sm"

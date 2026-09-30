@@ -42,15 +42,18 @@ export default function TransactionDetailsModal({
   const isCardPayment = isTransfer && !!transaction?.paymentForAccountId;
   const isIncome = transaction?.type === "income";
   const isInvestment = transaction?.type === "investment";
-  const isRefund = isIncome && !!transaction?.refundOf;
-  const isExpense = transaction?.type === "expense";
+  const isAdjustment = !!transaction?.adjustment;
+  const isRefund = isIncome && !!transaction?.refundOf && !isAdjustment;
+  const isExpense = transaction?.type === "expense" && !isAdjustment;
   const refundable =
     isExpense && transaction ? transaction.amount - refunded > 0.005 : false;
   const isInflow =
     isIncome ||
     (isTransfer && transaction?.transferDirection === "in");
 
-  const noun = isCardPayment
+  const noun = isAdjustment
+    ? "adjustment"
+    : isCardPayment
     ? "card payment"
     : isTransfer
       ? "transfer"
@@ -119,6 +122,8 @@ export default function TransactionDetailsModal({
                   <span className="text-fg">Transfer</span>
                 ) : isInvestment ? (
                   <span className="text-invest">Investment</span>
+                ) : isAdjustment ? (
+                  <span className="text-fg">Balance adjustment</span>
                 ) : (
                   <span className={isIncome ? "text-income" : "text-expense"}>
                     {isRefund ? "Refund" : isIncome ? "Income" : "Expense"}
@@ -170,6 +175,13 @@ export default function TransactionDetailsModal({
                     : " (full)"}
                 </Row>
               )}
+              {transaction.installment && (
+                <Row label="Installment">
+                  {transaction.installment.index} of {transaction.installment.count}
+                  {" · "}
+                  {formatCurrency(transaction.installment.total, transaction.currency)} total
+                </Row>
+              )}
               {transaction.tags && transaction.tags.length > 0 && (
                 <Row label="Tags">
                   {transaction.tags.map((t) => `#${t}`).join(" ")}
@@ -189,7 +201,7 @@ export default function TransactionDetailsModal({
                     Record refund
                   </Button>
                 )}
-                {onEdit && !isTransfer && !isInvestment && (
+                {onEdit && !isTransfer && !isInvestment && !isAdjustment && (
                   <Button
                     variant="secondary"
                     size="md"
@@ -221,8 +233,11 @@ export default function TransactionDetailsModal({
         title={`Delete this ${noun}?`}
         message={
           <>
-            <span className="text-fg font-medium">{summaryLabel}</span> will
-            be removed. Balances and monthly totals recalculate automatically.
+            <span className="text-fg font-medium">{summaryLabel}</span>
+            {transaction?.installment
+              ? ` and all ${transaction.installment.count} of its installments will be removed.`
+              : " will be removed."}{" "}
+            Balances and monthly totals recalculate automatically.
           </>
         }
         confirmLabel="Delete"

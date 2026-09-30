@@ -51,6 +51,10 @@ export interface Account {
   paymentDay?: number;
   creditLimit?: number;
   creditLimitUSD?: number;
+  // Last time the user checked this balance against the bank's, and the
+  // balance they confirmed (in the account's currency; negative = owed).
+  reconciledAt?: string;
+  reconciledBalance?: number;
   _owner?: OwnerCtx;
 }
 
@@ -114,7 +118,20 @@ export interface Transaction {
   // the expense's category, and spend math counts it as negative spend there
   // (see lib/utils/refunds.ts).
   refundOf?: string;
+  // A correction posted by reconciling an account. Moves the balance but
+  // isn't income or spending, so stats and budgets ignore it.
+  adjustment?: boolean;
+  // One monthly slice of a card purchase paid in installments. All slices
+  // share `planId`; `total` is the full purchase in the transaction currency.
+  installment?: InstallmentInfo;
   _owner?: OwnerCtx;
+}
+
+export interface InstallmentInfo {
+  planId: string;
+  index: number; // 1-based
+  count: number;
+  total: number;
 }
 
 export type NewTransaction = Omit<
