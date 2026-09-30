@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 type Tone = "accent" | "income" | "expense" | "invest";
 
 interface PhaseIndicatorProps {
@@ -50,7 +51,7 @@ export default function PhaseIndicator({
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label={ariaLabel ?? `${Math.round(p * 100)}% of goal`}
+      aria-label={ariaLabel ?? t("{0}% of goal", { "0": Math.round(p * 100) })}
       className={cn("shrink-0", className)}
     >
       <circle

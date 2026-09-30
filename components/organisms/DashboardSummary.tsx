@@ -4,13 +4,14 @@ import { useMemo } from "react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
-import { formatCurrencyCompact } from "@/lib/utils/format";
+import { formatCurrencyCompact, formatPercent } from "@/lib/utils/format";
 import {
   latestValuationFor,
   manualSnapshot,
   marketSnapshot,
 } from "@/lib/utils/holdings";
 
+import { t } from "@/lib/i18n";
 interface DashboardSummaryProps {
   income: number;
   expense: number;
@@ -86,27 +87,27 @@ export default function DashboardSummary({
   return (
     <section
       className="surface grid grid-cols-2 sm:grid-cols-3"
-      aria-label="Month summary"
+      aria-label={t("Month summary")}
     >
       <Tile
-        label="Income"
+        label={t("Income")}
         value={formatCurrencyCompact(convertUsd(income), displayCurrency)}
         tone="text-income"
       />
       <Tile
-        label="Expenses"
+        label={t("Expenses")}
         value={formatCurrencyCompact(convertUsd(expense), displayCurrency)}
         tone="text-expense"
         className="border-l border-border"
       />
       {showPortfolio && portfolio && (
         <Tile
-          label="Portfolio"
+          label={t("Portfolio")}
           value={formatCurrencyCompact(convertUsd(portfolio.currentValue), displayCurrency)}
           tone="text-invest"
           hint={
             portfolio.gainPct !== null
-              ? `${portfolio.gain >= 0 ? "+" : ""}${(portfolio.gainPct * 100).toFixed(2)}%`
+              ? `${portfolio.gain >= 0 ? "+" : ""}${formatPercent(portfolio.gainPct)}`
               : undefined
           }
           hintTone={gainTone}

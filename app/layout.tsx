@@ -3,7 +3,8 @@ import { Geist, Newsreader, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import PWARegister from "@/components/atoms/PWARegister";
 import ThemeProvider from "@/components/atoms/ThemeProvider";
-import AppShell from "@/components/organisms/AppShell";
+import RootProviders from "@/components/organisms/RootProviders";
+import { siteUrl } from "@/lib/site/url";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -27,10 +28,40 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const DESCRIPTION =
+  "Track accounts, spending, budgets and savings goals in colones and dollars. Log purchases in seconds, even offline, and see where your month stands.";
+
 export const metadata: Metadata = {
-  title: "Perch",
-  description: "Perch — a quiet place for your money to rest.",
+  metadataBase: new URL(siteUrl()),
+  title: {
+    default: "Perch — a quiet place for your money to rest",
+    template: "%s · Perch",
+  },
+  description: DESCRIPTION,
   applicationName: "Perch",
+  keywords: [
+    "presupuesto",
+    "finanzas personales",
+    "control de gastos",
+    "colones y dólares",
+    "Costa Rica",
+    "budget app",
+    "expense tracker",
+    "personal finance",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "Perch",
+    title: "Perch — a quiet place for your money to rest",
+    description: DESCRIPTION,
+    locale: "en_US",
+    alternateLocale: ["es_CR"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Perch — a quiet place for your money to rest",
+    description: DESCRIPTION,
+  },
   appleWebApp: {
     capable: true,
     title: "Perch",
@@ -64,13 +95,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <AppShell>{children}</AppShell>
+          <RootProviders>{children}</RootProviders>
         </ThemeProvider>
         <PWARegister />
-      {/* impeccable-live-start */}
-<script src="http://localhost:8400/live.js?token=64fc7728-1c24-41ab-8411-ba08c0053771"></script>
-{/* impeccable-live-end */}
-</body>
+      </body>
     </html>
   );
 }

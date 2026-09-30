@@ -1,16 +1,19 @@
 import {
-  addDoc,
-  deleteDoc,
-  getDoc,
+  doc,
   orderBy,
   query,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import {
+  commitWrite,
   listAcrossOwners,
   ownerCollection,
   ownerDoc,
+  readAfterWrite,
+  readDoc,
 } from "@/lib/firebase/firestoreHelpers";
+import { softDelete } from "@/lib/firebase/trash";
 import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
 import { getRate } from "@/lib/services/exchangeRates";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
@@ -75,7 +78,8 @@ export const firebaseAccountStore: AccountStore = {
       creditLimitUSD,
       createdAt,
     });
-    const ref = await addDoc(ownerCollection(uid, COL), account);
+    const ref = doc(ownerCollection(uid, COL));
+    await commitWrite(setDoc(ref, account));
     return {
       id: ref.id,
       ...account,
@@ -88,7 +92,7 @@ export const firebaseAccountStore: AccountStore = {
     const nextPatch: Partial<Account> = { ...patch };
 
     if (patch.currency !== undefined || patch.initialBalance !== undefined) {
-      const existing = await getDoc(ref);
+      const existing = await readDoc(ref);
       if (!existing.exists()) throw new Error(`Account ${id} not found`);
       const current = existing.data() as Omit<Account, "id">;
       const currency = patch.currency ?? current.currency ?? BASE_CURRENCY;
@@ -99,7 +103,7 @@ export const firebaseAccountStore: AccountStore = {
     }
 
     if (patch.currency !== undefined || patch.creditLimit !== undefined) {
-      const existing = await getDoc(ref);
+      const existing = await readDoc(ref);
       if (!existing.exists()) throw new Error(`Account ${id} not found`);
       const current = existing.data() as Omit<Account, "id">;
       const currency = patch.currency ?? current.currency ?? BASE_CURRENCY;
@@ -116,8 +120,8 @@ export const firebaseAccountStore: AccountStore = {
     // Never persist `_owner` — it's a read-time decoration.
     delete (nextPatch as { _owner?: unknown })._owner;
 
-    await updateDoc(ref, stripUndefined(nextPatch));
-    const snap = await getDoc(ref);
+    await commitWrite(updateDoc(ref, stripUndefined(nextPatch)));
+    const snap = await readAfterWrite(ref);
     if (!snap.exists()) throw new Error(`Account ${id} not found`);
     return hydrate(
       snap.id,
@@ -127,6 +131,12 @@ export const firebaseAccountStore: AccountStore = {
   },
   async remove(id, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    await deleteDoc(ownerDoc(uid, COL, id));
+    const snap = await readDoc(ownerDoc(uid, COL, id));
+    const data = snap.data() as Partial<Account> | undefined;
+    return softDelete(uid, {
+      kind: "account",
+      label: data?.name || "Account",
+      refs: [{ col: COL, id }],
+    });
   },
 };

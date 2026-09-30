@@ -6,17 +6,39 @@ interface OpenErApiResponse {
 
 import type { RateSource, Transaction } from "@/lib/types";
 
-let usdRatesCache: { rates: Record<string, number>; fetchedAt: number } | null =
-  null;
-const USD_RATES_TTL_MS = 60 * 60 * 1000;
+type UsdRatesCache = { rates: Record<string, number>; fetchedAt: number };
 
-async function getUsdRates(): Promise<Record<string, number>> {
-  if (
-    usdRatesCache &&
-    Date.now() - usdRatesCache.fetchedAt < USD_RATES_TTL_MS
-  ) {
-    return usdRatesCache.rates;
+let usdRatesCache: UsdRatesCache | null = null;
+const USD_RATES_TTL_MS = 60 * 60 * 1000;
+// The last good table also lives in localStorage so conversions keep working
+// offline. A stale rate beats blocking a transaction; the online refresh
+// replaces it as soon as the connection is back.
+const STORAGE_KEY = "perch:usdRates";
+
+function readStoredRates(): UsdRatesCache | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UsdRatesCache;
+    return parsed && parsed.rates && typeof parsed.fetchedAt === "number"
+      ? parsed
+      : null;
+  } catch {
+    return null;
   }
+}
+
+function storeRates(cache: UsdRatesCache) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+  } catch {
+    // Storage full or blocked: the in-memory cache still works.
+  }
+}
+
+async function fetchUsdRates(): Promise<Record<string, number>> {
   const res = await fetch("https://open.er-api.com/v6/latest/USD");
   if (!res.ok) {
     throw new Error(`Failed to fetch latest rates (${res.status}).`);
@@ -25,8 +47,32 @@ async function getUsdRates(): Promise<Record<string, number>> {
   if (data.result !== "success" || !data.rates) {
     throw new Error("Malformed rates response from open.er-api.com.");
   }
-  usdRatesCache = { rates: data.rates, fetchedAt: Date.now() };
   return data.rates;
+}
+
+async function getUsdRates(): Promise<Record<string, number>> {
+  usdRatesCache ??= readStoredRates();
+  if (
+    usdRatesCache &&
+    Date.now() - usdRatesCache.fetchedAt < USD_RATES_TTL_MS
+  ) {
+    return usdRatesCache.rates;
+  }
+  try {
+    const rates = await fetchUsdRates();
+    usdRatesCache = { rates, fetchedAt: Date.now() };
+    storeRates(usdRatesCache);
+    return rates;
+  } catch (err) {
+    if (usdRatesCache) return usdRatesCache.rates;
+    throw err;
+  }
+}
+
+/** When the rates in use were fetched, or null if none are loaded yet. */
+export function usdRatesFetchedAt(): number | null {
+  usdRatesCache ??= readStoredRates();
+  return usdRatesCache?.fetchedAt ?? null;
 }
 
 /**

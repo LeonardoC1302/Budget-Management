@@ -19,6 +19,7 @@ import {
   type RecurringTransaction,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface RecurringItemProps {
   template: RecurringTransaction;
   account?: Account;
@@ -49,16 +50,16 @@ export default function RecurringItem({
       ? "text-income"
       : "text-expense";
 
-  const title = template.description || category?.name || "Untitled recurring";
+  const title = template.description || category?.name || t("Untitled recurring");
   const next = template.active
     ? nextOccurrenceAfter(toRule(template), todayISODate())
     : undefined;
-  const cadence = RECURRENCE_FREQUENCY_LABELS[template.frequency];
+  const cadence = t(RECURRENCE_FREQUENCY_LABELS[template.frequency]);
   const nextLabel = template.active
     ? next
-      ? `Next · ${formatDate(next)}`
-      : "No upcoming occurrences"
-    : "Paused";
+      ? t("Next · {date}", { date: formatDate(next) })
+      : t("No upcoming occurrences")
+    : t("Paused");
 
   const subtitle = [cadence, category?.name, account?.name]
     .filter(Boolean)
@@ -102,7 +103,7 @@ export default function RecurringItem({
             <Button
               variant="ghost"
               size="sm"
-              aria-label={template.active ? "Pause" : "Resume"}
+              aria-label={template.active ? t("Pause") : t("Resume")}
               onClick={() => onToggleActive(template.id)}
               className="px-2"
             >
@@ -117,7 +118,7 @@ export default function RecurringItem({
             <Button
               variant="ghost"
               size="sm"
-              aria-label="Edit"
+              aria-label={t("Edit")}
               onClick={() => onEdit(template)}
               className="px-2"
             >
@@ -128,7 +129,7 @@ export default function RecurringItem({
             <Button
               variant="ghost"
               size="sm"
-              aria-label="Delete"
+              aria-label={t("Delete")}
               onClick={() => onDelete(template.id)}
               className="px-2"
             >

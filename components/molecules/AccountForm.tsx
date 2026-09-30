@@ -13,6 +13,7 @@ import {
   type NewAccount,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface AccountFormProps {
   initial?: Account;
   onSubmit: (input: NewAccount) => void | Promise<void>;
@@ -22,6 +23,8 @@ interface AccountFormProps {
 const TYPE_OPTIONS = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[])
   .filter((value) => value !== "credit")
   .map((value) => ({ value, label: ACCOUNT_TYPE_LABELS[value] }));
+
+const typeOptions = () => TYPE_OPTIONS.map((o) => ({ ...o, label: t(o.label) }));
 
 export default function AccountForm({
   initial,
@@ -54,24 +57,24 @@ export default function AccountForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
-        label="Name"
+        label={t("Name")}
         name="name"
-        placeholder="e.g. Chase Debit"
+        placeholder={t("e.g. Chase Debit")}
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
 
       <Select
-        label="Type"
+        label={t("Type")}
         name="type"
         value={type}
         onChange={(next) => setType(next as AccountType)}
-        options={TYPE_OPTIONS}
+        options={typeOptions()}
       />
 
       <Input
-        label={initial ? "Initial balance" : "Starting balance"}
+        label={initial ? t("Initial balance") : t("Starting balance")}
         name="initialBalance"
         type="number"
         inputMode="decimal"
@@ -82,21 +85,21 @@ export default function AccountForm({
       />
 
       <CurrencySelect
-        label="Currency"
+        label={t("Currency")}
         name="currency"
         value={currency}
         onChange={setCurrency}
       />
 
       <p className="text-xs text-fg-subtle">
-        Adding a credit card? Manage those on the{" "}
+        {t("Adding a credit card? Manage those on the")}{" "}
         <a
           href="/cards"
           className="text-fg-muted hover:text-fg underline decoration-dotted underline-offset-4"
         >
-          Cards
+          {t("Cards")}
         </a>{" "}
-        tab.
+        {t("tab.")}
       </p>
 
       <div className="flex gap-2 pt-2">
@@ -108,11 +111,11 @@ export default function AccountForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
-          {submitting ? "Saving…" : initial ? "Save changes" : "Add account"}
+          {submitting ? t("Saving…") : initial ? t("Save changes") : t("Add account")}
         </Button>
       </div>
     </form>

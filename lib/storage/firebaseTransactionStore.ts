@@ -1,21 +1,24 @@
 import {
-  addDoc,
-  deleteDoc,
   doc,
-  getDoc,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   where,
   writeBatch,
-  getDocs,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import {
+  commitWrite,
+  isSoftDeleted,
   listAcrossOwners,
   ownerCollection,
   ownerDoc,
+  readAfterWrite,
+  readDoc,
+  readDocs,
 } from "@/lib/firebase/firestoreHelpers";
+import { softDelete } from "@/lib/firebase/trash";
 import {
   requireWriteUid,
   findOwnerCtx,
@@ -67,7 +70,7 @@ async function fetchAccountCurrency(
     if (!uid || seen.has(uid)) continue;
     seen.add(uid);
     try {
-      const snap = await getDoc(ownerDoc(uid, ACCOUNTS_COL, accountId));
+      const snap = await readDoc(ownerDoc(uid, ACCOUNTS_COL, accountId));
       if (snap.exists()) {
         const data = snap.data() as { currency?: string };
         return data.currency ?? BASE_CURRENCY;
@@ -118,7 +121,8 @@ export const firebaseTransactionStore: TransactionStore = {
       accountAmount,
       createdAt,
     });
-    const ref = await addDoc(ownerCollection(uid, COL), transaction);
+    const ref = doc(ownerCollection(uid, COL));
+    await commitWrite(setDoc(ref, transaction));
     return {
       id: ref.id,
       ...transaction,
@@ -126,7 +130,7 @@ export const firebaseTransactionStore: TransactionStore = {
     } as Transaction;
   },
   async addMany(inputs: NewTransaction[], ownerUid?: string) {
-    if (inputs.length === 0) return;
+    if (inputs.length === 0) return [];
     const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
     const priced = await Promise.all(
@@ -150,11 +154,18 @@ export const firebaseTransactionStore: TransactionStore = {
       }),
     );
     const col = ownerCollection(uid, COL);
-    const batch = writeBatch(db);
-    for (const payload of priced) {
-      batch.set(doc(col), payload);
+    const ids: string[] = [];
+    // Firestore caps a batch at 500 writes.
+    for (let i = 0; i < priced.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const payload of priced.slice(i, i + 450)) {
+        const ref = doc(col);
+        ids.push(ref.id);
+        batch.set(ref, payload);
+      }
+      await commitWrite(batch.commit());
     }
-    await batch.commit();
+    return ids;
   },
   async addTransfer(input: NewTransfer, ownerUid?: string) {
     const uid = requireWriteUid(ownerUid);
@@ -222,11 +233,47 @@ export const firebaseTransactionStore: TransactionStore = {
     const batch = writeBatch(db);
     batch.set(outRef, outDoc);
     batch.set(inRef, inDoc);
-    await batch.commit();
+    await commitWrite(batch.commit());
   },
   async remove(id, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    await deleteDoc(ownerDoc(uid, COL, id));
+    const snap = await readDoc(ownerDoc(uid, COL, id));
+    const data = snap.data() as Partial<Transaction> | undefined;
+    // An installment slice takes its whole plan with it: deleting one month
+    // of a split purchase would leave the card owing the wrong total.
+    if (data?.installment?.planId) {
+      const slices = (
+        await readDocs(
+          query(
+            ownerCollection(uid, COL),
+            where("installment.planId", "==", data.installment.planId),
+          ),
+        )
+      ).docs.filter((d) => !isSoftDeleted(d.data()));
+      return softDelete(uid, {
+        kind: "transaction",
+        label: `${data.description || "Purchase"} (${data.installment.count} installments)`,
+        refs: slices.map((d) => ({ col: COL, id: d.id })),
+        amount: data.installment.total,
+        currency: data.currency,
+      });
+    }
+    // Refunds of this expense go with it, and come back with it on restore.
+    const refunds =
+      data?.type === "expense"
+        ? (
+            await readDocs(
+              query(ownerCollection(uid, COL), where("refundOf", "==", id)),
+            )
+          ).docs.filter((d) => !isSoftDeleted(d.data()))
+        : [];
+    return softDelete(uid, {
+      kind: "transaction",
+      label: data?.description || "Transaction",
+      refs: [{ col: COL, id }, ...refunds.map((d) => ({ col: COL, id: d.id }))],
+      amount: data?.amount,
+      currency: data?.currency,
+    });
   },
   async update(id, input, ownerUid) {
     const uid = requireWriteUid(ownerUid);
@@ -244,22 +291,29 @@ export const firebaseTransactionStore: TransactionStore = {
     // `_owner` is a read-time decoration and must never be persisted.
     delete (payload as { _owner?: unknown })._owner;
     const ref = ownerDoc(uid, COL, id);
-    await updateDoc(ref, payload);
-    const snap = await getDoc(ref);
+    await commitWrite(updateDoc(ref, payload));
+    const snap = await readAfterWrite(ref);
     return hydrate(id, snap.data() as Omit<Transaction, "id">, ownerCtxFor(uid));
   },
   async removeTransfer(transferId, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    const snap = await getDocs(
+    const snap = await readDocs(
       query(
         ownerCollection(uid, COL),
         where("transferId", "==", transferId),
       ),
     );
-    if (snap.empty) return;
-    const batch = writeBatch(db);
-    for (const d of snap.docs) batch.delete(d.ref);
-    await batch.commit();
+    const legs = snap.docs.filter((d) => !isSoftDeleted(d.data()));
+    if (legs.length === 0) return;
+    const out = (legs.find((d) => d.data().transferDirection === "out") ??
+      legs[0]).data() as Partial<Transaction>;
+    return softDelete(uid, {
+      kind: "transfer",
+      label: out.description || "Transfer",
+      refs: legs.map((d) => ({ col: COL, id: d.id })),
+      amount: out.amount,
+      currency: out.currency,
+    });
   },
   async rebaseAccountCurrency(accountId, currency) {
     // Transactions on a shared account can live in any writer's subtree, so
@@ -294,7 +348,7 @@ export const firebaseTransactionStore: TransactionStore = {
           accountAmount: u.accountAmount,
         });
       }
-      await batch.commit();
+      await commitWrite(batch.commit());
     }
   },
 };

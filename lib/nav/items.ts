@@ -5,12 +5,12 @@ import {
   AddIcon,
   BudgetsIcon,
   CardsIcon,
-  ConnectionsIcon,
   GoalsIcon,
   HomeIcon,
   InvestIcon,
   RatesIcon,
   RecurringIcon,
+  SettingsIcon,
 } from "@/lib/nav/icons";
 
 export type NavGroup = "primary" | "secondary";
@@ -28,7 +28,7 @@ export interface NavItem {
  * - secondary: reference and less frequent surfaces.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Home", Icon: HomeIcon, group: "primary" },
+  { href: "/home", label: "Home", Icon: HomeIcon, group: "primary" },
   { href: "/transactions", label: "Activity", Icon: ActivityIcon, group: "primary" },
   { href: "/add", label: "Add", Icon: AddIcon, group: "primary" },
   { href: "/budgets", label: "Budgets", Icon: BudgetsIcon, group: "primary" },
@@ -38,12 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/investments", label: "Invest", Icon: InvestIcon, group: "secondary" },
   { href: "/cards", label: "Cards", Icon: CardsIcon, group: "secondary" },
   { href: "/rates", label: "Rates", Icon: RatesIcon, group: "secondary" },
-  {
-    href: "/settings/connections",
-    label: "Connections",
-    Icon: ConnectionsIcon,
-    group: "secondary",
-  },
+  { href: "/settings", label: "Settings", Icon: SettingsIcon, group: "secondary" },
 ];
 
 export const PRIMARY_ITEMS = NAV_ITEMS.filter((i) => i.group === "primary");

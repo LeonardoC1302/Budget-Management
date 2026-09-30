@@ -13,6 +13,7 @@ import {
 import { auth, db } from "@/lib/firebase/client";
 import type { OwnerPermission } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 // Codes are 6 uppercase alphanumerics from a curated alphabet without visually
 // ambiguous characters (no O/0, no I/1/L). Users read these to each other, so
 // legibility beats a slightly larger keyspace.
@@ -121,7 +122,7 @@ export async function generateConnectionCode(
       throw err;
     }
   }
-  throw new Error("Could not generate a unique code. Please try again.");
+  throw new Error(t("Could not generate a unique code. Please try again."));
 }
 
 // Owner-initiated cancel of an unclaimed code.
@@ -143,17 +144,17 @@ export async function claimConnectionCode(
 
   return runTransaction(db, async (txn) => {
     const snap = await txn.get(codeRef);
-    if (!snap.exists()) throw new Error("Code not found or already used.");
+    if (!snap.exists()) throw new Error(t("Code not found or already used."));
     const data = snap.data() as ConnectionCodeDoc;
 
     if (data.status !== "pending") {
-      throw new Error("This code has already been used.");
+      throw new Error(t("This code has already been used."));
     }
     if (new Date(data.expiresAt).getTime() < Date.now()) {
-      throw new Error("This code has expired. Ask for a fresh one.");
+      throw new Error(t("This code has expired. Ask for a fresh one."));
     }
     if (data.ownerUid === guestUid) {
-      throw new Error("You can't accept your own connection code.");
+      throw new Error(t("You can't accept your own connection code."));
     }
 
     const forwardId = connectionId(data.ownerUid, guestUid);

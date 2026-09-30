@@ -3,6 +3,7 @@
 import { formatCurrency } from "@/lib/utils/format";
 import type { MonthlyPoint } from "@/lib/utils/analytics";
 
+import { t } from "@/lib/i18n";
 interface SavingsBarChartProps {
   data: MonthlyPoint[];
   currency?: string;
@@ -22,7 +23,7 @@ export default function SavingsBarChart({
   if (data.length === 0) {
     return (
       <p className="text-sm text-fg-subtle">
-        Not enough data yet to plot monthly savings.
+        {t("Not enough data yet to plot monthly savings.")}
       </p>
     );
   }
@@ -42,7 +43,7 @@ export default function SavingsBarChart({
         preserveAspectRatio="none"
         className="w-full h-[140px]"
         role="img"
-        aria-label="Monthly savings for the last 6 months"
+        aria-label={t("Monthly savings for the last 6 months")}
       >
         {/* baseline */}
         <line
@@ -92,14 +93,14 @@ export default function SavingsBarChart({
             aria-hidden
             className="w-2.5 h-2.5 rounded-sm bg-income"
           />
-          Saved
+          {t("Saved")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
             className="w-2.5 h-2.5 rounded-sm bg-expense"
           />
-          Shortfall
+          {t("Shortfall")}
         </span>
       </div>
     </div>

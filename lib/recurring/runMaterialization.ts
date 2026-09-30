@@ -3,6 +3,7 @@ import { pickBccrRate, type BccrSnapshot } from "@/lib/services/bccrRates";
 import { getRate } from "@/lib/services/exchangeRates";
 import {
   accountStore,
+  holdingStore,
   recurringTransactionStore,
   transactionStore,
 } from "@/lib/storage";
@@ -13,6 +14,7 @@ import type {
   RateSource,
   RecurringTransaction,
 } from "@/lib/types";
+import { apiFetch } from "@/lib/api/apiFetch";
 
 type FxDirection = "USD_TO_CRC" | "CRC_TO_USD";
 
@@ -24,7 +26,7 @@ function directionFor(from: string, to: string): FxDirection | null {
 
 async function fetchBccrSnapshotOrNull(): Promise<BccrSnapshot | null> {
   try {
-    const res = await fetch("/api/rates/bccr");
+    const res = await apiFetch("/api/rates/bccr");
     if (!res.ok) return null;
     const data = (await res.json()) as BccrSnapshot & { error?: string };
     if (data.error || !Array.isArray(data.entities) || !data.fetchedAt) {
@@ -44,6 +46,52 @@ async function resolveFallbackRate(
     return await getRate(from, to);
   } catch {
     return null;
+  }
+}
+
+interface PriceOnDate {
+  closeUSD?: number;
+  date?: string;
+}
+
+/**
+ * Give recurring investment occurrences shares and a unit price from that
+ * day's close, like a contribution entered by hand. When the price can't be
+ * fetched the occurrence is saved `unpriced` so it can be fixed later on the
+ * Investments page. Manual holdings have no ticker and need no pricing.
+ */
+async function priceInvestmentOccurrences(txs: NewTransaction[]): Promise<void> {
+  const investing = txs.filter((t) => t.type === "investment" && t.holdingId);
+  if (investing.length === 0) return;
+  const holdings = await holdingStore.listHoldings();
+  const byId = new Map(holdings.map((h) => [h.id, h]));
+  const priceCache = new Map<string, number | null>();
+
+  for (const tx of investing) {
+    const holding = byId.get(tx.holdingId!);
+    if (!holding || holding.kind !== "market" || !holding.symbol) continue;
+    const key = `${holding.symbol}|${tx.date}`;
+    if (!priceCache.has(key)) {
+      try {
+        const res = await apiFetch(
+          `/api/market/priceOnDate?symbol=${encodeURIComponent(holding.symbol)}&date=${tx.date}`,
+        );
+        const data = (await res.json()) as PriceOnDate;
+        priceCache.set(key, res.ok && data.closeUSD ? data.closeUSD : null);
+      } catch {
+        priceCache.set(key, null);
+      }
+    }
+    const close = priceCache.get(key);
+    const usdRate =
+      tx.currency === "USD" ? 1 : await resolveFallbackRate(tx.currency, "USD");
+    if (close && usdRate) {
+      tx.unitPriceUSD = close;
+      // Shares are bought with what's left after the commission.
+      tx.sharesDelta = ((tx.amount - (tx.fee ?? 0)) * usdRate) / close;
+    } else {
+      tx.unpriced = true;
+    }
   }
 }
 
@@ -136,6 +184,7 @@ export async function runMaterialization(
     }
   }
 
+  await priceInvestmentOccurrences(toInsert);
   await transactionStore.addMany(toInsert);
   await recurringTransactionStore.updateLastGeneratedDates(
     plans.map((p) => ({

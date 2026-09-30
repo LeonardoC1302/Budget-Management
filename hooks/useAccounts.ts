@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { accountStore, goalStore, transactionStore } from "@/lib/storage";
 import { computeCardTotals, type CardTotals } from "@/lib/credit/statement";
+import { todayISODate } from "@/lib/utils/format";
 import type {
   Account,
   Goal,
@@ -12,6 +14,7 @@ import type {
   Transaction,
 } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 function computeDerived(accounts: Account[], transactions: Transaction[]) {
   const balances: Record<string, number> = {};
   const counts: Record<string, number> = {};
@@ -78,7 +81,7 @@ function computeReservations(
     out[accountId] = Object.entries(perGoal)
       .map(([goalId, amount]) => ({
         goalId,
-        goalName: goalsById[goalId]?.name ?? "Goal",
+        goalName: goalsById[goalId]?.name ?? t("Goal"),
         amount,
       }))
       .filter((r) => r.amount > 0)
@@ -162,14 +165,62 @@ export function useAccounts() {
       const count = txCountByAccount[id] ?? 0;
       if (count > 0) {
         throw new Error(
-          `This account has ${count} transaction${count === 1 ? "" : "s"}. Delete or reassign them before deleting the account.`,
+          tn(
+            "This account has {count} transaction. Delete or reassign it before deleting the account.",
+            "This account has {count} transactions. Delete or reassign them before deleting the account.",
+            count,
+          ),
         );
       }
       const target = accounts.find((a) => a.id === id);
-      await accountStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await accountStore.remove(id, ownerUid);
       await refresh();
+      announceRemoval("Account deleted", [{ ownerUid, trashId }]);
     },
     [accounts, refresh, txCountByAccount],
+  );
+
+  /**
+   * Line Perch's balance up with the bank's. Posts an adjustment for any
+   * difference (neither income nor spending) and stamps the account as
+   * reconciled. `actualBalance` is in the account's currency; negative means
+   * owed, as with card balances.
+   */
+  const reconcile = useCallback(
+    async (id: string, actualBalance: number) => {
+      const target = accounts.find((a) => a.id === id);
+      if (!target) throw new Error(t("Account not found."));
+      const ownerUid = target._owner?.uid;
+      const current = balances[id] ?? target.initialBalance;
+      const diff = Math.round((actualBalance - current) * 100) / 100;
+      if (Math.abs(diff) >= 0.005) {
+        await transactionStore.add(
+          {
+            type: diff > 0 ? "income" : "expense",
+            amount: Math.abs(diff),
+            currency: target.currency,
+            accountId: id,
+            categoryId: "",
+            // Left blank so the list shows a label in the reader's language.
+            description: "",
+            date: todayISODate(),
+            adjustment: true,
+          },
+          ownerUid,
+        );
+      }
+      await accountStore.update(
+        id,
+        {
+          reconciledAt: new Date().toISOString(),
+          reconciledBalance: actualBalance,
+        },
+        ownerUid,
+      );
+      emitDataChanged();
+    },
+    [accounts, balances],
   );
 
   const byId = useMemo(() => {
@@ -199,6 +250,7 @@ export function useAccounts() {
     add,
     update,
     remove,
+    reconcile,
     refresh,
   };
 }

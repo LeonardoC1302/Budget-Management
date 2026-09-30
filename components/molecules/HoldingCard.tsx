@@ -7,6 +7,8 @@ import type { QuoteResult } from "@/lib/services/marketData";
 import type { Holding } from "@/lib/types";
 import type { HoldingPosition, HoldingValueSnapshot } from "@/lib/utils/holdings";
 
+import { getLocale, t } from "@/lib/i18n";
+import { formatPercent } from "@/lib/utils/format";
 interface HoldingCardProps {
   holding: Holding;
   position?: HoldingPosition;
@@ -19,7 +21,7 @@ interface HoldingCardProps {
 function formatShares(shares: number): string {
   if (shares === 0) return "0";
   if (Math.abs(shares) < 0.01) return shares.toExponential(2);
-  return shares.toLocaleString("en-US", {
+  return shares.toLocaleString(getLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 4,
   });
@@ -27,7 +29,7 @@ function formatShares(shares: number): string {
 
 function formatSignedPct(pct: number): string {
   const sign = pct >= 0 ? "+" : "";
-  return `${sign}${(pct * 100).toFixed(2)}%`;
+  return `${sign}${formatPercent(pct)}`;
 }
 
 export default function HoldingCard({
@@ -81,7 +83,7 @@ export default function HoldingCard({
         <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em] truncate">
           {isMarket ? (
             <>
-              {showShares ? `${formatShares(shares)} sh` : "No shares yet"}
+              {showShares ? `${formatShares(shares)} sh` : t("No shares yet")}
               {quote?.priceUSD ? (
                 <>
                   {" · "}
@@ -94,9 +96,9 @@ export default function HoldingCard({
               ) : null}
             </>
           ) : snapshot.asOf ? (
-            <>as of {snapshot.asOf}</>
+            <>{t("as of {date}", { date: snapshot.asOf })}</>
           ) : (
-            <>No valuation yet</>
+            <>{t("No valuation yet")}</>
           )}
         </p>
       </div>

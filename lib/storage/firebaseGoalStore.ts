@@ -1,20 +1,22 @@
 import {
-  addDoc,
-  deleteDoc,
-  getDoc,
-  getDocs,
+  doc,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   where,
-  writeBatch,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
 import {
+  commitWrite,
+  isSoftDeleted,
   listAcrossOwners,
   ownerCollection,
   ownerDoc,
+  readAfterWrite,
+  readDoc,
+  readDocs,
 } from "@/lib/firebase/firestoreHelpers";
+import { softDelete } from "@/lib/firebase/trash";
 import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
 import type {
   Goal,
@@ -59,10 +61,8 @@ export const firebaseGoalStore: GoalStore = {
   async addGoal(input: NewGoal, ownerUid?: string) {
     const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
-    const ref = await addDoc(ownerCollection(uid, GOALS), {
-      ...input,
-      createdAt,
-    });
+    const ref = doc(ownerCollection(uid, GOALS));
+    await commitWrite(setDoc(ref, { ...input, createdAt }));
     return { id: ref.id, ...input, createdAt, _owner: ownerCtxFor(uid) };
   },
   async updateGoal(id, patch, ownerUid) {
@@ -70,8 +70,8 @@ export const firebaseGoalStore: GoalStore = {
     const ref = ownerDoc(uid, GOALS, id);
     const cleaned: Partial<Goal> = { ...patch };
     delete (cleaned as { _owner?: unknown })._owner;
-    await updateDoc(ref, cleaned);
-    const snap = await getDoc(ref);
+    await commitWrite(updateDoc(ref, cleaned));
+    const snap = await readAfterWrite(ref);
     if (!snap.exists()) throw new Error(`Goal ${id} not found`);
     return hydrateGoal(
       snap.id,
@@ -81,13 +81,25 @@ export const firebaseGoalStore: GoalStore = {
   },
   async removeGoal(id, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    const batch = writeBatch(db);
-    batch.delete(ownerDoc(uid, GOALS, id));
-    const contribSnap = await getDocs(
+    const goalSnap = await readDoc(ownerDoc(uid, GOALS, id));
+    const goal = goalSnap.data() as Partial<Goal> | undefined;
+    // Contributions already in the trash keep their own entry, so restoring
+    // the goal doesn't bring back ones deleted separately.
+    const contribSnap = await readDocs(
       query(ownerCollection(uid, CONTRIBUTIONS), where("goalId", "==", id)),
     );
-    for (const c of contribSnap.docs) batch.delete(c.ref);
-    await batch.commit();
+    return softDelete(uid, {
+      kind: "goal",
+      label: goal?.name || "Goal",
+      refs: [
+        { col: GOALS, id },
+        ...contribSnap.docs
+          .filter((c) => !isSoftDeleted(c.data()))
+          .map((c) => ({ col: CONTRIBUTIONS, id: c.id })),
+      ],
+      amount: goal?.targetAmount,
+      currency: goal?.currency,
+    });
   },
 
   async listContributions() {
@@ -101,14 +113,19 @@ export const firebaseGoalStore: GoalStore = {
   async addContribution(input: NewGoalContribution, ownerUid?: string) {
     const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
-    const ref = await addDoc(ownerCollection(uid, CONTRIBUTIONS), {
-      ...input,
-      createdAt,
-    });
+    const ref = doc(ownerCollection(uid, CONTRIBUTIONS));
+    await commitWrite(setDoc(ref, { ...input, createdAt }));
     return { id: ref.id, ...input, createdAt, _owner: ownerCtxFor(uid) };
   },
   async removeContribution(id, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    await deleteDoc(ownerDoc(uid, CONTRIBUTIONS, id));
+    const snap = await readDoc(ownerDoc(uid, CONTRIBUTIONS, id));
+    const data = snap.data() as Partial<GoalContribution> | undefined;
+    return softDelete(uid, {
+      kind: "contribution",
+      label: data?.note || "Goal contribution",
+      refs: [{ col: CONTRIBUTIONS, id }],
+      amount: data?.amount,
+    });
   },
 };

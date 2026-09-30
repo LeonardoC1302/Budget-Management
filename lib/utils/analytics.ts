@@ -1,6 +1,8 @@
 import type { Category, Transaction } from "@/lib/types";
 import { monthKeyOf } from "@/lib/utils/budgets";
+import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 
+import { getLocale } from "@/lib/i18n";
 export interface MonthlyTotal {
   income: number;
   expense: number;
@@ -23,8 +25,8 @@ export function monthLabel(monthKey: string, short = true): string {
   const [year, month] = monthKey.split("-").map(Number);
   const d = new Date(year, month - 1, 1);
   return short
-    ? d.toLocaleDateString("en-US", { month: "short" })
-    : d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    ? d.toLocaleDateString(getLocale(), { month: "short" })
+    : d.toLocaleDateString(getLocale(), { month: "long", year: "numeric" });
 }
 
 export function getMonthlyTotals(
@@ -35,8 +37,8 @@ export function getMonthlyTotals(
   let expense = 0;
   for (const t of transactions) {
     if (monthKeyOf(t.date) !== monthKey) continue;
-    if (t.type === "income") income += t.amountUSD;
-    else if (t.type === "expense") expense += t.amountUSD;
+    if (countsAsIncome(t)) income += t.amountUSD;
+    else expense += spendSign(t) * t.amountUSD;
   }
   return { income, expense, net: income - expense };
 }
@@ -76,12 +78,14 @@ export function getCategoryBreakdown(
   let total = 0;
 
   for (const t of transactions) {
-    if (t.type !== "expense" || monthKeyOf(t.date) !== monthKey) continue;
-    totals[t.categoryId] = (totals[t.categoryId] ?? 0) + t.amountUSD;
-    total += t.amountUSD;
+    const sign = spendSign(t);
+    if (sign === 0 || monthKeyOf(t.date) !== monthKey) continue;
+    totals[t.categoryId] = (totals[t.categoryId] ?? 0) + sign * t.amountUSD;
+    total += sign * t.amountUSD;
   }
 
   const sorted = Object.entries(totals)
+    .filter(([, amount]) => amount > 0)
     .map(([categoryId, amount]) => ({
       categoryId,
       name: categoriesById[categoryId]?.name ?? "Unknown",

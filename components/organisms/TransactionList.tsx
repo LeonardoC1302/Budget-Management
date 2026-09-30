@@ -7,6 +7,7 @@ import { formatDateHeader } from "@/lib/utils/format";
 import { formatCurrencyCompact, formatCurrency } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface TransactionListProps {
   transactions: Transaction[];
   accountsById?: Record<string, Account>;
@@ -41,7 +42,7 @@ export default function TransactionList({
   emptyActionLabel,
   emptyActionOnClick,
   emptyActionHref,
-  emptyMessage = "No transactions yet.",
+  emptyMessage = t("No transactions yet."),
   groupByDate = false,
   groupTransfers = false,
   compact = false,

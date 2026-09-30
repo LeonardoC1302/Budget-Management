@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface RowSkeletonProps {
   count?: number;
   bordered?: boolean;
@@ -43,7 +44,7 @@ export default function RowSkeleton({
           <div className="w-16 h-3.5 skeleton shrink-0" />
         </div>
       ))}
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("Loading…")}</span>
     </div>
   );
 }

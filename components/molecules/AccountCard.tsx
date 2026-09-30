@@ -1,10 +1,12 @@
 import Amount from "@/components/atoms/Amount";
 import Button from "@/components/atoms/Button";
 import OwnerBadge from "@/components/atoms/OwnerBadge";
-import { DeleteIcon, EditIcon } from "@/lib/action/icons";
+import { DeleteIcon, EditIcon, ReconcileIcon } from "@/lib/action/icons";
+import { formatDate } from "@/lib/utils/format";
 import { ACCOUNT_TYPE_LABELS, type Account } from "@/lib/types";
 import type { GoalReservation } from "@/hooks/useAccounts";
 
+import { t } from "@/lib/i18n";
 interface AccountCardProps {
   account: Account;
   balance: number;
@@ -12,6 +14,7 @@ interface AccountCardProps {
   reservations?: GoalReservation[];
   onEdit?: (account: Account) => void;
   onDelete?: (account: Account) => void;
+  onReconcile?: (account: Account) => void;
 }
 
 export default function AccountCard({
@@ -21,6 +24,7 @@ export default function AccountCard({
   reservations = [],
   onEdit,
   onDelete,
+  onReconcile,
 }: AccountCardProps) {
   const canDelete = transactionCount === 0;
   const totalReserved = reservations.reduce((s, r) => s + r.amount, 0);
@@ -42,7 +46,8 @@ export default function AccountCard({
             <OwnerBadge owner={account._owner} />
           </div>
           <p className="text-[11px] text-fg-muted mt-1 uppercase tracking-[0.14em]">
-            {ACCOUNT_TYPE_LABELS[account.type]} · {transactionCount} tx
+            {t(ACCOUNT_TYPE_LABELS[account.type])} · {t("{count} tx", { count: transactionCount })}
+            {account.reconciledAt && t(" · Reconciled {0}", { "0": formatDate(account.reconciledAt) })}
           </p>
         </div>
 
@@ -54,13 +59,25 @@ export default function AccountCard({
           className="font-serif"
         />
 
-        {(onEdit || onDelete) && !readOnly && (
+        {(onEdit || onDelete || onReconcile) && !readOnly && (
           <div className="flex gap-1">
+            {onReconcile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={t("Reconcile {name}", { name: account.name })}
+                title={t("Check this balance against your bank")}
+                onClick={() => onReconcile(account)}
+                className="px-2"
+              >
+                <ReconcileIcon aria-hidden />
+              </Button>
+            )}
             {onEdit && (
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Edit ${account.name}`}
+                aria-label={t("Edit {name}", { name: account.name })}
                 onClick={() => onEdit(account)}
                 className="px-2"
               >
@@ -71,13 +88,13 @@ export default function AccountCard({
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Delete ${account.name}`}
+                aria-label={t("Delete {name}", { name: account.name })}
                 onClick={() => onDelete(account)}
                 disabled={!canDelete}
                 title={
                   canDelete
-                    ? "Delete account"
-                    : "Delete or reassign this account's transactions first"
+                    ? t("Delete account")
+                    : t("Delete or reassign this account's transactions first")
                 }
                 className="px-2"
               >
@@ -96,7 +113,7 @@ export default function AccountCard({
               className="flex items-center justify-between gap-3"
             >
               <span className="text-fg-muted truncate">
-                Reserved for {r.goalName}
+                {t("Reserved for {name}", { name: r.goalName })}
               </span>
               <Amount
                 value={r.amount}
@@ -108,7 +125,7 @@ export default function AccountCard({
           ))}
           <div className="flex items-center justify-between gap-3 pt-1 border-t border-border">
             <span className="text-fg uppercase tracking-[0.14em] text-[11px]">
-              Free to use
+              {t("Free to use")}
             </span>
             <Amount
               value={freeToUse}

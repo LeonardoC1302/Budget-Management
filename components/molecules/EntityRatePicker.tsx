@@ -5,6 +5,7 @@ import Select from "@/components/atoms/Select";
 import { useBccrRates } from "@/hooks/useBccrRates";
 import type { BccrEntityRate } from "@/lib/services/bccrRates";
 
+import { getLocale, t } from "@/lib/i18n";
 export type FxDirection = "USD_TO_CRC" | "CRC_TO_USD";
 
 export interface ResolvedRate {
@@ -84,38 +85,38 @@ export default function EntityRatePicker({
     return { value: e.id, label };
   });
 
-  const dirLabel = direction === "USD_TO_CRC" ? "compra (USD→CRC)" : "venta (CRC→USD)";
+  const dirLabel = direction === "USD_TO_CRC" ? t("compra (USD→CRC)") : t("venta (CRC→USD)");
 
   return (
     <div className="flex flex-col gap-1.5">
       <Select
-        label={`Bank rate — ${dirLabel}`}
+        label={t("Bank rate — {dirLabel}", { dirLabel })}
         value={selected?.id ?? ""}
         onChange={onChange}
         options={options}
         disabled={disabled || loading || options.length === 0}
-        placeholder={loading ? "Loading BCCR rates…" : "Select entity"}
+        placeholder={loading ? t("Loading BCCR rates…") : t("Select entity")}
       />
       {error && (
         <p className="text-xs text-expense">
-          BCCR unreachable ({error}). Using open.er-api.com fallback rate.{" "}
+          {t("BCCR unreachable ({error}). Using open.er-api.com fallback rate.", { error })}{" "}
           <button
             type="button"
             onClick={() => void refresh()}
             className="underline decoration-dotted underline-offset-4"
           >
-            Retry
+            {t("Retry")}
           </button>
         </p>
       )}
       {!error && snapshot && resolved === null && selected && (
         <p className="text-xs text-fg-subtle">
-          {selected.name} has no {dirLabel} rate posted. Using fallback.
+          {t("{name} has no {direction} rate posted. Using fallback.", { name: selected.name, direction: dirLabel })}
         </p>
       )}
       {resolved && (
         <p className="text-xs text-fg-subtle">
-          Snapshot from {new Date(resolved.snapshotAt).toLocaleString("es-CR")}
+          {t("Snapshot from {date}", { date: new Date(resolved.snapshotAt).toLocaleString(getLocale()) })}
         </p>
       )}
     </div>

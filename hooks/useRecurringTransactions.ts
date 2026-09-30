@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { runMaterialization } from "@/lib/recurring/runMaterialization";
 import { recurringTransactionStore } from "@/lib/storage";
 import type {
@@ -10,16 +11,15 @@ import type {
 } from "@/lib/types";
 
 /**
- * One-time soft-migration: legacy investment recurring templates are paused
+ * One-time soft-migration: legacy investment recurring templates (no
+ * holding) are paused
  * on first load after the Invest tab was removed from the recurring form.
  * They remain visible under "Retired" so the user can delete them at will.
  */
 async function retireLegacyInvestments(
   templates: RecurringTransaction[],
 ): Promise<RecurringTransaction[]> {
-  const changes = templates.filter(
-    (t) => t.type === "investment" && t.active,
-  );
+  const changes = templates.filter(isLegacyActiveInvestment);
   if (changes.length === 0) return templates;
   await Promise.all(
     changes.map((t) =>
@@ -27,8 +27,14 @@ async function retireLegacyInvestments(
     ),
   );
   return templates.map((t) =>
-    t.type === "investment" && t.active ? { ...t, active: false } : t,
+    isLegacyActiveInvestment(t) ? { ...t, active: false } : t,
   );
+}
+
+// Legacy investment templates predate holdings and have no `holdingId`.
+// Recurring contributions into a holding are current and must stay active.
+function isLegacyActiveInvestment(t: RecurringTransaction): boolean {
+  return t.type === "investment" && !t.holdingId && t.active;
 }
 
 export function useRecurringTransactions() {
@@ -91,8 +97,10 @@ export function useRecurringTransactions() {
   const remove = useCallback(
     async (id: string) => {
       const target = recurring.find((r) => r.id === id);
-      await recurringTransactionStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await recurringTransactionStore.remove(id, ownerUid);
       setRecurring((prev) => prev.filter((r) => r.id !== id));
+      announceRemoval("Recurring item deleted", [{ ownerUid, trashId }]);
     },
     [recurring],
   );

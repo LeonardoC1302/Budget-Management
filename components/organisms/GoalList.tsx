@@ -4,11 +4,14 @@ import EmptyState from "@/components/atoms/EmptyState";
 import GoalCard from "@/components/molecules/GoalCard";
 import type { Goal, GoalContribution } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface GoalListProps {
   goals: Goal[];
   contributionsByGoal: Record<string, GoalContribution[]>;
   monthlyRate: number | null;
   onContribute?: (goal: Goal) => void;
+  onWithdraw?: (goal: Goal) => void;
+  onDeleteContribution?: (id: string) => void | Promise<void>;
   onEdit?: (goal: Goal) => void;
   onDelete?: (goal: Goal) => void;
   emptyTitle?: string;
@@ -24,6 +27,8 @@ export default function GoalList({
   contributionsByGoal,
   monthlyRate,
   onContribute,
+  onWithdraw,
+  onDeleteContribution,
   onEdit,
   onDelete,
   emptyTitle,
@@ -31,7 +36,7 @@ export default function GoalList({
   emptyActionLabel,
   emptyActionOnClick,
   emptyActionHref,
-  emptyMessage = "No goals yet.",
+  emptyMessage = t("No goals yet."),
 }: GoalListProps) {
   if (goals.length === 0) {
     return (
@@ -54,6 +59,8 @@ export default function GoalList({
           contributions={contributionsByGoal[goal.id] ?? []}
           monthlyRate={monthlyRate}
           onContribute={onContribute}
+          onWithdraw={onWithdraw}
+          onDeleteContribution={onDeleteContribution}
           onEdit={onEdit}
           onDelete={onDelete}
         />

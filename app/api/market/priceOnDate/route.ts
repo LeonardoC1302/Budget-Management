@@ -4,11 +4,14 @@ import {
   MarketDataUnavailableError,
   getPriceOnDate,
 } from "@/lib/services/marketData";
+import { requireUser } from "@/lib/server/requireUser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const denied = await requireUser(req);
+  if (denied) return denied;
   const url = new URL(req.url);
   const symbol = url.searchParams.get("symbol")?.trim();
   const date = url.searchParams.get("date")?.trim();

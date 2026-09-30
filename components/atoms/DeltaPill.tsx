@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils/cn";
 import type { Delta } from "@/lib/utils/analytics";
 
+import { t } from "@/lib/i18n";
 interface DeltaPillProps {
   label: string;
   delta: Delta;
@@ -73,7 +74,7 @@ export default function DeltaPill({
         </span>
       </div>
       <span className="text-[10px] text-fg-subtle leading-tight uppercase tracking-[0.14em]">
-        vs last month
+        {t("vs last month")}
       </span>
       {isBad && reassuranceWhenBad && (
         <span className="lede text-[11px] leading-snug">

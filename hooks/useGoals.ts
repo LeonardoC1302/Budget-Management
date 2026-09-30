@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { goalStore, transactionStore } from "@/lib/storage";
-import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { computeMonthlySavingsRate } from "@/lib/utils/goals";
 import type {
   Goal,
@@ -80,8 +81,10 @@ export function useGoals() {
   const removeGoal = useCallback(
     async (id: string) => {
       const target = goals.find((g) => g.id === id);
-      await goalStore.removeGoal(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await goalStore.removeGoal(id, ownerUid);
       await refreshGoals();
+      announceRemoval("Goal deleted", [{ ownerUid, trashId }]);
     },
     [goals, refreshGoals],
   );
@@ -91,6 +94,8 @@ export function useGoals() {
       const goal = goals.find((g) => g.id === input.goalId);
       const created = await goalStore.addContribution(input, goal?._owner?.uid);
       await refreshGoals();
+      // Account reservations (free-to-use) depend on contributions.
+      emitDataChanged();
       return created;
     },
     [goals, refreshGoals],
@@ -99,8 +104,10 @@ export function useGoals() {
   const removeContribution = useCallback(
     async (id: string) => {
       const target = contributions.find((c) => c.id === id);
-      await goalStore.removeContribution(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await goalStore.removeContribution(id, ownerUid);
       await refreshGoals();
+      announceRemoval("Contribution deleted", [{ ownerUid, trashId }]);
     },
     [contributions, refreshGoals],
   );

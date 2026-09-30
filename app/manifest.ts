@@ -5,7 +5,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Perch",
     short_name: "Perch",
     description: "A quiet place for your money to rest.",
-    start_url: "/",
+    // Installed copies are identified by `id`. It was implicitly "/" (the old
+    // start_url); pinning it keeps existing installs the same app now that
+    // the app opens at /home and "/" is the public landing page.
+    id: "/",
+    start_url: "/home",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

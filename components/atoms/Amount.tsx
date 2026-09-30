@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
+import { getLocale } from "@/lib/i18n";
 type Tone = "income" | "expense" | "neutral";
 
 interface AmountProps {
@@ -35,7 +36,7 @@ export default function Amount({
   compact = false,
   className,
 }: AmountProps) {
-  const formatted = new Intl.NumberFormat("en-US", {
+  const formatted = new Intl.NumberFormat(getLocale(), {
     style: "currency",
     currency,
     currencyDisplay: "narrowSymbol",

@@ -7,6 +7,7 @@ import MobileNavMenu from "@/components/organisms/MobileNavMenu";
 import { NAV_ITEMS, PRIMARY_ITEMS, SECONDARY_ITEMS, type NavItem } from "@/lib/nav/items";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 /**
  * Bottom navigation, Alcove-styled.
  * - Desktop reveals two rows split by a hairline wall.
@@ -23,7 +24,7 @@ export default function BottomNav() {
   return (
     <>
       <nav
-        aria-label="Primary"
+        aria-label={t("Primary")}
         className={cn(
           "fixed bottom-0 inset-x-0 z-40",
           "border-t border-border",
@@ -53,7 +54,7 @@ export default function BottomNav() {
         <div className="md:hidden flex items-center justify-center py-3">
           <button
             type="button"
-            aria-label="Open navigation menu"
+            aria-label={t("Open navigation menu")}
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
@@ -69,7 +70,7 @@ export default function BottomNav() {
             {ActiveIcon ? (
               <ActiveIcon width={18} height={18} aria-hidden />
             ) : null}
-            <span>{activeItem?.label ?? "Menu"}</span>
+            <span>{activeItem ? t(activeItem.label) : t("Menu")}</span>
           </button>
         </div>
       </nav>
@@ -110,7 +111,7 @@ function NavCell({ item, active, muted }: NavCellProps) {
           />
         )}
         <Icon width={22} height={22} aria-hidden />
-        <span>{item.label}</span>
+        <span>{t(item.label)}</span>
       </Link>
     </li>
   );

@@ -1,0 +1,110 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
+import TransactionForm from "@/components/molecules/TransactionForm";
+import { useTransactions, type AddOptions } from "@/hooks/useTransactions";
+import { formatCurrency } from "@/lib/utils/format";
+import type { NewTransaction } from "@/lib/types";
+
+import { t } from "@/lib/i18n";
+interface SessionEntry {
+  amount: number;
+  currency: string;
+  type: NewTransaction["type"];
+  description: string;
+  timestamp: number;
+}
+
+const TYPE_LABEL: Record<NewTransaction["type"], string> = {
+  income: "income",
+  expense: "expense",
+  investment: "investment",
+  transfer: "transfer",
+};
+
+export default function AddTransactionPage() {
+  const { add } = useTransactions();
+  const [session, setSession] = useState<SessionEntry[]>([]);
+  const [formKey, setFormKey] = useState(0);
+  const loggedRef = useRef<HTMLElement>(null);
+
+  const last = session[session.length - 1];
+
+  useEffect(() => {
+    if (!last) return;
+    loggedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    loggedRef.current?.focus({ preventScroll: true });
+  }, [last]);
+
+  async function handleSubmit(input: NewTransaction, options?: AddOptions) {
+    await add(input, options);
+    setSession((prev) => [
+      ...prev,
+      {
+        amount: input.amount,
+        currency: input.currency,
+        type: input.type,
+        description: input.description ?? "",
+        timestamp: Date.now(),
+      },
+    ]);
+    // Bump the form key so the amount/description reset while account & date
+    // stay on whatever the user last chose.
+    setFormKey((k) => k + 1);
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <RouteMasthead
+        kicker={t("New")}
+        title={t("Add transaction")}
+        actions={
+          <Link href="/home">
+            <Button variant="secondary" size="sm">
+              {t("Done")}
+            </Button>
+          </Link>
+        }
+      />
+
+      {last && (
+        <section
+          ref={loggedRef}
+          className="courtyard p-5 flex flex-col gap-3"
+          aria-live="polite"
+          tabIndex={-1}
+          style={{ background: "var(--color-income-soft)" }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm text-fg">
+                <span className="font-medium text-income">{t("Logged")}</span>{" "}
+                <span className="font-medium">
+                  {formatCurrency(last.amount, last.currency)}
+                </span>{" "}
+                <span className="text-fg-muted">· {t(TYPE_LABEL[last.type])}</span>
+              </p>
+              {last.description && (
+                <p className="lede text-xs mt-1 truncate">{last.description}</p>
+              )}
+            </div>
+            <span className="kicker shrink-0">
+              {t("{count} this session", { count: session.length })}
+            </span>
+          </div>
+          <p className="lede text-xs">
+            {t("The form's ready for the next one. Tap")}{" "}<em>{t("Done")}</em>{" "}{t("when you're finished.")}
+          </p>
+        </section>
+      )}
+
+      <Card>
+        <TransactionForm key={formKey} onSubmit={handleSubmit} />
+      </Card>
+    </div>
+  );
+}

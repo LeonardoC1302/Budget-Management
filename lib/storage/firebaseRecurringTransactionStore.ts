@@ -1,18 +1,21 @@
 import {
-  addDoc,
-  deleteDoc,
-  getDoc,
+  doc,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import {
+  commitWrite,
   listAcrossOwners,
   ownerCollection,
   ownerDoc,
+  readAfterWrite,
+  readDoc,
 } from "@/lib/firebase/firestoreHelpers";
+import { softDelete } from "@/lib/firebase/trash";
 import { requireWriteUid, findOwnerCtx } from "@/lib/firebase/access";
 import type {
   NewRecurringTransaction,
@@ -56,7 +59,8 @@ export const firebaseRecurringTransactionStore: RecurringTransactionStore = {
     const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
     const payload = stripUndefined({ ...input, createdAt });
-    const ref = await addDoc(ownerCollection(uid, COL), payload);
+    const ref = doc(ownerCollection(uid, COL));
+    await commitWrite(setDoc(ref, payload));
     return {
       id: ref.id,
       ...(payload as Omit<RecurringTransaction, "id">),
@@ -68,8 +72,8 @@ export const firebaseRecurringTransactionStore: RecurringTransactionStore = {
     const ref = ownerDoc(uid, COL, id);
     const cleaned = stripUndefined(patch) as Record<string, unknown>;
     delete cleaned._owner;
-    await updateDoc(ref, cleaned);
-    const snap = await getDoc(ref);
+    await commitWrite(updateDoc(ref, cleaned));
+    const snap = await readAfterWrite(ref);
     if (!snap.exists()) throw new Error(`Recurring template ${id} not found`);
     return hydrate(
       snap.id,
@@ -79,7 +83,15 @@ export const firebaseRecurringTransactionStore: RecurringTransactionStore = {
   },
   async remove(id, ownerUid) {
     const uid = requireWriteUid(ownerUid);
-    await deleteDoc(ownerDoc(uid, COL, id));
+    const snap = await readDoc(ownerDoc(uid, COL, id));
+    const data = snap.data() as Partial<RecurringTransaction> | undefined;
+    return softDelete(uid, {
+      kind: "recurring",
+      label: data?.description || "Recurring item",
+      refs: [{ col: COL, id }],
+      amount: data?.amount,
+      currency: data?.currency,
+    });
   },
   async updateLastGeneratedDates(updates) {
     if (updates.length === 0) return;
@@ -99,7 +111,7 @@ export const firebaseRecurringTransactionStore: RecurringTransactionStore = {
           lastGeneratedDate: u.lastGeneratedDate,
         });
       }
-      await batch.commit();
+      await commitWrite(batch.commit());
     }
   },
 };

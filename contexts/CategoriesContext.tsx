@@ -11,8 +11,10 @@ import {
 } from "react";
 import { budgetStore, categoryStore, transactionStore } from "@/lib/storage";
 import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import type { Category, NewCategory, TransactionType } from "@/lib/types";
 
+import { t, tn } from "@/lib/i18n";
 interface CategoriesContextValue {
   categories: Category[];
   byId: Record<string, Category>;
@@ -75,21 +77,25 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     async (id: string) => {
       const target = categories.find((c) => c.id === id);
       if (target?.isDefault) {
-        throw new Error("Default categories cannot be deleted.");
+        throw new Error(t("Default categories cannot be deleted."));
       }
       const count = usage[id] ?? 0;
       if (count > 0) {
         throw new Error(
-          `This category is used by ${count} transaction${count === 1 ? "" : "s"}.`,
+          tn("This category is used by {count} transaction.", "This category is used by {count} transactions.", count),
         );
       }
       const budgets = await budgetStore.list();
       const orphanedBudgets = budgets.filter((b) => b.categoryId === id);
+      const removed: { ownerUid?: string; trashId: string | void }[] = [];
       for (const b of orphanedBudgets) {
-        await budgetStore.remove(b.id, b._owner?.uid);
+        const ownerUid = b._owner?.uid;
+        removed.push({ ownerUid, trashId: await budgetStore.remove(b.id, ownerUid) });
       }
-      await categoryStore.remove(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      removed.push({ ownerUid, trashId: await categoryStore.remove(id, ownerUid) });
       await refresh();
+      announceRemoval("Category deleted", removed);
       if (orphanedBudgets.length > 0) emitDataChanged();
     },
     [categories, usage, refresh],

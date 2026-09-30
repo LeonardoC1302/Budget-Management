@@ -10,6 +10,7 @@ import type { GoalReservation } from "@/hooks/useAccounts";
 import { todayISODate } from "@/lib/utils/format";
 import type { Account, NewGoalContribution } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface ContributionFormProps {
   goalId: string;
   goalCurrency: string;
@@ -73,8 +74,7 @@ export default function ContributionForm({
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-fg-muted">
-          You need an account in {goalCurrency} to reserve money for this goal.
-          Add one first.
+          {t("You need an account in {currency} to reserve money for this goal. Add one first.", { currency: goalCurrency })}
         </p>
         {onCancel && (
           <Button
@@ -84,7 +84,7 @@ export default function ContributionForm({
             fullWidth
             onClick={onCancel}
           >
-            Close
+            {t("Close")}
           </Button>
         )}
       </div>
@@ -112,7 +112,7 @@ export default function ContributionForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Select
-        label="Account"
+        label={t("Account")}
         name="account"
         value={effectiveAccountId}
         onChange={setAccountId}
@@ -124,7 +124,7 @@ export default function ContributionForm({
 
       <div className="flex flex-col gap-1">
         <Input
-          label={`Amount (${goalCurrency})`}
+          label={t("Amount ({currency})", { currency: goalCurrency })}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -136,7 +136,7 @@ export default function ContributionForm({
           onChange={(e) => setAmount(e.target.value)}
         />
         <div className="flex items-center gap-1 text-xs text-fg-subtle">
-          <span>Available:</span>
+          <span>{t("Available:")}</span>
           <Amount
             value={available}
             tone={available > 0 ? "neutral" : "expense"}
@@ -146,27 +146,26 @@ export default function ContributionForm({
         </div>
         {exceedsAvailable && (
           <p className="text-xs text-expense">
-            Amount exceeds what&apos;s free on this account.
+            {t("Amount exceeds what's free on this account.")}
           </p>
         )}
         {!exceedsAvailable && available <= 0 && (
           <p className="text-xs text-expense">
-            This account has nothing free to reserve. Pick another or free up
-            some balance.
+            {t("This account has nothing free to reserve. Pick another or free up some balance.")}
           </p>
         )}
       </div>
 
       <Input
-        label="Note"
+        label={t("Note")}
         name="note"
-        placeholder="Optional"
+        placeholder={t("Optional")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
 
       <DatePicker
-        label="Date"
+        label={t("Date")}
         name="date"
         required
         value={date}
@@ -182,11 +181,11 @@ export default function ContributionForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button type="submit" size="lg" fullWidth disabled={!canSubmit}>
-          {submitting ? "Adding…" : "Add contribution"}
+          {submitting ? t("Adding…") : t("Add contribution")}
         </Button>
       </div>
     </form>

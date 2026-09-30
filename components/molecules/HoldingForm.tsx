@@ -6,6 +6,8 @@ import Input from "@/components/atoms/Input";
 import { cn } from "@/lib/utils/cn";
 import type { Holding, HoldingKind, NewHolding } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
+import { apiFetch } from "@/lib/api/apiFetch";
 interface HoldingFormProps {
   initial?: Holding;
   onSubmit: (input: NewHolding) => void | Promise<void>;
@@ -53,19 +55,19 @@ export default function HoldingForm({
     if (kind !== "market") return;
     const q = query.trim();
     if (q.length < 1) return;
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       setSearching(true);
       setSearchError(null);
-      fetch(`/api/market/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/market/search?q=${encodeURIComponent(q)}`, {
         signal: ctrl.signal,
       })
         .then(async (res) => {
           const data = (await res.json()) as SearchResponse;
           if (!res.ok) {
-            setSearchError(data.error ?? "Search unavailable.");
+            setSearchError(data.error ?? t("Search unavailable."));
             setHits([]);
           } else {
             setHits(data.results ?? []);
@@ -73,11 +75,11 @@ export default function HoldingForm({
         })
         .catch((err) => {
           if ((err as Error).name === "AbortError") return;
-          setSearchError("Search unavailable.");
+          setSearchError(t("Search unavailable."));
         })
         .finally(() => setSearching(false));
     }, 250);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, [query, kind]);
 
   const visibleHits =
@@ -130,7 +132,7 @@ export default function HoldingForm({
       {!isEditing && (
         <div
           role="tablist"
-          aria-label="Holding kind"
+          aria-label={t("Holding kind")}
           className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
         >
           {(["market", "manual"] as const).map((k) => (
@@ -147,7 +149,7 @@ export default function HoldingForm({
                   : "text-fg-muted hover:text-fg",
               )}
             >
-              {k}
+              {t(k)}
             </button>
           ))}
         </div>
@@ -157,15 +159,15 @@ export default function HoldingForm({
         <>
           <div className="flex flex-col gap-1.5">
             <Input
-              label="Search a ticker"
+              label={t("Search a ticker")}
               name="symbol-search"
-              placeholder="e.g. SPY, QQQ, AAPL, BTC/USD"
+              placeholder={t("e.g. SPY, QQQ, AAPL, BTC/USD")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={!canEditSymbol}
             />
             {searching && (
-              <p className="text-xs text-fg-subtle">Searching…</p>
+              <p className="text-xs text-fg-subtle">{t("Searching…")}</p>
             )}
             {searchError && (
               <p role="status" className="text-xs text-expense">
@@ -200,7 +202,7 @@ export default function HoldingForm({
           </div>
 
           <Input
-            label="Symbol"
+            label={t("Symbol")}
             name="symbol"
             required
             value={symbol}
@@ -209,11 +211,11 @@ export default function HoldingForm({
           />
           {!canEditSymbol && (
             <p className="text-xs text-fg-subtle">
-              Symbol is fixed once created — create a new position to switch tickers.
+              {t("Symbol is fixed once created — create a new position to switch tickers.")}
             </p>
           )}
           <Input
-            label="Quote currency"
+            label={t("Quote currency")}
             name="quoteCurrency"
             value={quoteCurrency}
             onChange={(e) => setQuoteCurrency(e.target.value.toUpperCase())}
@@ -222,11 +224,11 @@ export default function HoldingForm({
       )}
 
       <Input
-        label="Name"
+        label={t("Name")}
         name="name"
         required
         placeholder={
-          kind === "manual" ? "e.g. Complementary pension" : "e.g. S&P 500 ETF"
+          kind === "manual" ? t("e.g. Complementary pension") : t("e.g. S&P 500 ETF")
         }
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -235,22 +237,22 @@ export default function HoldingForm({
       {kind === "manual" && (
         <div className="flex flex-col gap-1">
           <Input
-            label="Symbol (optional)"
+            label={t("Symbol (optional)")}
             name="manual-symbol"
-            placeholder="e.g. PENS, GOLD, RE"
+            placeholder={t("e.g. PENS, GOLD, RE")}
             maxLength={6}
             value={symbol}
             onChange={(e) => setSymbol(e.target.value.toUpperCase())}
           />
           <p className="text-xs text-fg-subtle">
-            Up to 6 characters. Shown on the position tile instead of “MANUAL”.
+            {t("Up to 6 characters. Shown on the position tile instead of “MANUAL”.")}
           </p>
         </div>
       )}
 
       {kind === "manual" && (
         <Input
-          label="Already invested (USD, optional)"
+          label={t("Already invested (USD, optional)")}
           name="initial-cost"
           type="number"
           inputMode="decimal"
@@ -259,7 +261,7 @@ export default function HoldingForm({
           placeholder="0.00"
           value={initialCost}
           onChange={(e) => setInitialCost(e.target.value)}
-          hint="Seed cost basis for money invested before you started tracking. Doesn’t debit any account or count as a valuation."
+          hint={t("Seed cost basis for money invested before you started tracking. Doesn’t debit any account or count as a valuation.")}
         />
       )}
 
@@ -272,7 +274,7 @@ export default function HoldingForm({
             fullWidth
             onClick={onCancel}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
         <Button
@@ -282,8 +284,8 @@ export default function HoldingForm({
           disabled={!canSubmit || submitting}
         >
           {submitting
-            ? isEditing ? "Saving…" : "Adding…"
-            : isEditing ? "Save changes" : "Add position"}
+            ? isEditing ? t("Saving…") : t("Adding…")
+            : isEditing ? t("Save changes") : t("Add position")}
         </Button>
       </div>
     </form>

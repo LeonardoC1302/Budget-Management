@@ -11,6 +11,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface OtpInputProps {
   length: number;
   value: string;
@@ -147,7 +148,7 @@ export default function OtpInput({
               disabled={disabled}
               value={hasChar ? ch : ""}
               maxLength={1}
-              aria-label={`Character ${i + 1} of ${length}`}
+              aria-label={t("Character {0} of {length}", { "0": i + 1, length })}
               onFocus={(e) => {
                 setFocused(i);
                 e.currentTarget.select();

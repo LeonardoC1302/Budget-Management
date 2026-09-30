@@ -10,18 +10,19 @@ import { formatCurrency } from "@/lib/utils/format";
 import type { Account, NewTransfer } from "@/lib/types";
 import { useMemo, useState } from "react";
 
+import { getLocale, t } from "@/lib/i18n";
 const NUDGE_WINDOW_DAYS = 10;
 
 function formatDueDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString(getLocale(), { month: "short", day: "numeric" });
 }
 
 function daysCopy(days: number): string {
-  if (days === 0) return "today";
-  if (days === 1) return "tomorrow";
-  if (days > 0) return `in ${days} days`;
-  if (days === -1) return "1 day late";
-  return `${Math.abs(days)} days late`;
+  if (days === 0) return t("today");
+  if (days === 1) return t("tomorrow");
+  if (days > 0) return t("in {days} days", { days });
+  if (days === -1) return t("1 day late");
+  return t("{0} days late", { "0": Math.abs(days) });
 }
 
 export default function CreditCardNudge() {
@@ -66,10 +67,10 @@ export default function CreditCardNudge() {
       >
         <div className="flex items-center justify-between gap-3">
           <h2 id="card-nudge-heading" className="kicker">
-            Cards to settle
+            {t("Cards to settle")}
           </h2>
           <span className="text-[11px] text-fg-subtle uppercase tracking-[0.14em]">
-            {rows.length} due within {NUDGE_WINDOW_DAYS} days
+            {t("{count} due within {days} days", { count: rows.length, days: NUDGE_WINDOW_DAYS })}
           </span>
         </div>
         <div className="rooms" role="list">
@@ -99,7 +100,7 @@ export default function CreditCardNudge() {
                   size="sm"
                   onClick={() => setPayingCard(card)}
                 >
-                  Pay
+                  {t("Pay")}
                 </Button>
               </div>
             );
@@ -110,7 +111,7 @@ export default function CreditCardNudge() {
       <Modal
         open={!!payingCard && !!payingTotals}
         onClose={() => setPayingCard(null)}
-        title={payingCard ? `Pay ${payingCard.name}` : "Pay card"}
+        title={payingCard ? `Pay ${payingCard.name}` : t("Pay card")}
       >
         {payingCard && payingTotals && (
           <PayCardForm

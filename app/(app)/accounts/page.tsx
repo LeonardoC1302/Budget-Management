@@ -1,0 +1,270 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Amount from "@/components/atoms/Amount";
+import Button from "@/components/atoms/Button";
+import ConfirmDialog from "@/components/atoms/ConfirmDialog";
+import Modal from "@/components/atoms/Modal";
+import RowSkeleton from "@/components/atoms/RowSkeleton";
+import AccountForm from "@/components/molecules/AccountForm";
+import ReconcileForm from "@/components/molecules/ReconcileForm";
+import RouteMasthead from "@/components/molecules/RouteMasthead";
+import TransferForm from "@/components/molecules/TransferForm";
+import AccountList from "@/components/organisms/AccountList";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useTransactions } from "@/hooks/useTransactions";
+import { TransferIcon } from "@/lib/action/icons";
+import type { Account, NewAccount, NewTransfer } from "@/lib/types";
+
+import { t, tn } from "@/lib/i18n";
+export default function AccountsPage() {
+  const {
+    accounts,
+    balances,
+    txCountByAccount,
+    reservationsByAccount,
+    loading,
+    add,
+    update,
+    remove,
+    reconcile,
+    refresh: refreshAccounts,
+  } = useAccounts();
+  const [reconciling, setReconciling] = useState<Account | null>(null);
+  const { addTransfer } = useTransactions();
+
+  const nonCreditAccounts = useMemo(
+    () => accounts.filter((a) => a.type !== "credit"),
+    [accounts],
+  );
+  const creditCardCount = accounts.length - nonCreditAccounts.length;
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [editing, setEditing] = useState<Account | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function openCreate() {
+    setEditing(null);
+    setError(null);
+    setModalOpen(true);
+  }
+
+  function openEdit(account: Account) {
+    setEditing(account);
+    setError(null);
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(input: NewAccount) {
+    if (editing) {
+      await update(editing.id, input);
+    } else {
+      await add(input);
+    }
+    setModalOpen(false);
+    setEditing(null);
+  }
+
+  async function handleTransfer(input: NewTransfer) {
+    await addTransfer(input);
+    await refreshAccounts();
+    setTransferOpen(false);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await remove(pendingDelete.id);
+      setPendingDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("Could not delete account"));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const canTransfer = nonCreditAccounts.length >= 2;
+
+  const balancesByCurrency = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const a of nonCreditAccounts) {
+      const bal = balances[a.id] ?? a.initialBalance;
+      map[a.currency] = (map[a.currency] ?? 0) + bal;
+    }
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [nonCreditAccounts, balances]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <RouteMasthead
+        kicker={t("Manage")}
+        title={t("Accounts")}
+        actions={
+          <Button size="md" onClick={openCreate}>
+            {t("+ Add")}
+          </Button>
+        }
+      />
+
+      {error && (
+        <div className="surface p-4 text-sm text-expense" style={{ borderColor: "var(--color-expense)" }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <RowSkeleton count={3} />
+      ) : (
+        <>
+          {nonCreditAccounts.length > 0 && (
+            <section
+              className="flex flex-col"
+              aria-label={t("Net across accounts")}
+            >
+              <div className="section-head">
+                <span className="section-head-title">{t("Net across accounts")}</span>
+                <span className="section-head-meta">
+                  {tn("{count} account", "{count} accounts", nonCreditAccounts.length)}
+                  {" · "}
+                  {tn("{count} currency", "{count} currencies", balancesByCurrency.length)}
+                </span>
+              </div>
+              <div className="rooms">
+                {balancesByCurrency.map(([currency, sum]) => (
+                  <div
+                    key={currency}
+                    className="flex items-center justify-between gap-3 px-4 py-3"
+                  >
+                    <span className="kicker shrink-0">{currency}</span>
+                    <Amount
+                      value={sum}
+                      tone={sum >= 0 ? "income" : "expense"}
+                      size="lg"
+                      currency={currency}
+                      className="font-serif min-w-0 truncate"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="lede text-xs mt-3">
+                {t("Balances are shown in each account's own currency — no conversion.")}
+              </p>
+            </section>
+          )}
+
+          <section className="flex flex-col" aria-label={t("Accounts")}>
+            <div className="section-head">
+              <span className="section-head-title">{t("All accounts")}</span>
+              {canTransfer ? (
+                <button
+                  type="button"
+                  onClick={() => setTransferOpen(true)}
+                  className="section-head-link inline-flex items-center gap-1.5"
+                >
+                  <TransferIcon aria-hidden />
+                  <span>{t("Move money")}</span>
+                </button>
+              ) : (
+                <span className="section-head-meta">{t("Managed by hand")}</span>
+              )}
+            </div>
+            <AccountList
+              accounts={nonCreditAccounts}
+              balances={balances}
+              txCountByAccount={txCountByAccount}
+              reservationsByAccount={reservationsByAccount}
+              onEdit={openEdit}
+              onDelete={setPendingDelete}
+              onReconcile={setReconciling}
+              emptyTitle={t("No accounts yet.")}
+              emptyDescription={t("Add your first account so transactions have somewhere to land.")}
+              emptyActionLabel={t("Add an account")}
+              emptyActionOnClick={openCreate}
+            />
+          </section>
+
+          {creditCardCount > 0 && (
+            <p className="lede text-xs text-center">
+              {tn(
+                "{count} credit card lives on the",
+                "{count} credit cards live on the",
+                creditCardCount,
+              )}{" "}
+              <a
+                href="/cards"
+                className="text-fg hover:text-accent underline decoration-dotted underline-offset-4"
+              >
+                {t("Cards")}
+              </a>{" "}
+              {t("tab.")}
+            </p>
+          )}
+        </>
+      )}
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editing ? t("Edit account") : t("New account")}
+      >
+        <AccountForm
+          initial={editing ?? undefined}
+          onSubmit={handleSubmit}
+          onCancel={() => setModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        open={!!reconciling}
+        onClose={() => setReconciling(null)}
+        title={reconciling ? `Reconcile ${reconciling.name}` : t("Reconcile")}
+      >
+        {reconciling && (
+          <ReconcileForm
+            account={reconciling}
+            balance={balances[reconciling.id] ?? reconciling.initialBalance}
+            onSubmit={async (actual) => {
+              await reconcile(reconciling.id, actual);
+              setReconciling(null);
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        title={t("Transfer between accounts")}
+      >
+        <TransferForm
+          onSubmit={handleTransfer}
+          onCancel={() => setTransferOpen(false)}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={t("Delete this account?")}
+        message={
+          pendingDelete && (
+            <>
+              <span className="text-fg font-medium">{pendingDelete.name}</span>{" "}
+              {t("will be removed. Its transactions stay in the ledger, unassigned — you can reassign them later.")}
+            </>
+          )
+        }
+        confirmLabel={t("Delete account")}
+        cancelLabel={t("Keep it")}
+        tone="danger"
+        submitting={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </div>
+  );
+}

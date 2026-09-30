@@ -6,6 +6,7 @@ import CurrencySelect from "@/components/atoms/CurrencySelect";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
+import TagInput from "@/components/atoms/TagInput";
 import CategoryPicker from "@/components/molecules/CategoryPicker";
 import EntityRatePicker, {
   type FxDirection,
@@ -14,10 +15,13 @@ import EntityRatePicker, {
 import { useAccounts } from "@/hooks/useAccounts";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
+import { useTransactions, type AddOptions } from "@/hooks/useTransactions";
 import { getRate } from "@/lib/services/exchangeRates";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
+import { MAX_INSTALLMENTS } from "@/lib/utils/installments";
+import { collectTags } from "@/lib/utils/tags";
 import type {
   EntryType,
   NewTransaction,
@@ -25,8 +29,12 @@ import type {
   Transaction,
 } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface TransactionFormProps {
-  onSubmit: (input: NewTransaction) => void | Promise<void>;
+  onSubmit: (
+    input: NewTransaction,
+    options?: AddOptions,
+  ) => void | Promise<void>;
   initial?: Transaction;
   submitLabel?: string;
 }
@@ -39,6 +47,8 @@ export default function TransactionForm({
   const { accounts, loading: accountsLoading } = useAccounts();
   const { filterByType, byId: categoriesById, loading: categoriesLoading } = useCategories();
   const { byCategoryId: budgetsByCategoryId, wouldExceed } = useBudgets();
+  const { transactions } = useTransactions();
+  const knownTags = useMemo(() => collectTags(transactions), [transactions]);
 
   const initialType: EntryType =
     initial && initial.type !== "transfer" && initial.type !== "investment"
@@ -58,6 +68,9 @@ export default function TransactionForm({
   );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [date, setDate] = useState(initial?.date ?? todayISODate());
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  const [splitInstallments, setSplitInstallments] = useState(false);
+  const [installmentCount, setInstallmentCount] = useState("3");
   const [submitting, setSubmitting] = useState(false);
   // Explicit user override for the transaction currency. `null` means "track
   // the account's currency", so switching accounts still auto-updates.
@@ -74,8 +87,15 @@ export default function TransactionForm({
       ? selectedAccountId
       : accounts[0]?.id ?? "";
 
-  const accountCurrency =
-    accounts.find((a) => a.id === accountId)?.currency ?? BASE_CURRENCY;
+  const selectedAccount = accounts.find((a) => a.id === accountId);
+  const accountCurrency = selectedAccount?.currency ?? BASE_CURRENCY;
+  const canSplit =
+    !isEditing && type === "expense" && selectedAccount?.type === "credit";
+  const parsedCount = parseInt(installmentCount, 10);
+  const installments =
+    canSplit && splitInstallments && parsedCount >= 2
+      ? Math.min(parsedCount, MAX_INSTALLMENTS)
+      : 1;
 
   const currency = currencyOverride ?? accountCurrency;
   const hasCurrencyMismatch = currency !== accountCurrency;
@@ -124,7 +144,7 @@ export default function TransactionForm({
           setRateEntry({
             key: pairKey,
             rate: null,
-            error: err instanceof Error ? err.message : "Rate unavailable",
+            error: err instanceof Error ? err.message : t("Rate unavailable"),
           });
         }
       });
@@ -176,7 +196,8 @@ export default function TransactionForm({
     }
 
     setSubmitting(true);
-    await onSubmit({
+    await onSubmit(
+      {
       type,
       amount: parsed,
       currency,
@@ -186,7 +207,12 @@ export default function TransactionForm({
       date,
       ...(initial?.recurringId ? { recurringId: initial.recurringId } : {}),
       ...(rateSource ? { rateSource } : {}),
-    });
+      // Send an empty list only when clearing tags an edit started with, so
+      // untagged transactions don't gain a `tags` field.
+      ...(tags.length > 0 || initial?.tags?.length ? { tags } : {}),
+      },
+      installments > 1 ? { installments } : undefined,
+    );
     if (!isEditing) {
       setAmount("");
       setDescription("");
@@ -203,34 +229,34 @@ export default function TransactionForm({
     parsedAmount > 0 &&
     !!budget &&
     wouldExceed(categoryId, parsedAmount, currency)
-      ? `This would push ${categoriesById[categoryId]?.name ?? "this category"} over its ${formatCurrency(budget.amount, budget.currency)} cap.`
+      ? t("This would push {0} over its {1} cap.", { "0": categoriesById[categoryId]?.name ?? "this category", "1": formatCurrency(budget.amount, budget.currency) })
       : null;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div
         role="tablist"
-        aria-label="Transaction type"
+        aria-label={t("Transaction type")}
         className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-[12px]"
       >
-        {(["expense", "income"] as const).map((t) => {
+        {(["expense", "income"] as const).map((kind) => {
           const activeClass =
-            t === "income"
+            kind === "income"
               ? "bg-income-soft text-income"
               : "bg-expense-soft text-expense";
           return (
             <button
-              key={t}
+              key={kind}
               type="button"
               role="tab"
-              aria-selected={type === t}
-              onClick={() => setType(t)}
+              aria-selected={type === kind}
+              onClick={() => setType(kind)}
               className={cn(
                 "h-9 text-sm font-medium rounded-[8px] transition-colors capitalize",
-                type === t ? activeClass : "text-fg-muted hover:text-fg",
+                type === kind ? activeClass : "text-fg-muted hover:text-fg",
               )}
             >
-              {t}
+              {t(kind)}
             </button>
           );
         })}
@@ -238,7 +264,7 @@ export default function TransactionForm({
 
       <div className="flex flex-col gap-1.5">
         <Input
-          label={`Amount (${currency})`}
+          label={t("Amount ({currency})", { currency: currency })}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -256,13 +282,13 @@ export default function TransactionForm({
         ) : amount.trim() !== "" &&
           (!Number.isFinite(parsedAmount) || parsedAmount <= 0) ? (
           <p role="status" className="text-xs text-fg-subtle">
-            Enter an amount greater than zero to enable the save button.
+            {t("Enter an amount greater than zero to enable the save button.")}
           </p>
         ) : null}
       </div>
 
       <Select
-        label="Account"
+        label={t("Account")}
         name="account"
         value={accountId}
         onChange={setSelectedAccountId}
@@ -272,7 +298,7 @@ export default function TransactionForm({
 
       <div className="flex flex-col gap-1.5">
         <CurrencySelect
-          label="Currency"
+          label={t("Currency")}
           name="currency"
           value={currency}
           onChange={(next) =>
@@ -290,10 +316,10 @@ export default function TransactionForm({
         {hasCurrencyMismatch && (
           <p role="status" className="text-xs text-fg-subtle">
             {convertedPreview !== null
-              ? `≈ ${formatCurrency(convertedPreview, accountCurrency)} on the ${accountCurrency} account`
+              ? t("≈ {0} on the {accountCurrency} account", { "0": formatCurrency(convertedPreview, accountCurrency), accountCurrency })
               : rateEntry.error
-                ? `Rate unavailable (${rateEntry.error}).`
-                : `Fetching ${currency} → ${accountCurrency} rate…`}
+                ? t("Rate unavailable ({error}).", { error: rateEntry.error })
+                : t("Fetching {currency} → {accountCurrency} rate…", { currency, accountCurrency })}
           </p>
         )}
       </div>
@@ -305,20 +331,59 @@ export default function TransactionForm({
       />
 
       <Input
-        label="Description"
+        label={t("Description")}
         name="description"
-        placeholder="Optional"
+        placeholder={t("Optional")}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
 
       <DatePicker
-        label="Date"
+        label={t("Date")}
         name="date"
         required
         value={date}
         onChange={setDate}
       />
+
+      <TagInput value={tags} onChange={setTags} suggestions={knownTags} />
+
+      {canSplit && (
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm text-fg-muted">
+            <input
+              type="checkbox"
+              checked={splitInstallments}
+              onChange={(e) => setSplitInstallments(e.target.checked)}
+            />
+            {t("Pay in monthly installments")}
+          </label>
+          {splitInstallments && (
+            <>
+              <Input
+                label={t("Number of installments")}
+                name="installments"
+                type="number"
+                inputMode="numeric"
+                min="2"
+                max={String(MAX_INSTALLMENTS)}
+                value={installmentCount}
+                onChange={(e) => setInstallmentCount(e.target.value)}
+              />
+              {installments > 1 &&
+                Number.isFinite(parsedAmount) &&
+                parsedAmount > 0 && (
+                  <p className="text-xs text-fg-subtle">
+                    {t("{count} charges of about {amount}, one a month starting on the purchase date. Budgets count each month's charge; the card owes the full amount now.", {
+                      count: installments,
+                      amount: formatCurrency(parsedAmount / installments, currency),
+                    })}
+                  </p>
+                )}
+            </>
+          )}
+        </div>
+      )}
 
       <Button
         type="submit"
@@ -327,8 +392,8 @@ export default function TransactionForm({
         disabled={submitting || loading || !accountId || !categoryId}
       >
         {submitting
-          ? isEditing ? "Saving…" : "Adding…"
-          : submitLabel ?? (isEditing ? "Save changes" : "Add transaction")}
+          ? isEditing ? t("Saving…") : t("Adding…")
+          : submitLabel ?? (isEditing ? t("Save changes") : t("Add transaction"))}
       </Button>
     </form>
   );

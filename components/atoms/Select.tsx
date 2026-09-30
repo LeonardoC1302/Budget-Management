@@ -10,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 export interface SelectOption {
   value: string;
   label: string;
@@ -46,7 +47,7 @@ export default function Select({
   value,
   onChange,
   disabled,
-  placeholder = "Select…",
+  placeholder = t("Select…"),
   id,
   name,
   className,

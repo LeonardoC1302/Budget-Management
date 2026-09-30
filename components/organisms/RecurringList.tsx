@@ -4,6 +4,7 @@ import EmptyState from "@/components/atoms/EmptyState";
 import RecurringItem from "@/components/molecules/RecurringItem";
 import type { Account, Category, RecurringTransaction } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface RecurringListProps {
   templates: RecurringTransaction[];
   accountsById?: Record<string, Account>;
@@ -31,7 +32,7 @@ export default function RecurringList({
   emptyActionLabel,
   emptyActionOnClick,
   emptyActionHref,
-  emptyMessage = "No recurring transactions yet.",
+  emptyMessage = t("No recurring transactions yet."),
 }: RecurringListProps) {
   if (templates.length === 0) {
     return (

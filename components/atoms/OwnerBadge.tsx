@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils/cn";
 import type { OwnerCtx } from "@/lib/types";
 
+import { t } from "@/lib/i18n";
 interface OwnerBadgeProps {
   owner?: OwnerCtx;
   className?: string;
@@ -11,15 +12,15 @@ interface OwnerBadgeProps {
 // disturbing the row. Full context is available on hover via the tooltip.
 export default function OwnerBadge({ owner, className }: OwnerBadgeProps) {
   if (!owner || owner.permission === "owner") return null;
-  const label = owner.nickname || "Shared";
+  const label = owner.nickname || t("Shared");
   return (
     <span
       className={cn(
         "inline-flex items-center justify-center shrink-0 text-fg-muted",
         className,
       )}
-      title={`Shared from ${label}`}
-      aria-label={`Shared from ${label}`}
+      title={t("Shared from {label}", { label })}
+      aria-label={t("Shared from {label}", { label })}
     >
       <svg
         aria-hidden

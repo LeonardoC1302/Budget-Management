@@ -1,11 +1,63 @@
-import { signInWithPopup, signOut, type User } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase/client";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+  type User,
+} from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import { clearIndexedDbPersistence, terminate } from "firebase/firestore";
+import { auth, db, googleProvider, usingEmulator } from "@/lib/firebase/client";
 
 export async function signInWithGoogle(): Promise<User> {
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
 }
 
+// Also wipes this device's offline copy of the data, so the next person to
+// sign in on a shared device can't read it from the cache. Callers must make
+// sure nothing is waiting to sync first (see hasUnsyncedChanges). The
+// Firestore instance can't be reused after terminate, hence the reload.
 export async function signOutUser(): Promise<void> {
   await signOut(auth);
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch (err) {
+    console.error("Couldn't clear the offline cache", err);
+  }
+  window.location.reload();
+}
+
+// Two local-only accounts so shared-account flows (Connections) can be tested
+// between them. They exist only inside the Auth emulator.
+export const TESTERS = {
+  a: { email: "tester-a@perch.test", name: "Tester A" },
+  b: { email: "tester-b@perch.test", name: "Tester B" },
+} as const;
+
+export type TesterId = keyof typeof TESTERS;
+
+// Emulator-only; exported so account deletion can re-authenticate testers.
+export const TESTER_PASSWORD = "perch-emulator-only";
+
+export async function signInAsTester(id: TesterId): Promise<User> {
+  if (!usingEmulator) {
+    throw new Error("Tester sign-in only works against the local emulator.");
+  }
+  const { email, name } = TESTERS[id];
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, TESTER_PASSWORD);
+    return result.user;
+  } catch (err) {
+    const code = err instanceof FirebaseError ? err.code : "";
+    if (code !== "auth/user-not-found" && code !== "auth/invalid-credential") {
+      throw err;
+    }
+  }
+  // First run against a fresh emulator: create the tester on the fly.
+  const result = await createUserWithEmailAndPassword(auth, email, TESTER_PASSWORD);
+  await updateProfile(result.user, { displayName: name });
+  return result.user;
 }

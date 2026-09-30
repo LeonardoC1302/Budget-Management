@@ -7,15 +7,17 @@ import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 export interface TransactionStore {
   list(): Promise<Transaction[]>;
   add(input: NewTransaction, ownerUid?: string): Promise<Transaction>;
-  addMany(inputs: NewTransaction[], ownerUid?: string): Promise<void>;
+  // Firebase resolves to the new doc ids (used to undo an import).
+  addMany(inputs: NewTransaction[], ownerUid?: string): Promise<string[] | void>;
   addTransfer(input: NewTransfer, ownerUid?: string): Promise<void>;
   update(
     id: string,
     input: NewTransaction,
     ownerUid?: string,
   ): Promise<Transaction>;
-  remove(id: string, ownerUid?: string): Promise<void>;
-  removeTransfer(transferId: string, ownerUid?: string): Promise<void>;
+  // Firebase stores soft-delete and resolve to the trash entry id (for undo).
+  remove(id: string, ownerUid?: string): Promise<string | void>;
+  removeTransfer(transferId: string, ownerUid?: string): Promise<string | void>;
   // Recompute `accountAmount` for every transaction on `accountId` after the
   // account switched to `currency`. Without this, balances keep the old
   // currency's numbers under the new currency's symbol.

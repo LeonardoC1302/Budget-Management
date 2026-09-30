@@ -5,6 +5,7 @@ import {
   getHistory,
   type MarketRange,
 } from "@/lib/services/marketData";
+import { requireUser } from "@/lib/server/requireUser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 const VALID_RANGES: readonly MarketRange[] = ["1M", "3M", "6M", "1Y", "5Y"];
 
 export async function GET(req: Request) {
+  const denied = await requireUser(req);
+  if (denied) return denied;
   const url = new URL(req.url);
   const symbol = url.searchParams.get("symbol")?.trim();
   const range = url.searchParams.get("range")?.toUpperCase() as

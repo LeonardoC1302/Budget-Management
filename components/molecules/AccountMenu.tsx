@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ConfirmDialog from "@/components/atoms/ConfirmDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { hasUnsyncedChanges } from "@/lib/offline/syncStatus";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 function initialsOf(name: string): string {
   const parts = name
     .split(/\s+/)
@@ -20,6 +23,9 @@ export default function AccountMenu() {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Signing out clears this device's offline copy, so changes that haven't
+  // reached the server yet would be lost. Block it until they sync.
+  const [unsynced, setUnsynced] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -46,11 +52,15 @@ export default function AccountMenu() {
   if (!user) return null;
 
   const name =
-    user.displayName?.trim() || user.email?.split("@")[0] || "You";
+    user.displayName?.trim() || user.email?.split("@")[0] || t("You");
   const email = user.email ?? "";
   const initials = initialsOf(name);
 
   async function handleSignOut() {
+    if (hasUnsyncedChanges()) {
+      setUnsynced(true);
+      return;
+    }
     setSubmitting(true);
     try {
       await signOut();
@@ -66,7 +76,7 @@ export default function AccountMenu() {
       <button
         ref={buttonRef}
         type="button"
-        aria-label={`Account menu for ${name}`}
+        aria-label={t("Account menu for {name}", { name })}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -100,7 +110,7 @@ export default function AccountMenu() {
       {open && (
         <div
           role="menu"
-          aria-label="Account"
+          aria-label={t("Account")}
           className={cn(
             "absolute right-0 top-full mt-2 z-40 min-w-[16rem]",
             "surface p-1.5 shadow-2xl",
@@ -122,11 +132,26 @@ export default function AccountMenu() {
 
           <div className="h-px bg-border mx-1 my-1" aria-hidden />
 
+          <Link
+            href="/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={cn(
+              "block w-full text-left px-3 py-2.5 rounded-[8px]",
+              "text-sm text-fg-muted hover:text-fg hover:bg-surface-2",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
+              "transition-colors",
+            )}
+          >
+            {t("Settings")}
+          </Link>
+
           <button
             type="button"
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setUnsynced(false);
               setConfirmOpen(true);
             }}
             className={cn(
@@ -136,17 +161,21 @@ export default function AccountMenu() {
               "transition-colors",
             )}
           >
-            Sign out
+            {t("Sign out")}
           </button>
         </div>
       )}
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Sign out of Perch?"
-        message="Your data stays where it is. You'll need to sign in with Google again to open it."
-        confirmLabel="Sign out"
-        cancelLabel="Stay signed in"
+        title={t("Sign out of Perch?")}
+        message={
+          unsynced
+            ? t("Some changes on this device haven't synced yet. Connect to the internet and wait for “Syncing changes” to finish, or they'll be lost.")
+            : t("Your data stays where it is. You'll need to sign in with Google again to open it.")
+        }
+        confirmLabel={t("Sign out")}
+        cancelLabel={t("Stay signed in")}
         tone="danger"
         submitting={submitting}
         onConfirm={handleSignOut}

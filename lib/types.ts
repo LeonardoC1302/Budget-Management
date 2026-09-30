@@ -51,6 +51,10 @@ export interface Account {
   paymentDay?: number;
   creditLimit?: number;
   creditLimitUSD?: number;
+  // Last time the user checked this balance against the bank's, and the
+  // balance they confirmed (in the account's currency; negative = owed).
+  reconciledAt?: string;
+  reconciledBalance?: number;
   _owner?: OwnerCtx;
 }
 
@@ -89,9 +93,12 @@ export interface Transaction {
   transferId?: string;
   transferDirection?: TransferDirection;
   linkedAccountId?: string;
-  // Fixed commission charged by the source entity on a transfer, in the
+  // Transfers: fixed commission charged by the source entity, in the
   // transfer's currency. Stored on both paired legs; the destination leg's
   // `amount` is already net of it.
+  // Investments: broker commission, in the transaction currency. `amount` is
+  // the total that left the account (invested + fee); shares were bought with
+  // `amount - fee`, and the fee counts toward cost basis.
   fee?: number;
   recurringId?: string;
   // Set on both paired docs of a credit-card payment transfer.
@@ -107,7 +114,27 @@ export interface Transaction {
   // investment category) and has no shares/price on file yet.
   unpriced?: boolean;
   rateSource?: RateSource;
+  // Free-form labels, stored lowercase without the leading "#". Optional so
+  // transactions written before tags existed read as untagged.
+  tags?: string[];
+  // Set on an income transaction that returns money from an expense. It keeps
+  // the expense's category, and spend math counts it as negative spend there
+  // (see lib/utils/refunds.ts).
+  refundOf?: string;
+  // A correction posted by reconciling an account. Moves the balance but
+  // isn't income or spending, so stats and budgets ignore it.
+  adjustment?: boolean;
+  // One monthly slice of a card purchase paid in installments. All slices
+  // share `planId`; `total` is the full purchase in the transaction currency.
+  installment?: InstallmentInfo;
   _owner?: OwnerCtx;
+}
+
+export interface InstallmentInfo {
+  planId: string;
+  index: number; // 1-based
+  count: number;
+  total: number;
 }
 
 export type NewTransaction = Omit<
@@ -141,6 +168,12 @@ export interface RecurringTransaction {
   // from the account's. Only used for USD↔CRC; other pairs fall through to
   // open.er-api.com. The rate itself is fetched each run, not stored here.
   rateBccrEntity?: { id: string; name: string };
+  // Investment templates only: the holding each occurrence buys into. Shares
+  // are priced at that day's close when the occurrence is materialized.
+  holdingId?: string;
+  // Investment templates only: broker commission added to each occurrence,
+  // in the template currency. `amount` is what gets invested.
+  fee?: number;
   _owner?: OwnerCtx;
 }
 
@@ -201,6 +234,9 @@ export interface GoalContribution {
   // Optional to preserve legacy contributions written before goals earmarked
   // money from a specific account. New contributions require it.
   accountId?: string;
+  // Money taken back out of the goal. Stored with a negative `amount` so every
+  // sum (saved, reserved per account) stays a plain total.
+  withdrawal?: boolean;
   _owner?: OwnerCtx;
 }
 
@@ -212,7 +248,18 @@ export interface Budget {
   amount: number;
   currency: string;
   createdAt: string;
+  // Earlier caps, so past months are judged against the cap that applied
+  // then. Each entry covers months before `until` (a "YYYY-MM" key, exclusive)
+  // back to the previous entry. Budgets without history use `amount` for
+  // every month.
+  capHistory?: BudgetCapChange[];
   _owner?: OwnerCtx;
+}
+
+export interface BudgetCapChange {
+  until: string;
+  amount: number;
+  currency: string;
 }
 
 export type NewBudget = Omit<Budget, "id" | "createdAt">;

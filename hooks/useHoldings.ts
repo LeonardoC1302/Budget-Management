@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
+import { announceRemoval } from "@/lib/events/undo";
 import { holdingStore, transactionStore } from "@/lib/storage";
 import { computePositions } from "@/lib/utils/holdings";
 import type {
@@ -70,8 +71,10 @@ export function useHoldings() {
   const removeHolding = useCallback(
     async (id: string) => {
       const target = holdings.find((h) => h.id === id);
-      await holdingStore.removeHolding(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await holdingStore.removeHolding(id, ownerUid);
       await refresh();
+      announceRemoval("Holding deleted", [{ ownerUid, trashId }]);
     },
     [holdings, refresh],
   );
@@ -106,8 +109,10 @@ export function useHoldings() {
   const removeValuation = useCallback(
     async (id: string) => {
       const target = valuations.find((v) => v.id === id);
-      await holdingStore.removeValuation(id, target?._owner?.uid);
+      const ownerUid = target?._owner?.uid;
+      const trashId = await holdingStore.removeValuation(id, ownerUid);
       await refresh();
+      announceRemoval("Valuation deleted", [{ ownerUid, trashId }]);
     },
     [valuations, refresh],
   );

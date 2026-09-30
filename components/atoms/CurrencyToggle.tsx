@@ -3,6 +3,7 @@
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { cn } from "@/lib/utils/cn";
 
+import { t } from "@/lib/i18n";
 interface CurrencyToggleProps {
   className?: string;
 }
@@ -27,8 +28,8 @@ export default function CurrencyToggle({ className }: CurrencyToggleProps) {
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
         className,
       )}
-      aria-label={`Switch display currency to ${next}`}
-      title={`Switch display currency to ${next}`}
+      aria-label={t("Switch display currency to {next}", { next })}
+      title={t("Switch display currency to {next}", { next })}
     >
       {displayCurrency}
     </button>

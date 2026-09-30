@@ -5,11 +5,17 @@ import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/format";
 import type { Budget, Category } from "@/lib/types";
 import type { BudgetProgress } from "@/lib/utils/budgets";
+import { monthLabel } from "@/lib/utils/analytics";
 
+import { t } from "@/lib/i18n";
 interface BudgetRowProps {
   budget: Budget;
   category?: Category;
   progress: BudgetProgress;
+  // False when looking at a past month: no pacing, past-tense notes.
+  isCurrentMonth?: boolean;
+  // This budget's last few months, oldest first, ending at the shown month.
+  trend?: { monthKey: string; progress?: BudgetProgress }[];
   onEdit?: (budget: Budget) => void;
   onDelete?: (budget: Budget) => void;
 }
@@ -38,30 +44,30 @@ export default function BudgetRow({
   budget,
   category,
   progress,
+  isCurrentMonth = true,
+  trend,
   onEdit,
   onDelete,
 }: BudgetRowProps) {
   const over = progress.status === "over";
-  const categoryName = category?.name ?? "Unknown category";
+  const cap = progress.cap;
+  const currency = progress.currency;
+  const categoryName = category?.name ?? t("Unknown category");
   const pct = Math.max(0, Math.min(100, progress.percent * 100));
-  const projected = projectMonthEnd(progress.spent);
+  const projected = isCurrentMonth ? projectMonthEnd(progress.spent) : null;
 
   const paceLine =
     !over && projected !== null
-      ? projected <= budget.amount
-        ? `On pace: ${formatCurrency(
-            budget.amount - projected,
-            budget.currency,
-          )} under.`
-        : `On pace: ${formatCurrency(
-            projected - budget.amount,
-            budget.currency,
-          )} over.`
+      ? projected <= cap
+        ? t("On pace: {0} under.", { "0": formatCurrency(cap - projected, currency) })
+        : t("On pace: {0} over.", { "0": formatCurrency(projected - cap, currency) })
       : null;
 
   const noteText = over
-    ? `Over cap by ${formatCurrency(-progress.remaining, budget.currency)}.`
-    : `${formatCurrency(progress.remaining, budget.currency)} left this month.`;
+    ? t("Over cap by {0}.", { "0": formatCurrency(-progress.remaining, currency) })
+    : isCurrentMonth
+      ? t("{0} left this month.", { "0": formatCurrency(progress.remaining, currency) })
+      : t("Finished {0} under.", { "0": formatCurrency(progress.remaining, currency) });
 
   return (
     <article className="px-4 py-4 flex flex-col gap-3">
@@ -71,11 +77,11 @@ export default function BudgetRow({
         </span>
         <span className="figure text-xs text-fg whitespace-nowrap">
           <span className="text-fg">
-            {formatCurrency(progress.spent, budget.currency)}
+            {formatCurrency(progress.spent, currency)}
           </span>
           <span className="text-fg-muted">
             {" / "}
-            {formatCurrency(budget.amount, budget.currency)}
+            {formatCurrency(cap, currency)}
           </span>
         </span>
       </div>
@@ -116,20 +122,99 @@ export default function BudgetRow({
         )}
       </div>
 
+      {trend && trend.some((m) => m.progress && m.progress.spent > 0) && (
+        <BudgetTrend trend={trend} />
+      )}
+
       {(onEdit || onDelete) && (
         <div className="flex gap-2 pt-2 border-t border-border">
           {onEdit && (
             <Button variant="ghost" size="sm" onClick={() => onEdit(budget)}>
-              Edit
+              {t("Edit")}
             </Button>
           )}
           {onDelete && (
             <Button variant="ghost" size="sm" onClick={() => onDelete(budget)}>
-              Delete
+              {t("Delete")}
             </Button>
           )}
         </div>
       )}
     </article>
+  );
+}
+
+/**
+ * Six tiny bars, one per month: height is spend as a share of that month's
+ * cap (capped at 130% so a blowout doesn't flatten the rest), with a hairline
+ * at 100%. Over-cap months use the expense tone and are named in the label,
+ * so the state isn't carried by color alone.
+ */
+function BudgetTrend({
+  trend,
+}: {
+  trend: { monthKey: string; progress?: BudgetProgress }[];
+}) {
+  const H = 28;
+  const MAX = 1.3;
+  const capY = H - (1 / MAX) * H;
+  const overMonths = trend
+    .filter((m) => m.progress?.status === "over")
+    .map((m) => monthLabel(m.monthKey));
+  const label = t("Last {length} months: {0}", { length: trend.length, "0": trend
+    .map((m) =>
+      m.progress
+        ? `${monthLabel(m.monthKey)} ${Math.round(m.progress.percent * 100)}%`
+        : t("{month} no cap", { month: monthLabel(m.monthKey) }),
+    )
+    .join(", ") });
+  return (
+    <div className="flex items-end gap-3">
+      <svg
+        viewBox={`0 0 ${trend.length * 10} ${H}`}
+        className="h-7 w-24 shrink-0"
+        role="img"
+        aria-label={label}
+      >
+        {trend.map((m, i) => {
+          const p = m.progress;
+          if (!p) return null;
+          const ratio = Math.min(Math.max(p.percent, 0), MAX) / MAX;
+          const h = Math.max(ratio * H, p.spent > 0 ? 2 : 0);
+          return (
+            <rect
+              key={m.monthKey}
+              x={i * 10 + 1}
+              y={H - h}
+              width={8}
+              height={h}
+              rx={2}
+              fill={
+                p.status === "over"
+                  ? "var(--color-expense)"
+                  : "var(--color-celadon-strong)"
+              }
+              opacity={i === trend.length - 1 ? 1 : 0.55}
+            >
+              <title>{t("{0}: {1}% of cap", { "0": monthLabel(m.monthKey), "1": Math.round(p.percent * 100) })}</title>
+            </rect>
+          );
+        })}
+        <line
+          x1={0}
+          x2={trend.length * 10}
+          y1={capY}
+          y2={capY}
+          stroke="var(--color-fg-subtle)"
+          strokeWidth={0.75}
+          strokeDasharray="2 2"
+        />
+      </svg>
+      <span className="text-[11px] text-fg-subtle">
+        {overMonths.length === 0
+          ? t("Under cap every month shown")
+          : t("Over in {0}", { "0": overMonths.join(", ") })}
+      </span>
+    </div>
   );
 }
