@@ -92,8 +92,14 @@ export default function TransactionItem({
     tone = "neutral";
     dotClass = "text-invest";
   } else {
-    title = transaction.description || category?.name || "Untitled";
-    subtitle = [category?.name, account?.name].filter(Boolean).join(" · ");
+    const isRefund = isIncome && !!transaction.refundOf;
+    title =
+      transaction.description ||
+      (isRefund ? "Refund" : category?.name) ||
+      "Untitled";
+    subtitle = [isRefund ? "Refund" : null, category?.name, account?.name]
+      .filter(Boolean)
+      .join(" · ");
     tone = isIncome ? "income" : "expense";
     dotClass = isIncome ? "text-income" : "text-expense";
   }
@@ -123,6 +129,12 @@ export default function TransactionItem({
           </div>
           <div className="entry-note">
             {subtitle} {!hideDate ? "" : `· ${formatDate(transaction.date)}`}
+            {transaction.tags && transaction.tags.length > 0 && (
+              <span className="text-fg-subtle">
+                {" "}
+                · {transaction.tags.map((t) => `#${t}`).join(" ")}
+              </span>
+            )}
           </div>
         </div>
       </div>

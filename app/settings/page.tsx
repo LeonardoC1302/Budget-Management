@@ -24,6 +24,11 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
     heading: "Your data",
     links: [
       {
+        href: "/settings/data",
+        title: "Import & export",
+        description: "Download your transactions as CSV, or bring them in from a spreadsheet.",
+      },
+      {
         href: "/settings/trash",
         title: "Recently deleted",
         description: "Restore anything deleted in the last 30 days.",

@@ -82,7 +82,10 @@ export function useBudgets() {
     const set = new Set<string>();
     for (const b of budgets) set.add(b.currency);
     for (const t of transactions) {
-      if (t.type === "expense" && t.date.startsWith(monthKey)) {
+      if (
+        (t.type === "expense" || t.refundOf) &&
+        t.date.startsWith(monthKey)
+      ) {
         set.add(t.currency);
       }
     }

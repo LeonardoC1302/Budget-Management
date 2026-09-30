@@ -16,6 +16,11 @@ interface TransactionDetailsModalProps {
   onClose: () => void;
   onEdit?: (transaction: Transaction) => void;
   onDelete?: (id: string) => void | Promise<void>;
+  // Refunds: the expense this one reverses, or how much of this expense has
+  // come back so far. `onRefund` offers "Record refund" on expenses.
+  refundOf?: Transaction;
+  refunded?: number;
+  onRefund?: (transaction: Transaction) => void;
 }
 
 export default function TransactionDetailsModal({
@@ -26,6 +31,9 @@ export default function TransactionDetailsModal({
   onClose,
   onEdit,
   onDelete,
+  refundOf,
+  refunded = 0,
+  onRefund,
 }: TransactionDetailsModalProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -34,6 +42,10 @@ export default function TransactionDetailsModal({
   const isCardPayment = isTransfer && !!transaction?.paymentForAccountId;
   const isIncome = transaction?.type === "income";
   const isInvestment = transaction?.type === "investment";
+  const isRefund = isIncome && !!transaction?.refundOf;
+  const isExpense = transaction?.type === "expense";
+  const refundable =
+    isExpense && transaction ? transaction.amount - refunded > 0.005 : false;
   const isInflow =
     isIncome ||
     (isTransfer && transaction?.transferDirection === "in");
@@ -44,9 +56,11 @@ export default function TransactionDetailsModal({
       ? "transfer"
       : isInvestment
         ? "investment"
-        : isIncome
-          ? "income entry"
-          : "expense";
+        : isRefund
+          ? "refund"
+          : isIncome
+            ? "income entry"
+            : "expense";
 
   async function handleConfirmDelete() {
     if (!transaction || !onDelete) return;
@@ -107,7 +121,7 @@ export default function TransactionDetailsModal({
                   <span className="text-invest">Investment</span>
                 ) : (
                   <span className={isIncome ? "text-income" : "text-expense"}>
-                    {isIncome ? "Income" : "Expense"}
+                    {isRefund ? "Refund" : isIncome ? "Income" : "Expense"}
                   </span>
                 )}
               </Row>
@@ -139,10 +153,42 @@ export default function TransactionDetailsModal({
               {transaction.description && (
                 <Row label="Description">{transaction.description}</Row>
               )}
+              {isRefund && (
+                <Row label="Refund of">
+                  {refundOf
+                    ? `${refundOf.description || "Expense"} · ${formatDate(refundOf.date)}`
+                    : "A deleted expense"}
+                </Row>
+              )}
+              {isExpense && refunded > 0 && (
+                <Row label="Refunded">
+                  <span className="text-income">
+                    {formatCurrency(refunded, transaction.currency)}
+                  </span>
+                  {refunded + 0.005 < transaction.amount
+                    ? ` of ${formatCurrency(transaction.amount, transaction.currency)}`
+                    : " (full)"}
+                </Row>
+              )}
+              {transaction.tags && transaction.tags.length > 0 && (
+                <Row label="Tags">
+                  {transaction.tags.map((t) => `#${t}`).join(" ")}
+                </Row>
+              )}
             </dl>
 
-            {(onEdit || onDelete) && (
+            {(onEdit || onDelete || onRefund) && (
               <div className="flex flex-col gap-2">
+                {onRefund && refundable && (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    fullWidth
+                    onClick={() => onRefund(transaction)}
+                  >
+                    Record refund
+                  </Button>
+                )}
                 {onEdit && !isTransfer && !isInvestment && (
                   <Button
                     variant="secondary"

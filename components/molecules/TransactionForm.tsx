@@ -6,6 +6,7 @@ import CurrencySelect from "@/components/atoms/CurrencySelect";
 import DatePicker from "@/components/atoms/DatePicker";
 import Input from "@/components/atoms/Input";
 import Select from "@/components/atoms/Select";
+import TagInput from "@/components/atoms/TagInput";
 import CategoryPicker from "@/components/molecules/CategoryPicker";
 import EntityRatePicker, {
   type FxDirection,
@@ -14,10 +15,12 @@ import EntityRatePicker, {
 import { useAccounts } from "@/hooks/useAccounts";
 import { useBudgets } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
+import { useTransactions } from "@/hooks/useTransactions";
 import { getRate } from "@/lib/services/exchangeRates";
 import { cn } from "@/lib/utils/cn";
 import { BASE_CURRENCY } from "@/lib/utils/currencies";
 import { formatCurrency, todayISODate } from "@/lib/utils/format";
+import { collectTags } from "@/lib/utils/tags";
 import type {
   EntryType,
   NewTransaction,
@@ -39,6 +42,8 @@ export default function TransactionForm({
   const { accounts, loading: accountsLoading } = useAccounts();
   const { filterByType, byId: categoriesById, loading: categoriesLoading } = useCategories();
   const { byCategoryId: budgetsByCategoryId, wouldExceed } = useBudgets();
+  const { transactions } = useTransactions();
+  const knownTags = useMemo(() => collectTags(transactions), [transactions]);
 
   const initialType: EntryType =
     initial && initial.type !== "transfer" && initial.type !== "investment"
@@ -58,6 +63,7 @@ export default function TransactionForm({
   );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [date, setDate] = useState(initial?.date ?? todayISODate());
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
   const [submitting, setSubmitting] = useState(false);
   // Explicit user override for the transaction currency. `null` means "track
   // the account's currency", so switching accounts still auto-updates.
@@ -186,6 +192,9 @@ export default function TransactionForm({
       date,
       ...(initial?.recurringId ? { recurringId: initial.recurringId } : {}),
       ...(rateSource ? { rateSource } : {}),
+      // Send an empty list only when clearing tags an edit started with, so
+      // untagged transactions don't gain a `tags` field.
+      ...(tags.length > 0 || initial?.tags?.length ? { tags } : {}),
     });
     if (!isEditing) {
       setAmount("");
@@ -319,6 +328,8 @@ export default function TransactionForm({
         value={date}
         onChange={setDate}
       />
+
+      <TagInput value={tags} onChange={setTags} suggestions={knownTags} />
 
       <Button
         type="submit"

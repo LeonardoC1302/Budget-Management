@@ -1,4 +1,5 @@
 import type { Budget, Transaction } from "@/lib/types";
+import { spendSign } from "@/lib/utils/refunds";
 
 export type BudgetStatus = "on-track" | "warning" | "over";
 
@@ -82,12 +83,13 @@ export function computeCategorySpend(
 ): number {
   let sum = 0;
   for (const t of transactions) {
+    const sign = spendSign(t);
     if (
-      t.type === "expense" &&
+      sign !== 0 &&
       t.categoryId === categoryId &&
       monthKeyOf(t.date) === monthKey
     ) {
-      sum += transactionAmountIn(t, currency, usdRates) ?? 0;
+      sum += sign * (transactionAmountIn(t, currency, usdRates) ?? 0);
     }
   }
   return sum;
@@ -139,8 +141,9 @@ export function computeBudgetTotals(
   }
 
   for (const t of transactions) {
-    if (t.type !== "expense" || monthKeyOf(t.date) !== monthKey) continue;
-    const value = transactionAmountIn(t, currency, usdRates) ?? 0;
+    const sign = spendSign(t);
+    if (sign === 0 || monthKeyOf(t.date) !== monthKey) continue;
+    const value = sign * (transactionAmountIn(t, currency, usdRates) ?? 0);
     if (cappedIds.has(t.categoryId)) totalSpent += value;
     else uncappedSpend += value;
   }

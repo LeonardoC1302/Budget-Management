@@ -107,6 +107,13 @@ export interface Transaction {
   // investment category) and has no shares/price on file yet.
   unpriced?: boolean;
   rateSource?: RateSource;
+  // Free-form labels, stored lowercase without the leading "#". Optional so
+  // transactions written before tags existed read as untagged.
+  tags?: string[];
+  // Set on an income transaction that returns money from an expense. It keeps
+  // the expense's category, and spend math counts it as negative spend there
+  // (see lib/utils/refunds.ts).
+  refundOf?: string;
   _owner?: OwnerCtx;
 }
 

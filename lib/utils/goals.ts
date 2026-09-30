@@ -1,4 +1,5 @@
 import type { Goal, GoalContribution, Transaction } from "@/lib/types";
+import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const DAYS_PER_MONTH = 30;
@@ -56,8 +57,8 @@ export function computeMonthlySavingsRate(
   let income = 0;
   let expense = 0;
   for (const t of transactions) {
-    if (t.type === "income") income += t.amountUSD;
-    else if (t.type === "expense") expense += t.amountUSD;
+    if (countsAsIncome(t)) income += t.amountUSD;
+    else expense += spendSign(t) * t.amountUSD;
   }
   const net = income - expense;
   return (net * DAYS_PER_MONTH) / spanDays;

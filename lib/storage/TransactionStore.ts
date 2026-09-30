@@ -7,7 +7,8 @@ import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 export interface TransactionStore {
   list(): Promise<Transaction[]>;
   add(input: NewTransaction, ownerUid?: string): Promise<Transaction>;
-  addMany(inputs: NewTransaction[], ownerUid?: string): Promise<void>;
+  // Firebase resolves to the new doc ids (used to undo an import).
+  addMany(inputs: NewTransaction[], ownerUid?: string): Promise<string[] | void>;
   addTransfer(input: NewTransfer, ownerUid?: string): Promise<void>;
   update(
     id: string,

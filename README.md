@@ -7,6 +7,8 @@ A personal budgeting app for tracking accounts, transactions, budgets, and savin
 - **Accounts** — Track balances across debit, credit, wallet, cash, and savings accounts, each in its own currency.
 - **Transactions** — Log income and expenses with categories, descriptions, and dates. Delete or inspect any transaction from the history view.
 - **Multi-currency with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Dashboard totals, previews, and lists show USD so cross-currency figures stay comparable. Live rates are fetched from [open.er-api.com](https://open.er-api.com) and cached in-memory for one hour.
+- **Search, tags and refunds** — Search the ledger by description, category, account, amount or `#tag`, and filter by period. Tag transactions (e.g. `#japan-trip`) and tap a tag to see what it adds up to by category. Record a refund against an expense; it lowers that category's spend instead of counting as income.
+- **CSV import & export** — Settings → Import & export downloads every transaction as CSV and imports income/expenses from a CSV (English or Spanish headers, comma or semicolon, either number format) with a preview, duplicate detection, and a one-tap undo.
 - **Transaction details modal** — Click any row on the `/transactions` page to view the full transaction with the amount in its original currency.
 - **Budgets** — Set monthly caps per category and see spend progress at a glance.
 - **Saving goals** — Create goals with target amounts and dates, log contributions, and track projected monthly rate.

@@ -130,7 +130,7 @@ export const firebaseTransactionStore: TransactionStore = {
     } as Transaction;
   },
   async addMany(inputs: NewTransaction[], ownerUid?: string) {
-    if (inputs.length === 0) return;
+    if (inputs.length === 0) return [];
     const uid = requireWriteUid(ownerUid);
     const createdAt = new Date().toISOString();
     const priced = await Promise.all(
@@ -154,11 +154,18 @@ export const firebaseTransactionStore: TransactionStore = {
       }),
     );
     const col = ownerCollection(uid, COL);
-    const batch = writeBatch(db);
-    for (const payload of priced) {
-      batch.set(doc(col), payload);
+    const ids: string[] = [];
+    // Firestore caps a batch at 500 writes.
+    for (let i = 0; i < priced.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const payload of priced.slice(i, i + 450)) {
+        const ref = doc(col);
+        ids.push(ref.id);
+        batch.set(ref, payload);
+      }
+      await commitWrite(batch.commit());
     }
-    await commitWrite(batch.commit());
+    return ids;
   },
   async addTransfer(input: NewTransfer, ownerUid?: string) {
     const uid = requireWriteUid(ownerUid);
@@ -232,10 +239,19 @@ export const firebaseTransactionStore: TransactionStore = {
     const uid = requireWriteUid(ownerUid);
     const snap = await readDoc(ownerDoc(uid, COL, id));
     const data = snap.data() as Partial<Transaction> | undefined;
+    // Refunds of this expense go with it, and come back with it on restore.
+    const refunds =
+      data?.type === "expense"
+        ? (
+            await readDocs(
+              query(ownerCollection(uid, COL), where("refundOf", "==", id)),
+            )
+          ).docs.filter((d) => !isSoftDeleted(d.data()))
+        : [];
     return softDelete(uid, {
       kind: "transaction",
       label: data?.description || "Transaction",
-      refs: [{ col: COL, id }],
+      refs: [{ col: COL, id }, ...refunds.map((d) => ({ col: COL, id: d.id }))],
       amount: data?.amount,
       currency: data?.currency,
     });

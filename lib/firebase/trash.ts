@@ -1,4 +1,5 @@
 import {
+  deleteDoc,
   deleteField,
   doc,
   query,
@@ -38,7 +39,8 @@ export type TrashKind =
   | "contribution"
   | "recurring"
   | "holding"
-  | "valuation";
+  | "valuation"
+  | "import";
 
 export interface TrashRef {
   col: string;
@@ -71,8 +73,24 @@ export async function softDelete(
 ): Promise<string> {
   const trashRef = doc(ownerCollection(ownerUid, TRASH_COL));
   const deletedAt = new Date().toISOString();
+  // Large sets (an undone import) exceed Firestore's 500-write batch cap.
+  // Earlier chunks commit first; the trash entry rides in the last one.
+  const chunks: TrashRef[][] = [];
+  for (let i = 0; i < input.refs.length; i += BATCH_LIMIT) {
+    chunks.push(input.refs.slice(i, i + BATCH_LIMIT));
+  }
+  for (const chunk of chunks.slice(0, -1)) {
+    const early = writeBatch(db);
+    for (const ref of chunk) {
+      early.update(ownerDoc(ownerUid, ref.col, ref.id), {
+        deletedAt,
+        trashId: trashRef.id,
+      });
+    }
+    await commitWrite(early.commit());
+  }
   const batch = writeBatch(db);
-  for (const ref of input.refs) {
+  for (const ref of chunks[chunks.length - 1] ?? []) {
     batch.update(ownerDoc(ownerUid, ref.col, ref.id), {
       deletedAt,
       trashId: trashRef.id,
@@ -99,15 +117,19 @@ export async function restoreFromTrash(
   const snap = await readDoc(trashRef);
   if (!snap.exists()) return;
   const entry = snap.data() as Omit<TrashEntry, "id">;
-  const batch = writeBatch(db);
-  for (const ref of entry.refs ?? []) {
-    batch.update(ownerDoc(ownerUid, ref.col, ref.id), {
-      deletedAt: deleteField(),
-      trashId: deleteField(),
-    });
+  const refs = entry.refs ?? [];
+  for (let i = 0; i < refs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    for (const ref of refs.slice(i, i + BATCH_LIMIT)) {
+      batch.update(ownerDoc(ownerUid, ref.col, ref.id), {
+        deletedAt: deleteField(),
+        trashId: deleteField(),
+      });
+    }
+    await commitWrite(batch.commit());
   }
-  batch.delete(trashRef);
-  await commitWrite(batch.commit());
+  // The entry goes last so a half-finished restore can be retried.
+  await commitWrite(deleteDoc(trashRef));
 }
 
 export async function listTrash(): Promise<TrashEntry[]> {

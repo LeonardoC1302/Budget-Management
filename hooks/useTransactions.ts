@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeDataChanged } from "@/lib/events/dataChanged";
 import { announceRemoval } from "@/lib/events/undo";
 import { transactionStore } from "@/lib/storage";
+import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 import type { NewTransaction, NewTransfer, Transaction } from "@/lib/types";
 
 function sortByTransactionDate(items: Transaction[]): Transaction[] {
@@ -82,8 +83,8 @@ export function useTransactions() {
     let income = 0;
     let expense = 0;
     for (const t of transactions) {
-      if (t.type === "income") income += t.amountUSD;
-      else if (t.type === "expense") expense += t.amountUSD;
+      if (countsAsIncome(t)) income += t.amountUSD;
+      else expense += spendSign(t) * t.amountUSD;
     }
     return { income, expense, balance: income - expense };
   }, [transactions]);

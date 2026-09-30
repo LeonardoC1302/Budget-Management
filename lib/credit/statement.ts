@@ -1,4 +1,5 @@
 import type { Account, Transaction } from "@/lib/types";
+import { isRefund } from "@/lib/utils/refunds";
 
 export interface CardCycle {
   lastCutDate: Date;
@@ -159,8 +160,12 @@ export function computeCardTotals(
       paymentsSinceCut += amtInCardCcy;
     } else if (t.type === "expense" || t.type === "investment") {
       unbilledPurchases += amtInCardCcy;
+    } else if (isRefund(t)) {
+      // A refund posted after the cut offsets purchases in the open cycle.
+      unbilledPurchases -= amtInCardCcy;
     }
   }
+  unbilledPurchases = Math.max(0, unbilledPurchases);
 
   const owed = Math.max(0, -runningBalance);
   const statementSnapshot = Math.max(0, -balanceAtCut);

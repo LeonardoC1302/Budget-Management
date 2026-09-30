@@ -26,6 +26,7 @@ const KIND_LABELS: Record<TrashKind, string> = {
   recurring: "Recurring",
   holding: "Holding",
   valuation: "Valuation",
+  import: "CSV import",
 };
 
 function daysLeft(entry: TrashEntry): number {
