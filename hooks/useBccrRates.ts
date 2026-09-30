@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { BccrSnapshot } from "@/lib/services/bccrRates";
 
 import { t } from "@/lib/i18n";
+import { apiFetch } from "@/lib/api/apiFetch";
 interface Cache {
   snapshot: BccrSnapshot | null;
   error: string | null;
@@ -62,7 +63,7 @@ async function loadOnce(force: boolean): Promise<void> {
   if (!force && inFlight) return inFlight;
   const request = (async () => {
     try {
-      const res = await fetch(`/api/rates/bccr${force ? "?refresh=1" : ""}`);
+      const res = await apiFetch(`/api/rates/bccr${force ? "?refresh=1" : ""}`);
       const data = (await res.json()) as
         | BccrSnapshot
         | { error: string };

@@ -12,6 +12,7 @@ import { formatCurrency, todayISODate } from "@/lib/utils/format";
 import type { Holding, NewTransaction } from "@/lib/types";
 
 import { t } from "@/lib/i18n";
+import { apiFetch } from "@/lib/api/apiFetch";
 interface HoldingContributionFormProps {
   holding: Holding;
   // Commission used on the last contribution to this holding, to prefill.
@@ -64,7 +65,7 @@ export default function HoldingContributionForm({
   useEffect(() => {
     if (!isMarket || !holding.symbol || manualMode) return;
     let cancelled = false;
-    fetch(
+    apiFetch(
       `/api/market/priceOnDate?symbol=${encodeURIComponent(holding.symbol)}&date=${date}`,
     )
       .then(async (res) => {

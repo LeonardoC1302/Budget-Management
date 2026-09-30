@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils/cn";
 import type { Holding, HoldingKind, NewHolding } from "@/lib/types";
 
 import { t } from "@/lib/i18n";
+import { apiFetch } from "@/lib/api/apiFetch";
 interface HoldingFormProps {
   initial?: Holding;
   onSubmit: (input: NewHolding) => void | Promise<void>;
@@ -60,7 +61,7 @@ export default function HoldingForm({
       abortRef.current = ctrl;
       setSearching(true);
       setSearchError(null);
-      fetch(`/api/market/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/market/search?q=${encodeURIComponent(q)}`, {
         signal: ctrl.signal,
       })
         .then(async (res) => {

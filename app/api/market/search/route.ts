@@ -4,11 +4,14 @@ import {
   MarketDataUnavailableError,
   searchSymbols,
 } from "@/lib/services/marketData";
+import { requireUser } from "@/lib/server/requireUser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const denied = await requireUser(req);
+  if (denied) return denied;
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ results: [] });

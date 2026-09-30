@@ -14,6 +14,7 @@ import type {
   RateSource,
   RecurringTransaction,
 } from "@/lib/types";
+import { apiFetch } from "@/lib/api/apiFetch";
 
 type FxDirection = "USD_TO_CRC" | "CRC_TO_USD";
 
@@ -25,7 +26,7 @@ function directionFor(from: string, to: string): FxDirection | null {
 
 async function fetchBccrSnapshotOrNull(): Promise<BccrSnapshot | null> {
   try {
-    const res = await fetch("/api/rates/bccr");
+    const res = await apiFetch("/api/rates/bccr");
     if (!res.ok) return null;
     const data = (await res.json()) as BccrSnapshot & { error?: string };
     if (data.error || !Array.isArray(data.entities) || !data.fetchedAt) {
@@ -72,7 +73,7 @@ async function priceInvestmentOccurrences(txs: NewTransaction[]): Promise<void> 
     const key = `${holding.symbol}|${tx.date}`;
     if (!priceCache.has(key)) {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/market/priceOnDate?symbol=${encodeURIComponent(holding.symbol)}&date=${tx.date}`,
         );
         const data = (await res.json()) as PriceOnDate;

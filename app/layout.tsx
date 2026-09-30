@@ -67,10 +67,7 @@ export default function RootLayout({
           <AppShell>{children}</AppShell>
         </ThemeProvider>
         <PWARegister />
-      {/* impeccable-live-start */}
-<script src="http://localhost:8400/live.js?token=64fc7728-1c24-41ab-8411-ba08c0053771"></script>
-{/* impeccable-live-end */}
-</body>
+      </body>
     </html>
   );
 }

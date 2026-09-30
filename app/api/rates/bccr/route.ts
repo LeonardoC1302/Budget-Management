@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { getBccrSnapshot } from "@/lib/services/bccrRates";
+import { requireUser } from "@/lib/server/requireUser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const denied = await requireUser(req);
+  if (denied) return denied;
   const url = new URL(req.url);
   const force = url.searchParams.get("refresh") === "1";
   try {

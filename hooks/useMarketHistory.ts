@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { HistoryResult, MarketRange } from "@/lib/services/marketData";
+import { apiFetch } from "@/lib/api/apiFetch";
 
 export type MarketHistoryStatus =
   | "idle"
@@ -25,7 +26,7 @@ export function useMarketHistory(symbol: string | null, range: MarketRange) {
     if (!symbol) return;
     setState((s) => ({ ...s, status: "loading" }));
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${range}`,
       );
       if (res.status === 503) {
@@ -50,7 +51,7 @@ export function useMarketHistory(symbol: string | null, range: MarketRange) {
   useEffect(() => {
     if (!symbol) return;
     let cancelled = false;
-    fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${range}`)
+    apiFetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${range}`)
       .then(async (res) => {
         if (cancelled) return;
         if (res.status === 503) {

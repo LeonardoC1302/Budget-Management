@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { QuoteResult } from "@/lib/services/marketData";
+import { apiFetch } from "@/lib/api/apiFetch";
 
 const REFRESH_MS = 5 * 60 * 1000;
 
@@ -34,7 +35,7 @@ export function useMarketQuotes(symbols: string[]) {
     abortRef.current = ctrl;
     setStatus((s) => (s === "ready" ? "ready" : "loading"));
     try {
-      const res = await fetch(`/api/market/quote?symbols=${encodeURIComponent(key)}`, {
+      const res = await apiFetch(`/api/market/quote?symbols=${encodeURIComponent(key)}`, {
         signal: ctrl.signal,
       });
       if (res.status === 503) {
@@ -61,7 +62,7 @@ export function useMarketQuotes(symbols: string[]) {
     if (!key) return;
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    fetch(`/api/market/quote?symbols=${encodeURIComponent(key)}`, {
+    apiFetch(`/api/market/quote?symbols=${encodeURIComponent(key)}`, {
       signal: ctrl.signal,
     })
       .then(async (res) => {

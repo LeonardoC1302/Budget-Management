@@ -11,6 +11,7 @@ import {
   type NetWorthInputs,
   type NetWorthPoint,
 } from "@/lib/utils/netWorth";
+import { apiFetch } from "@/lib/api/apiFetch";
 
 export const NET_WORTH_MONTHS = 12;
 
@@ -44,7 +45,7 @@ async function loadInputs(): Promise<NetWorthInputs> {
   const histories = await Promise.all(
     symbols.map(async (symbol) => {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/market/history?symbol=${encodeURIComponent(symbol)}&range=1Y`,
         );
         if (!res.ok) return null;
