@@ -171,8 +171,9 @@ export interface RecurringTransaction {
   // Investment templates only: the holding each occurrence buys into. Shares
   // are priced at that day's close when the occurrence is materialized.
   holdingId?: string;
-  // Investment templates only: broker commission added to each occurrence,
-  // in the template currency. `amount` is what gets invested.
+  // Investment templates only: broker commission on each occurrence, in the
+  // template currency. `amount` is what leaves the account; the commission
+  // comes out of it and `amount - fee` gets invested.
   fee?: number;
   _owner?: OwnerCtx;
 }

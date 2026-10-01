@@ -981,6 +981,12 @@ export const es: Record<string, string> = {
   "manual": "manual",
 
   "Converted from {amount} at today's rate. Change it if your bank uses a different figure.": "Convertido desde {amount} al tipo de cambio de hoy. Cámbialo si tu banco usa otra cifra.",
+  "Amount from account ({currency})": "Monto que sale de la cuenta ({currency})",
+  "What the broker charges for this buy. It comes out of the amount above and counts toward cost basis.": "Lo que cobra el bróker por esta compra. Sale del monto de arriba y cuenta para el costo base.",
+  "{invested} will be invested: {amount} leaves {account}, minus {fee} commission.": "Se van a invertir {invested}: salen {amount} de {account}, menos {fee} de comisión.",
+  "The commission is paid on top of the shares bought.": "La comisión se paga además de las acciones compradas.",
+  "The commission has to be less than the amount.": "La comisión tiene que ser menor que el monto.",
+  "Comes out of the amount each time; the rest is invested.": "Sale del monto cada vez; el resto se invierte.",
   // ------------------------------------------------------------ public site
   "Permanently delete your account and all its data.": "Elimina de forma permanente tu cuenta y todos sus datos.",
   "About": "Acerca de",
