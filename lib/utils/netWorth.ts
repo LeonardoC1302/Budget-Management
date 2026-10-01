@@ -1,4 +1,5 @@
 import type { HistoryPoint } from "@/lib/services/marketData";
+import { withSettledPayments } from "@/lib/credit/settlement";
 import type {
   Account,
   Holding,
@@ -96,6 +97,12 @@ export function computeNetWorthSeries(
     const list = txByAccount.get(t.accountId) ?? [];
     list.push(t);
     txByAccount.set(t.accountId, list);
+  }
+  // Card payments count for the charges they settle, matching the Cards page.
+  for (const account of accounts) {
+    if (account.type !== "credit") continue;
+    const list = txByAccount.get(account.id);
+    if (list) txByAccount.set(account.id, withSettledPayments(account, list));
   }
   const holdingsById = new Map(holdings.map((h) => [h.id, h]));
   const sortedHistory: Record<string, HistoryPoint[]> = {};
