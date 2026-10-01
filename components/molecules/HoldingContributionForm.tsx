@@ -97,6 +97,10 @@ export default function HoldingContributionForm({
     !isMarket || !holding.symbol || manualMode ? { status: "idle" } : price;
 
   const parsedAmount = parseFloat(amount);
+  const parsedFeeInput = parseFloat(fee);
+  const feeInput = Number.isFinite(parsedFeeInput) && parsedFeeInput > 0 ? parsedFeeInput : 0;
+  // The commission comes out of the amount; the rest buys shares.
+  const investedAmount = parsedAmount - feeInput;
 
   // Cheap enough to recompute each render; the React Compiler memoizes it.
   const preview = (() => {
@@ -111,15 +115,15 @@ export default function HoldingContributionForm({
       return { shares: s, unitPriceUSD: p, amountUSD: usd };
     }
     if (effectivePrice.status !== "ok") return null;
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return null;
-    // parsedAmount is in account currency — we need to know USD for shares math.
+    if (!Number.isFinite(investedAmount) || investedAmount <= 0) return null;
+    // investedAmount is in account currency — we need to know USD for shares math.
     // We show the preview in USD terms; final USD is recomputed on submit.
     if (accountCurrency === BASE_CURRENCY) {
-      const shares = parsedAmount / effectivePrice.closeUSD;
+      const shares = investedAmount / effectivePrice.closeUSD;
       return {
         shares,
         unitPriceUSD: effectivePrice.closeUSD,
-        amountUSD: parsedAmount,
+        amountUSD: investedAmount,
       };
     }
     return {
@@ -133,6 +137,7 @@ export default function HoldingContributionForm({
     event.preventDefault();
     if (!accountId) return;
 
+    // What leaves the account.
     let amountValue: number;
     let currency: string;
     let sharesDelta: number | undefined;
@@ -150,9 +155,11 @@ export default function HoldingContributionForm({
         accountCurrency === BASE_CURRENCY
           ? 1
           : await getRate(BASE_CURRENCY, accountCurrency);
-      amountValue = s * p * rate;
+      // The shares and price are what was bought; the commission is on top.
+      amountValue = s * p * rate + feeInput;
     } else {
-      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return;
+      if (!Number.isFinite(investedAmount) || investedAmount <= 0) return;
+      // The amount is what leaves the account; the commission comes out of it.
       amountValue = parsedAmount;
       currency = accountCurrency;
       if (isMarket && effectivePrice.status === "ok") {
@@ -161,20 +168,20 @@ export default function HoldingContributionForm({
           accountCurrency === BASE_CURRENCY
             ? 1
             : await getRate(accountCurrency, BASE_CURRENCY);
-        const usdAmount = parsedAmount * usdRate;
+        const usdAmount = investedAmount * usdRate;
         sharesDelta = usdAmount / effectivePrice.closeUSD;
       }
     }
 
-    const parsedFee = parseFloat(fee);
-    const feeValue = Number.isFinite(parsedFee) && parsedFee > 0 ? parsedFee : 0;
+    const feeValue = feeInput;
 
     setSubmitting(true);
     try {
       const payload: NewTransaction = {
         type: "investment",
-        // The account pays the investment plus the commission.
-        amount: amountValue + feeValue,
+        // `amount` is the total that left the account; shares were bought
+        // with `amount - fee` (see Transaction.fee).
+        amount: amountValue,
         ...(feeValue > 0 ? { fee: feeValue } : {}),
         currency,
         accountId,
@@ -209,16 +216,28 @@ export default function HoldingContributionForm({
     return null;
   })();
 
-  const feeNumber = parseFloat(fee);
+  const feeTooHigh =
+    !(isMarket && manualMode) &&
+    feeInput > 0 &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0 &&
+    investedAmount <= 0;
   const totalLine = (() => {
-    if (!(Number.isFinite(feeNumber) && feeNumber > 0)) return null;
-    const base = isMarket && manualMode ? null : parsedAmount;
-    if (base === null || !Number.isFinite(base) || base <= 0) return null;
-    return t("{total} will leave {account} ({amount} invested + {fee} commission).", {
-      total: formatCurrency(base + feeNumber, accountCurrency),
+    if (feeInput <= 0) return null;
+    if (isMarket && manualMode) {
+      const s = parseFloat(manualShares);
+      const p = parseFloat(manualPrice);
+      if (!Number.isFinite(s) || !Number.isFinite(p) || s <= 0 || p <= 0) return null;
+      return t("The commission is paid on top of the shares bought.");
+    }
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || investedAmount <= 0) {
+      return null;
+    }
+    return t("{invested} will be invested: {amount} leaves {account}, minus {fee} commission.", {
+      invested: formatCurrency(investedAmount, accountCurrency),
+      amount: formatCurrency(parsedAmount, accountCurrency),
       account: account?.name ?? t("the account"),
-      amount: formatCurrency(base, accountCurrency),
-      fee: formatCurrency(feeNumber, accountCurrency),
+      fee: formatCurrency(feeInput, accountCurrency),
     });
   })();
 
@@ -229,7 +248,7 @@ export default function HoldingContributionForm({
       const p = parseFloat(manualPrice);
       return !Number.isFinite(s) || !Number.isFinite(p) || s <= 0 || p <= 0;
     }
-    return !Number.isFinite(parsedAmount) || parsedAmount <= 0;
+    return !Number.isFinite(investedAmount) || investedAmount <= 0;
   })();
 
   return (
@@ -284,7 +303,7 @@ export default function HoldingContributionForm({
         </div>
       ) : (
         <Input
-          label={t("Amount to invest ({currency})", { currency: accountCurrency })}
+          label={t("Amount from account ({currency})", { currency: accountCurrency })}
           name="amount"
           type="number"
           inputMode="decimal"
@@ -312,9 +331,15 @@ export default function HoldingContributionForm({
           placeholder="0.00"
           value={fee}
           onChange={(e) => setFee(e.target.value)}
-          hint={t("What the broker charges for this buy. It's taken from the account on top of the amount and counts toward cost basis.")}
+          hint={t("What the broker charges for this buy. It comes out of the amount above and counts toward cost basis.")}
         />
-        {totalLine && <p className="text-xs text-fg-muted">{totalLine}</p>}
+        {feeTooHigh ? (
+          <p className="text-xs text-expense">
+            {t("The commission has to be less than the amount.")}
+          </p>
+        ) : (
+          totalLine && <p className="text-xs text-fg-muted">{totalLine}</p>
+        )}
       </div>
 
       <Select

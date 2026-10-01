@@ -1,5 +1,6 @@
 import type { Account, Transaction } from "@/lib/types";
 import { isRefund } from "@/lib/utils/refunds";
+import { settleCard, withSettledPayments } from "@/lib/credit/settlement";
 
 export interface CardCycle {
   lastCutDate: Date;
@@ -129,7 +130,7 @@ function accountDelta(t: Transaction, accountId: string): number {
 
 export function computeCardTotals(
   account: Account,
-  transactions: Transaction[],
+  allTransactions: Transaction[],
   today: Date = new Date(),
 ): CardTotals | null {
   if (
@@ -138,6 +139,8 @@ export function computeCardTotals(
   ) {
     return null;
   }
+  // Payments count for the charges they settle (see lib/credit/settlement).
+  const transactions = withSettledPayments(account, allTransactions);
 
   const cycle = computeCardCycle(account.cutDay, account.paymentDay, today);
   const lastCut = cycle.lastCutDate;
@@ -230,17 +233,7 @@ export function getUnbilledCharges(
   }
   const cycle = computeCardCycle(account.cutDay, account.paymentDay, today);
   const lastCutMs = cycle.lastCutDate.getTime();
-  const paidChargeIds = new Set<string>();
-  for (const t of transactions) {
-    if (
-      t.type === "transfer" &&
-      t.transferDirection === "in" &&
-      t.accountId === account.id &&
-      t.paidChargeIds
-    ) {
-      for (const id of t.paidChargeIds) paidChargeIds.add(id);
-    }
-  }
+  const { unpaid } = settleCard(account, transactions);
   return transactions
     .filter(
       (t) =>
@@ -248,7 +241,7 @@ export function getUnbilledCharges(
         (t.type === "expense" || t.type === "investment") &&
         parseISODate(t.date).getTime() > lastCutMs &&
         parseISODate(t.date).getTime() <= cycle.nextCutDate.getTime() &&
-        !paidChargeIds.has(t.id),
+        (unpaid.get(t.id) ?? 0) > 0.005,
     )
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map((t) => ({
@@ -259,8 +252,36 @@ export function getUnbilledCharges(
       type: t.type as "expense" | "investment",
       amount: t.amount,
       currency: t.currency,
-      amountInCard: t.accountAmount ?? t.amount,
+      amountInCard: unpaid.get(t.id) ?? t.accountAmount ?? t.amount,
     }));
+}
+
+/**
+ * Unpaid charges dated on or before the last cut: what "Statement due"
+ * pays. Recorded on the payment so those charges read as paid.
+ */
+export function getStatementChargeIds(
+  account: Account,
+  transactions: Transaction[],
+  today: Date = new Date(),
+): string[] {
+  if (
+    typeof account.cutDay !== "number" ||
+    typeof account.paymentDay !== "number"
+  ) {
+    return [];
+  }
+  const cycle = computeCardCycle(account.cutDay, account.paymentDay, today);
+  const lastCutMs = cycle.lastCutDate.getTime();
+  const { unpaid } = settleCard(account, transactions);
+  return transactions
+    .filter(
+      (t) =>
+        t.accountId === account.id &&
+        (unpaid.get(t.id) ?? 0) > 0.005 &&
+        parseISODate(t.date).getTime() <= lastCutMs,
+    )
+    .map((t) => t.id);
 }
 
 export type EffectiveDue =
@@ -340,7 +361,7 @@ export interface CardHistoryOptions {
 
 export function computeCardHistory(
   account: Account,
-  transactions: Transaction[],
+  allTransactions: Transaction[],
   today: Date = new Date(),
   options: CardHistoryOptions = {},
 ): CardHistory | null {
@@ -352,6 +373,7 @@ export function computeCardHistory(
   }
   const cutDay = account.cutDay;
   const paymentDay = account.paymentDay;
+  const transactions = withSettledPayments(account, allTransactions);
   const {
     statementCount = 6,
     chargeCount = 8,

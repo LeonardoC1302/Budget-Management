@@ -5,6 +5,7 @@ import { emitDataChanged, subscribeDataChanged } from "@/lib/events/dataChanged"
 import { announceRemoval } from "@/lib/events/undo";
 import { accountStore, goalStore, transactionStore } from "@/lib/storage";
 import { computeCardTotals, type CardTotals } from "@/lib/credit/statement";
+import { settleCard } from "@/lib/credit/settlement";
 import { todayISODate } from "@/lib/utils/format";
 import type {
   Account,
@@ -18,15 +19,22 @@ import { t, tn } from "@/lib/i18n";
 function computeDerived(accounts: Account[], transactions: Transaction[]) {
   const balances: Record<string, number> = {};
   const counts: Record<string, number> = {};
+  // On cards, a payment counts for the charges it settles, matching the
+  // Cards page (lib/credit/settlement).
+  const settledPayment = new Map<string, number>();
   for (const a of accounts) {
     balances[a.id] = a.initialBalance;
     counts[a.id] = 0;
+    if (a.type !== "credit") continue;
+    for (const [id, amount] of settleCard(a, transactions).paymentAmount) {
+      settledPayment.set(id, amount);
+    }
   }
   for (const t of transactions) {
     // Use amount converted to the account's currency so mixed-currency
     // transactions (e.g. a CRC purchase on a USD card) don't corrupt the
     // balance. Falls back to `amount` for legacy docs where currency matched.
-    const nativeAmount = t.accountAmount ?? t.amount;
+    const nativeAmount = settledPayment.get(t.id) ?? t.accountAmount ?? t.amount;
     let delta = 0;
     if (t.type === "income") delta = nativeAmount;
     else if (t.type === "expense") delta = -nativeAmount;

@@ -64,8 +64,11 @@ export default function RecurringContributionForm({
   const account = fundingAccounts.find((a) => a.id === effectiveAccountId);
   const holding = holdings.find((h) => h.id === holdingId);
   const parsed = parseFloat(amount);
+  const parsedFeeValue = parseFloat(fee);
+  const feeTooHigh =
+    Number.isFinite(parsed) && Number.isFinite(parsedFeeValue) && parsedFeeValue >= parsed;
   const valid =
-    !!holding && !!account && Number.isFinite(parsed) && parsed > 0 &&
+    !!holding && !!account && Number.isFinite(parsed) && parsed > 0 && !feeTooHigh &&
     (!endDate || endDate >= startDate);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -150,7 +153,13 @@ export default function RecurringContributionForm({
         placeholder="0.00"
         value={fee}
         onChange={(e) => setFee(e.target.value)}
+        hint={t("Comes out of the amount each time; the rest is invested.")}
       />
+      {feeTooHigh && (
+        <p className="text-xs text-expense -mt-2">
+          {t("The commission has to be less than the amount.")}
+        </p>
+      )}
 
       <Select
         label={t("How often")}

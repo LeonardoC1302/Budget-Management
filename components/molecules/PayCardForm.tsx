@@ -10,6 +10,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import {
   effectiveDue,
+  getStatementChargeIds,
   getUnbilledCharges,
   type CardTotals,
 } from "@/lib/credit/statement";
@@ -212,6 +213,12 @@ export default function PayCardForm({
 
     setSubmitting(true);
     setError(null);
+    // "Statement due" pays the statement's charges; record them so they read
+    // as paid, the same as charges picked one by one.
+    const paidChargeIds = [
+      ...(includeStatementDue ? getStatementChargeIds(card, transactions) : []),
+      ...selectedIds,
+    ];
     try {
       await onSubmit({
         fromAccountId: effectiveFromId,
@@ -223,9 +230,7 @@ export default function PayCardForm({
         description: description.trim() || `Payment · ${card.name}`,
         date,
         paymentForAccountId: card.id,
-        ...(selectedIds.size > 0
-          ? { paidChargeIds: Array.from(selectedIds) }
-          : {}),
+        ...(paidChargeIds.length > 0 ? { paidChargeIds } : {}),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("Payment failed"));
