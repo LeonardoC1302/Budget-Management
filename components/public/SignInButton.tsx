@@ -52,7 +52,7 @@ export default function SignInButton({
   if (user) {
     return (
       <Link href="/home" className={cn("btn btn-primary", sizeClass, className)}>
-        {t("Open Perch")}
+        {t("Open PerchCR")}
       </Link>
     );
   }

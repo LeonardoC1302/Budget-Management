@@ -1,14 +1,9 @@
-interface OpenErApiResponse {
-  result: string;
-  base_code: string;
-  rates: Record<string, number>;
-}
-
 import type { RateSource, Transaction } from "@/lib/types";
 
 type UsdRatesCache = { rates: Record<string, number>; fetchedAt: number };
 
 let usdRatesCache: UsdRatesCache | null = null;
+let usdRatesInflight: Promise<Record<string, number>> | null = null;
 const USD_RATES_TTL_MS = 60 * 60 * 1000;
 // The last good table also lives in localStorage so conversions keep working
 // offline. A stale rate beats blocking a transaction; the online refresh
@@ -38,14 +33,23 @@ function storeRates(cache: UsdRatesCache) {
   }
 }
 
+// Rates come from the BCCR (lib/services/bccrUsdRates.ts). Server code reads
+// them directly; the browser goes through /api/rates/usd so the BCCR token
+// stays on the server. Both imports are dynamic so neither side bundles the
+// other's code path.
 async function fetchUsdRates(): Promise<Record<string, number>> {
-  const res = await fetch("https://open.er-api.com/v6/latest/USD");
+  if (typeof window === "undefined") {
+    const { getBccrUsdRates } = await import("@/lib/services/bccrUsdRates");
+    return (await getBccrUsdRates()).rates;
+  }
+  const { apiFetch } = await import("@/lib/api/apiFetch");
+  const res = await apiFetch("/api/rates/usd");
   if (!res.ok) {
     throw new Error(`Failed to fetch latest rates (${res.status}).`);
   }
-  const data = (await res.json()) as OpenErApiResponse;
-  if (data.result !== "success" || !data.rates) {
-    throw new Error("Malformed rates response from open.er-api.com.");
+  const data = (await res.json()) as { rates?: Record<string, number> };
+  if (!data.rates || typeof data.rates.CRC !== "number") {
+    throw new Error("Malformed rates response.");
   }
   return data.rates;
 }
@@ -58,8 +62,12 @@ async function getUsdRates(): Promise<Record<string, number>> {
   ) {
     return usdRatesCache.rates;
   }
+  // Screens that load together share one request.
+  usdRatesInflight ??= fetchUsdRates().finally(() => {
+    usdRatesInflight = null;
+  });
   try {
-    const rates = await fetchUsdRates();
+    const rates = await usdRatesInflight;
     usdRatesCache = { rates, fetchedAt: Date.now() };
     storeRates(usdRatesCache);
     return rates;
@@ -76,10 +84,11 @@ export function usdRatesFetchedAt(): number | null {
 }
 
 /**
- * Fetch the current exchange rate from `from` to `to`. Rates come from
- * open.er-api.com (~160 currencies, refreshed hourly upstream). The USD
- * rate table is cached in-memory for one hour, so back-to-back conversions
- * are cheap and rates advance as the upstream data does.
+ * Fetch the current exchange rate from `from` to `to`. Rates come from the
+ * BCCR's daily table (dollar↔colón at the midpoint of the reference buy and
+ * sell rates, plus about 45 other currencies). The table is cached for an
+ * hour in memory and in localStorage, so conversions are cheap and keep
+ * working offline.
  */
 export async function getRate(from: string, to: string): Promise<number> {
   if (from === to) return 1;

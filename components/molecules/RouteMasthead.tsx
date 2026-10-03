@@ -38,7 +38,7 @@ export default function RouteMasthead({
           style={{ borderRadius: "var(--radius-control)" }}
         >
           <PerchMark size={18} />
-          <span>{t("Perch")}</span>
+          <span>{t("PerchCR")}</span>
         </Link>
         <div className="nameplate-tools">
           {actions}

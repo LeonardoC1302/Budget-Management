@@ -70,7 +70,7 @@ export default function Onboarding() {
       <div className="w-full max-w-md flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-2 text-sm font-medium">
-            <PerchMark size={20} /> Perch
+            <PerchMark size={20} /> PerchCR
           </span>
           <ol className="flex gap-1.5" aria-label={t("Setup progress")}>
             {steps.map((s, i) => (
@@ -93,7 +93,7 @@ export default function Onboarding() {
         {step === "welcome" && (
           <section className="surface p-6 flex flex-col gap-5">
             <div className="flex flex-col gap-1">
-              <h1 className="heading-lg">{t("Welcome to Perch")}</h1>
+              <h1 className="heading-lg">{t("Welcome to PerchCR")}</h1>
               <p className="text-sm text-fg-muted">
                 {t("A quiet place to see your accounts, spending and savings. Two quick choices first.")}
               </p>
@@ -204,7 +204,7 @@ export default function Onboarding() {
               </li>
             </ul>
             <Button size="lg" fullWidth onClick={finish} disabled={finishing}>
-              {t("Open Perch")}
+              {t("Open PerchCR")}
             </Button>
           </section>
         )}

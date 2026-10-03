@@ -93,7 +93,7 @@ export default function DataPage() {
       EXPORT_HEADER,
       exportRows(transactions, accountsById, categoriesById),
     );
-    downloadText(`perch-transactions-${todayISODate()}.csv`, csv);
+    downloadText(`perchcr-transactions-${todayISODate()}.csv`, csv);
   }
 
   async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -210,7 +210,7 @@ export default function DataPage() {
         <h2 className="label-sm">{t("Import")}</h2>
         <div className="surface p-5 flex flex-col gap-4">
           <p className="text-sm text-fg-muted">
-            {t("Bring in income and expenses from a CSV: a Perch export, a bank statement, or your own spreadsheet. You'll see a preview before anything is saved, and rows already in your ledger are skipped.")}
+            {t("Bring in income and expenses from a CSV: a PerchCR export, a bank statement, or your own spreadsheet. You'll see a preview before anything is saved, and rows already in your ledger are skipped.")}
           </p>
 
           <input

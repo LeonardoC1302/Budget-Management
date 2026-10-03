@@ -56,7 +56,7 @@ export default function DeleteAccountPage() {
 
       <section className="surface p-5 flex flex-col gap-4">
         <p className="text-sm text-fg">
-          {t("This permanently deletes your Perch account and everything in it:")}
+          {t("This permanently deletes your PerchCR account and everything in it:")}
         </p>
         <ul className="text-sm text-fg-muted flex flex-col gap-1 list-disc pl-5">
           <li>{t("Accounts, cards, transactions and categories")}</li>

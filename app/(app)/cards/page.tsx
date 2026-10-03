@@ -124,7 +124,7 @@ export default function CardsPage() {
       ) : cards.length === 0 ? (
         <EmptyState
           title={t("No credit cards yet")}
-          description={t("Add a card with its cut and payment days and Perch will track statements, unbilled charges, and what to pay when.")}
+          description={t("Add a card with its cut and payment days and PerchCR will track statements, unbilled charges, and what to pay when.")}
           actionLabel={t("Add a card")}
           actionOnClick={openCreate}
         />

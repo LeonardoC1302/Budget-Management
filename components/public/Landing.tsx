@@ -2,7 +2,7 @@
 
 /*
  * THESIS: The familiar landing layout played straight, at the craft level of
- * Copilot Money, YNAB and Linear, in Perch's own room. It refuses the icon-tile
+ * Copilot Money, YNAB and Linear, in PerchCR's own room. It refuses the icon-tile
  * feature grid: features are shown as the product at work.
  * OWN-WORLD: Stone paper by day, warm night by dark mode; hairline "rooms",
  * Newsreader display over Geist, one tracked kicker, celadon only on the
@@ -10,7 +10,7 @@
  * STORY: Someone juggling colones and dollars sees their month calmly, trusts
  * it's private and works offline, and signs in with Google.
  * FIRST VIEWPORT: Nameplate header. Left: tagline as display serif, one
- * supporting line, Google sign-in and "See how it works". Right: a Perch
+ * supporting line, Google sign-in and "See how it works". Right: a PerchCR
  * balance and ledger preview with sample entries in ₡ and $.
  * FORM: Standard landing (the canon), seed 642dceae; sections: hero, three
  * facts, four product rooms, the rest, three steps, questions, close.
@@ -38,7 +38,7 @@ export default function Landing() {
         </div>
         <Showcase
           title={t("Colones and dollars, side by side")}
-          body={t("Log each purchase in the currency you paid. Perch keeps the original amount, converts it with the rate your bank actually used, and totals everything in the currency you choose.")}
+          body={t("Log each purchase in the currency you paid. PerchCR keeps the original amount, converts it with the rate your bank actually used, and totals everything in the currency you choose.")}
           points={[
             t("Buy and sell rates from every bank's window, updated through the day"),
             t("Or type the exact rate from your statement"),
@@ -49,7 +49,7 @@ export default function Landing() {
         <Showcase
           reverse
           title={t("Credit cards, finally clear")}
-          body={t("Add your cut and payment days once. Perch shows what's due and by when, what's still unbilled, and how much credit you have left.")}
+          body={t("Add your cut and payment days once. PerchCR shows what's due and by when, what's still unbilled, and how much credit you have left.")}
           points={[
             t("Split purchases into monthly installments"),
             t("Pay the statement or pick the exact charges to cover"),
@@ -155,7 +155,7 @@ function HeroPreview() {
     { date: t("Yesterday"), title: t("Streaming · 1/1"), note: t("Subscriptions · Visa"), amount: 7.99, currency: "USD", tone: "neg" },
   ];
   return (
-    <figure className="landing-stage" aria-label={t("Perch home screen with sample data")}>
+    <figure className="landing-stage" aria-label={t("PerchCR home screen with sample data")}>
       <div className="landing-device">
         <div className="masthead-balance surface p-5 flex flex-col gap-2">
           <span className="label-sm">{t("Balance of the month")}</span>
@@ -212,7 +212,7 @@ function Facts() {
     },
   ];
   return (
-    <section aria-label={t("Why Perch")} className="mx-auto max-w-6xl px-4 sm:px-6 pt-20">
+    <section aria-label={t("Why PerchCR")} className="mx-auto max-w-6xl px-4 sm:px-6 pt-20">
       <div className="rooms-h grid-cols-1 md:grid-cols-3 landing-facts">
         {facts.map((f) => (
           <div key={f.title} className="p-6 flex flex-col gap-2">
@@ -453,7 +453,7 @@ function TheRest() {
     [t("Reconcile"), t("Match an account to your bank in one step.")],
     [t("Import and export"), t("Bring your spreadsheet in, take everything out as CSV.")],
     [t("Net worth"), t("Accounts plus investments, minus cards, month by month.")],
-    [t("App lock"), t("A PIN or your fingerprint when Perch opens.")],
+    [t("App lock"), t("A PIN or your fingerprint when PerchCR opens.")],
     [t("Undo and recover"), t("Undo a delete, or restore anything from the last 30 days.")],
     [t("English and Spanish"), t("Switch any time; amounts and dates follow.")],
   ];
@@ -480,7 +480,7 @@ function Steps() {
   const steps = [
     [t("Sign in with Google"), t("No new password to remember.")],
     [t("Add your accounts"), t("Bank, savings, cash, cards: start with today's balances.")],
-    [t("Log as you go"), t("A few seconds per purchase. Perch does the math.")],
+    [t("Log as you go"), t("A few seconds per purchase. PerchCR does the math.")],
   ];
   return (
     <section aria-labelledby="steps-title" className="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
@@ -509,8 +509,8 @@ function Steps() {
 function Questions() {
   const faqs: [string, string][] = [
     [
-      t("Does Perch connect to my bank?"),
-      t("No. You add transactions yourself, which takes seconds and means Perch never needs your bank password. You can also import a CSV from your bank or spreadsheet."),
+      t("Does PerchCR connect to my bank?"),
+      t("No. You add transactions yourself, which takes seconds and means PerchCR never needs your bank password. You can also import a CSV from your bank or spreadsheet."),
     ],
     [
       t("Which currencies does it support?"),
@@ -518,11 +518,11 @@ function Questions() {
     ],
     [
       t("Does it work without internet?"),
-      t("Yes. Once you've signed in on a device, you can open Perch and log transactions offline. They sync when you're connected again."),
+      t("Yes. Once you've signed in on a device, you can open PerchCR and log transactions offline. They sync when you're connected again."),
     ],
     [
       t("Do I need to download an app?"),
-      t("No. Perch runs in your browser. On your phone you can add it to the home screen and it opens like any other app."),
+      t("No. PerchCR runs in your browser. On your phone you can add it to the home screen and it opens like any other app."),
     ],
     [
       t("Can I share a budget with my partner?"),
@@ -530,7 +530,7 @@ function Questions() {
     ],
     [
       t("Who can see my data?"),
-      t("Only you and anyone you connect with. Perch doesn't sell data or show ads. Read the privacy policy for the details."),
+      t("Only you and anyone you connect with. PerchCR doesn't sell data or show ads. Read the privacy policy for the details."),
     ],
     [
       t("Can I leave and take my data?"),

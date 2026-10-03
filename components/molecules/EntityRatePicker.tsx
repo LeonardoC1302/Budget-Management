@@ -99,7 +99,7 @@ export default function EntityRatePicker({
       />
       {error && (
         <p className="text-xs text-expense">
-          {t("BCCR unreachable ({error}). Using open.er-api.com fallback rate.", { error })}{" "}
+          {t("Bank rates are unavailable ({error}). Using the BCCR reference rate.", { error })}{" "}
           <button
             type="button"
             onClick={() => void refresh()}

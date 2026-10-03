@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Perch is a public personal finance app for people in Costa Rica who handle
+PerchCR is a public personal finance app for people in Costa Rica who handle
 money in both colones and US dollars. Anyone with a Google account can sign
 in from the landing page at `/`. Each user works inside their own per-user
 data tree. Users can connect with a one-time code and then see and edit
@@ -22,12 +22,12 @@ and its public pages are available in English and Costa Rican Spanish.
 
 ## Product Purpose
 
-Perch is a personal budgeting PWA for people who want to see, decide, and log
+PerchCR is a personal budgeting PWA for people who want to see, decide, and log
 their own money across colones and dollars without a dashboard shouting at
 them. Users track accounts, credit cards, transactions, budgets, saving
 goals, recurring items and investments in one quiet surface that installs on
 their device and keeps working offline. Success is a user who trusts what
-they see, understands where their month stands, and returns to Perch because
+they see, understands where their month stands, and returns to PerchCR because
 using it feels calm rather than taxing.
 
 ## Positioning
@@ -41,7 +41,7 @@ truthfully copy:
   display currency (USD or CRC). Costa Rican bank window rates (compra and
   venta) are built in, and a purchase can carry the exact rate the bank
   used.
-- **Manual entry only, no bank aggregation.** Perch never connects to a
+- **Manual entry only, no bank aggregation.** PerchCR never connects to a
   bank, card or aggregator and never asks for bank credentials. Every
   transaction is a deliberate act by the user, helped by recurring items and
   CSV import. This is a positioning choice, not a limitation to fix.
@@ -73,9 +73,10 @@ truthfully copy:
 - **What it depends on.**
   - Firebase Authentication with Google Sign-In.
   - Firestore with persistent local cache for per-user data.
-  - `open.er-api.com` for general exchange rates (fetched from the browser).
-  - `tipodecambio.info` for Costa Rican bank window rates, via
-    `/api/rates/bccr`.
+  - The Banco Central de Costa Rica's economic data API (SDDE) for every
+    exchange rate (needs `BCCR_SDDE_TOKEN`): general conversions via
+    `/api/rates/usd` (table 520) and each institution's window rates via
+    `/api/rates/bccr` (table 1015).
   - Twelve Data for market prices, via `/api/market/*`.
   - Every `/api` route requires a Firebase ID token, verified server-side
     with `jose` against Google's public keys.
@@ -137,10 +138,14 @@ Durable constraints future work must preserve:
 
 Explicitly undecided, recorded so future work does not silently lock it in:
 
-- Pricing. Perch may become freemium. Public copy must not promise that it
+- Pricing. PerchCR may become freemium. Public copy must not promise that it
   is free; the terms say paid features may come with notice.
-- The final name and domain. "Perch" has not been checked for trademark or
-  store conflicts, and there is no custom domain yet.
+- Trademark protection for the name. The app was renamed from Perch to
+  PerchCR in October 2026. A US registration for PERCH (consumer loans,
+  AARC LLC, no. 6284596) has been enforced against another finance app, so
+  the name is meant for Costa Rica; expanding beyond it needs a new
+  clearance. The Costa Rica Registro Nacional search (classes 9, 36, 42)
+  and the domain purchase (perchcr.dev was the candidate) are pending.
 - Whether a paid exchange-rate or market-data provider replaces the free
   tiers if reliability or quota needs change.
 - Hardening deferred for later: Firebase App Check and bot blocking, a
@@ -148,10 +153,11 @@ Explicitly undecided, recorded so future work does not silently lock it in:
 
 ## Brand Commitments
 
-- The name **Perch** and the tagline **"A quiet place for your money to
+- The name **PerchCR** and the tagline **"A quiet place for your money to
   rest."** appear in the metadata, manifest, landing page, Open Graph image
-  and app icon. They stand until the user rebrands; see the undecided name
-  check above.
+  and app icon. Internal identifiers (`perch:` storage keys, `PerchMark`,
+  the emulator project `demo-perch`) keep the old name on purpose: renaming
+  the storage keys would reset every device's settings and app lock.
 - The visual world is **Alcove**, described in `DESIGN.md`: light and dark
   themes, celadon accent, Newsreader serif display over Geist sans. Any
   binding change to name, tagline or visual direction is a redesign
@@ -166,8 +172,8 @@ Explicitly undecided, recorded so future work does not silently lock it in:
 - The README describes the shipped features, setup and deployment.
 - Legal text lives in `lib/legal/`, with `[CONTACT EMAIL]` and
   `[FIRESTORE REGION]` placeholders in `lib/legal/types.ts`.
-- Rate and price sources: `open.er-api.com` (free tier),
-  `tipodecambio.info`, and Twelve Data's free tier (800 requests/day,
+- Rate and price sources: the BCCR SDDE API (table 520 for general
+  rates, table 1015 for window rates) and Twelve Data's free tier (800 requests/day,
   8/min) behind `TWELVEDATA_API_KEY`. Without that key, investments fall
   back to cost basis only.
 - There are **no** testimonials, user counts, press mentions, customer

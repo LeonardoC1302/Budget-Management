@@ -65,10 +65,10 @@ function PublicHeader() {
         <Link
           href="/?stay"
           className="nameplate-brand hover:opacity-80 transition-opacity"
-          aria-label={t("Perch home")}
+          aria-label={t("PerchCR home")}
         >
           <PerchMark size={20} />
-          <span>Perch</span>
+          <span>PerchCR</span>
         </Link>
         <nav aria-label={t("Sections")} className="hidden md:flex items-center gap-1 ml-6">
           <Link href="/?stay#features" className="btn btn-ghost btn-sm">
@@ -97,7 +97,7 @@ function PublicFooter() {
         <div className="flex flex-col gap-2 max-w-sm">
           <span className="nameplate-brand">
             <PerchMark size={18} />
-            <span>Perch</span>
+            <span>PerchCR</span>
           </span>
           <p className="lede text-sm">{t("A quiet place for your money to rest.")}</p>
           <p className="text-xs text-fg-subtle">{t("Made in Costa Rica.")}</p>
@@ -113,7 +113,7 @@ function PublicFooter() {
         </nav>
       </div>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-8 text-xs text-fg-subtle">
-        © {new Date().getFullYear()} Perch
+        © {new Date().getFullYear()} PerchCR
       </div>
     </footer>
   );

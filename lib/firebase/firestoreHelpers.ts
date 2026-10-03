@@ -5,8 +5,6 @@ import {
   getDocFromCache,
   getDocs,
   getDocsFromCache,
-  orderBy,
-  query,
   type CollectionReference,
   type DocumentReference,
   type DocumentSnapshot,
@@ -15,6 +13,11 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/client";
 import { getAccessibleContexts } from "@/lib/firebase/access";
+import {
+  getLiveDocs,
+  noteLocalWrite,
+  retainLiveOwners,
+} from "@/lib/firebase/liveCollections";
 import { trackPendingWrite } from "@/lib/offline/syncStatus";
 import type { OwnerCtx } from "@/lib/types";
 
@@ -89,6 +92,7 @@ export async function readDoc(ref: DocumentReference): Promise<DocumentSnapshot>
  */
 export async function commitWrite(write: Promise<unknown>): Promise<void> {
   trackPendingWrite(write);
+  noteLocalWrite();
   if (isOffline()) return;
   try {
     await withTimeout(write, WRITE_ACK_TIMEOUT_MS);
@@ -147,29 +151,62 @@ export function ownerDoc(
   return doc(db, "users", ownerUid, name, id);
 }
 
-// Fans out a `getDocs` query across every accessible owner (self + grantors)
-// and decorates the results with `_owner`. When the user has zero grantors
-// this is exactly one round-trip — identical to the pre-connections cost.
-//
-// `buildQuery` receives the owner's collection ref and returns the query to
-// run against it (typically `query(col, orderBy(...))`). It's a callback so
-// callers can add `where` filters or `orderBy` as needed. If omitted, a plain
-// `getDocs(col)` is used. Soft-deleted docs are skipped.
+export interface ListOrder {
+  field: string;
+  direction?: "asc" | "desc";
+}
+
+// Sort key for a Firestore value: ISO strings and numbers compare directly,
+// Timestamps by their milliseconds.
+function sortKey(value: unknown): string | number {
+  if (typeof value === "string" || typeof value === "number") return value;
+  if (value && typeof (value as { toMillis?: unknown }).toMillis === "function") {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  return String(value);
+}
+
+/**
+ * Same result as Firestore's `orderBy(field, direction)`: documents missing
+ * the field are left out, ties fall back to the document ID.
+ */
+function sortLikeOrderBy<D extends { id: string; data: () => Record<string, unknown> }>(
+  docs: D[],
+  order: ListOrder,
+): D[] {
+  const sign = order.direction === "desc" ? -1 : 1;
+  return docs
+    .map((d) => ({ d, key: d.data()[order.field] }))
+    .filter((x) => x.key !== undefined && x.key !== null)
+    .map((x) => ({ d: x.d, key: sortKey(x.key) }))
+    .sort((a, b) => {
+      if (a.key < b.key) return -sign;
+      if (a.key > b.key) return sign;
+      return a.d.id < b.d.id ? -sign : a.d.id > b.d.id ? sign : 0;
+    })
+    .map((x) => x.d);
+}
+
+// Lists a collection across every accessible owner (self + grantors) and
+// decorates the results with `_owner`. Reads come from one shared live
+// listener per owner and collection (lib/firebase/liveCollections.ts), so
+// repeated lists across hooks and pages cost no extra Firestore reads.
+// Soft-deleted docs are skipped unless `includeSoftDeleted` is set.
 export async function listAcrossOwners<T>(
   collectionName: string,
   hydrate: (id: string, data: Record<string, unknown>, owner: OwnerCtx) => T,
-  buildQuery?: (col: CollectionReference) => Query,
+  order?: ListOrder,
   options: { includeSoftDeleted?: boolean } = {},
 ): Promise<T[]> {
   const contexts = getAccessibleContexts();
   if (contexts.length === 0) return [];
+  retainLiveOwners(contexts.map((c) => c.uid));
   const perOwner = await Promise.all(
     contexts.map(async (owner) => {
-      const col = ownerCollection(owner.uid, collectionName);
-      const q = buildQuery ? buildQuery(col) : col;
       try {
-        const snap = await readDocs(q);
-        return snap.docs
+        const live = await getLiveDocs(owner.uid, collectionName);
+        const docs = order ? sortLikeOrderBy(live, order) : live;
+        return docs
           .filter((d) => options.includeSoftDeleted || !isSoftDeleted(d.data()))
           .map((d) =>
             hydrate(d.id, d.data() as Record<string, unknown>, owner),
@@ -189,13 +226,4 @@ export async function listAcrossOwners<T>(
     }),
   );
   return perOwner.flat();
-}
-
-// Convenience: same but with an `orderBy` field. Kept because most stores just
-// need one order key.
-export function orderedQuery(
-  field: string,
-  direction: "asc" | "desc" = "asc",
-): (col: CollectionReference) => Query {
-  return (col) => query(col, orderBy(field, direction));
 }

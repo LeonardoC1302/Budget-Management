@@ -5,7 +5,7 @@ import { privacyPolicy } from "@/lib/legal/privacy";
 export const metadata: Metadata = {
   title: "Privacy policy",
   description:
-    "What Perch collects, why, who processes it, how long it's kept, and how to export or delete your data.",
+    "What PerchCR collects, why, who processes it, how long it's kept, and how to export or delete your data.",
   alternates: { canonical: "/privacy" },
 };
 

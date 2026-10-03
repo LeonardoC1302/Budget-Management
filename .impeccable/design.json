@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-08-14T15:48:18.076Z",
-  "title": "Design System: Perch",
+  "title": "Design System: PerchCR",
   "extensions": {
     "colorMeta": {
       "bg":             { "role": "neutral", "displayName": "Night",           "canonical": "#0a0a0b", "tonalRamp": ["#050506","#0a0a0b","#111114","#17171b","#1c1c22","#22222a","#26262c","#35353d"] },
@@ -12,8 +12,8 @@
       "fg":             { "role": "neutral", "displayName": "Feather White",   "canonical": "#f4f4f5", "tonalRamp": ["#26262c","#4a4a55","#71717a","#a1a1aa","#c8c8ce","#dedee2","#eaeaec","#f4f4f5"] },
       "fg-muted":       { "role": "neutral", "displayName": "Feather Muted",   "canonical": "#a1a1aa", "tonalRamp": ["#26262c","#35353d","#4a4a55","#71717a","#a1a1aa","#c8c8ce","#dedee2","#f4f4f5"] },
       "fg-subtle":      { "role": "neutral", "displayName": "Feather Subtle",  "canonical": "#71717a", "tonalRamp": ["#17171b","#26262c","#35353d","#4a4a55","#71717a","#a1a1aa","#c8c8ce","#dedee2"] },
-      "accent":         { "role": "primary", "displayName": "Perch Indigo",    "canonical": "#6366f1", "tonalRamp": ["#1e1f4a","#2d2f6b","#3e40a0","#4f52c9","#6366f1","#7c7ff5","#a0a2f8","#c8caff"] },
-      "accent-hover":   { "role": "primary", "displayName": "Perch Indigo Bright", "canonical": "#7c7ff5", "tonalRamp": ["#2d2f6b","#3e40a0","#4f52c9","#6366f1","#7c7ff5","#a0a2f8","#c8caff","#e6e7ff"] },
+      "accent":         { "role": "primary", "displayName": "PerchCR Indigo",    "canonical": "#6366f1", "tonalRamp": ["#1e1f4a","#2d2f6b","#3e40a0","#4f52c9","#6366f1","#7c7ff5","#a0a2f8","#c8caff"] },
+      "accent-hover":   { "role": "primary", "displayName": "PerchCR Indigo Bright", "canonical": "#7c7ff5", "tonalRamp": ["#2d2f6b","#3e40a0","#4f52c9","#6366f1","#7c7ff5","#a0a2f8","#c8caff","#e6e7ff"] },
       "income":         { "role": "success", "displayName": "Ledger Green",    "canonical": "#10b981", "tonalRamp": ["#052e21","#083f2e","#0b5e46","#0e8663","#10b981","#34d399","#6ee7b7","#a7f3d0"] },
       "income-soft":    { "role": "success", "displayName": "Ledger Green Whisper", "canonical": "rgba(16,185,129,0.094)", "tonalRamp": [] },
       "expense":        { "role": "danger",  "displayName": "Ledger Rose",     "canonical": "#f43f5e", "tonalRamp": ["#4a0d1a","#6b1226","#9c1a37","#c92548","#f43f5e","#fb7185","#fda4af","#fecdd3"] },
@@ -130,8 +130,8 @@
     }
   ],
   "narrative": {
-    "northStar": "The Nightbird's Perch — a moonlit ledger.",
-    "overview": "Perch is a dark, quiet room where money can be looked at without being shouted about. The whole system is built to feel like sitting in a low-lit study after hours: near-black surfaces, hairline borders, and a single indigo light that behaves like the moon on the perch — one authored glow at the top-right of the masthead balance, one dashed accent stroke (\"the roost line\") that grows in on mount, and then stillness. Semantic income / expense / investment tones are the only colored voices allowed onto the canvas, and they only speak when a number needs to mean something. Nothing performs importance; the figures themselves are the point.\n\nDensity is calm, not sparse: money surfaces cluster into fielded cards with generous internal padding, list rows use ample vertical rhythm, and the primary action lives at the thumb on mobile via the bottom-anchored capsule. Motion is authored, brief, and always respectful of prefers-reduced-motion. The aesthetic anti-references are the two forms of dashboard cliché this product exists to reject — the bright-fintech \"confetti + candy palette\" and the enterprise-BI \"metric wall\". Perch declines both.",
+    "northStar": "The Nightbird's PerchCR — a moonlit ledger.",
+    "overview": "PerchCR is a dark, quiet room where money can be looked at without being shouted about. The whole system is built to feel like sitting in a low-lit study after hours: near-black surfaces, hairline borders, and a single indigo light that behaves like the moon on the perch — one authored glow at the top-right of the masthead balance, one dashed accent stroke (\"the roost line\") that grows in on mount, and then stillness. Semantic income / expense / investment tones are the only colored voices allowed onto the canvas, and they only speak when a number needs to mean something. Nothing performs importance; the figures themselves are the point.\n\nDensity is calm, not sparse: money surfaces cluster into fielded cards with generous internal padding, list rows use ample vertical rhythm, and the primary action lives at the thumb on mobile via the bottom-anchored capsule. Motion is authored, brief, and always respectful of prefers-reduced-motion. The aesthetic anti-references are the two forms of dashboard cliché this product exists to reject — the bright-fintech \"confetti + candy palette\" and the enterprise-BI \"metric wall\". PerchCR declines both.",
     "keyCharacteristics": [
       "Dark-only, near-black canvas with hairline muted borders",
       "One accent (indigo) used sparingly; three semantic tones (income, expense, investment) reserved for money meaning",
@@ -148,18 +148,18 @@
       { "name": "The One-Glow-Per-Surface Rule",   "body": "The masthead balance owns the single radial indigo glow ('moon on the perch'). Do not repeat that device on other cards; it is a hallmark, not a pattern.", "section": "elevation" }
     ],
     "dos": [
-      "Do treat Perch Indigo as light. Use it for the primary action, focus rings, the active nav pip, the PerchMark's eye, and the masthead's radial glow — and mostly nothing else.",
+      "Do treat PerchCR Indigo as light. Use it for the primary action, focus rings, the active nav pip, the PerchMark's eye, and the masthead's radial glow — and mostly nothing else.",
       "Do reserve Ledger Green / Rose / Amber for money meaning. If a color is on the screen, a viewer should be able to point at it and say 'that's about a number'.",
       "Do use tabular-nums whitespace-nowrap on every currency value.",
       "Do describe cards with a 1px Hairline border + the Surface ambient shadow. Fill alone is not enough.",
       "Do honor prefers-reduced-motion: mask, don't merely shorten, the masthead settle and roost draw.",
-      "Do keep the Perch identity (name, tagline 'A quiet place for your money to rest.', PerchMark glyph) intact across surfaces."
+      "Do keep the PerchCR identity (name, tagline 'A quiet place for your money to rest.', PerchMark glyph) intact across surfaces."
     ],
     "donts": [
       "Don't introduce halo shadows (0 0 X rgba(...)) on cards, buttons, or containers. Depth is offset, not glow.",
-      "Don't paint large surfaces in Perch Indigo (banners, hero fills, backgrounds). It is a spotlight, not a wall.",
+      "Don't paint large surfaces in PerchCR Indigo (banners, hero fills, backgrounds). It is a spotlight, not a wall.",
       "Don't use semantic money colors for non-monetary status (avoid Ledger Green 'success' toasts, Ledger Rose 'error' banners, etc. — use neutral surfaces with Feather Subtle copy instead).",
-      "Don't add a light theme without a product-level decision. Perch is committed dark; color-scheme: dark is set on the root.",
+      "Don't add a light theme without a product-level decision. PerchCR is committed dark; color-scheme: dark is set on the root.",
       "Don't stack multiple radial glows on a single viewport. The masthead owns the moon.",
       "Don't repeat capital-letter text outside the label-sm role. Uppercase buttons or uppercase body copy break the calm.",
       "Don't add 'dashboard' chrome: KPI walls, big colored gauges, confetti, streak fires, notification counters. The product's anti-reference is the metric wall."

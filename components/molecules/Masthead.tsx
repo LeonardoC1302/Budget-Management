@@ -37,7 +37,7 @@ interface MastheadProps {
 }
 
 /**
- * Home masthead. Perch identity anchored top-left (mark + wordmark), tools
+ * Home masthead. PerchCR identity anchored top-left (mark + wordmark), tools
  * anchored top-right, then a hairline wall and a single Alcove courtyard
  * carrying the month's balance with its warm skylight glow.
  */
@@ -56,7 +56,7 @@ export default function Masthead({ balance }: MastheadProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 text-fg">
           <PerchMark size={26} />
-          <span className="text-lg font-semibold tracking-tight">{t("Perch")}</span>
+          <span className="text-lg font-semibold tracking-tight">{t("PerchCR")}</span>
         </div>
         <div className="flex items-center gap-1">
           <CurrencyToggle />

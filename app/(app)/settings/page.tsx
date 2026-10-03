@@ -30,7 +30,7 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
       {
         href: "/settings/security",
         title: "App lock",
-        description: "Ask for a PIN or fingerprint when Perch opens on this device.",
+        description: "Ask for a PIN or fingerprint when PerchCR opens on this device.",
       },
     ],
   },
@@ -59,18 +59,18 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
     links: [
       {
         href: "/?stay",
-        title: "Perch website",
+        title: "PerchCR website",
         description: "The public home page.",
       },
       {
         href: "/privacy",
         title: "Privacy policy",
-        description: "What Perch collects and how it's used.",
+        description: "What PerchCR collects and how it's used.",
       },
       {
         href: "/terms",
         title: "Terms of service",
-        description: "The rules for using Perch.",
+        description: "The rules for using PerchCR.",
       },
     ],
   },
@@ -87,7 +87,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <RouteMasthead kicker={t("Perch")} title={t("Settings")} />
+      <RouteMasthead kicker={t("PerchCR")} title={t("Settings")} />
 
       <section className="flex flex-col gap-3">
         <h2 className="label-sm">{t("Language")}</h2>

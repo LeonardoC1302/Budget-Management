@@ -2,20 +2,20 @@ import { LEGAL_PLACEHOLDERS as P, type LegalDocument } from "@/lib/legal/types";
 
 const en: LegalDocument = {
   title: "Terms of service",
-  updated: "Last updated: September 30, 2026",
+  updated: "Last updated: October 2, 2026",
   intro:
-    "These terms govern your use of Perch, a personal finance app operated by an individual developer based in Costa Rica (\"we\", \"us\"). By signing in, you agree to them.",
+    "These terms govern your use of PerchCR, a personal finance app operated by an individual developer based in Costa Rica (\"we\", \"us\"). By signing in, you agree to them.",
   sections: [
     {
-      heading: "What Perch is",
+      heading: "What PerchCR is",
       blocks: [
-        { p: "Perch helps you record and review your own money: accounts, transactions, budgets, goals and investments. Everything in it is information you enter or import yourself. Perch does not connect to banks, move money, or hold funds." },
+        { p: "PerchCR helps you record and review your own money: accounts, transactions, budgets, goals and investments. Everything in it is information you enter or import yourself. PerchCR does not connect to banks, move money, or hold funds." },
       ],
     },
     {
       heading: "Not financial advice",
       blocks: [
-        { p: "Perch shows calculations based on what you enter. It is not financial, investment, tax or legal advice, and nothing in it is a recommendation to buy, sell or hold anything. Make important decisions with a qualified professional." },
+        { p: "PerchCR shows calculations based on what you enter. It is not financial, investment, tax or legal advice, and nothing in it is a recommendation to buy, sell or hold anything. Make important decisions with a qualified professional." },
       ],
     },
     {
@@ -30,38 +30,38 @@ const en: LegalDocument = {
         { list: [
           "You sign in with a Google account and are responsible for keeping it secure.",
           "You're responsible for the accuracy of what you enter and for who you share your budget with.",
-          "You must be at least 18 years old to use Perch.",
+          "You must be at least 18 years old to use PerchCR.",
         ] },
       ],
     },
     {
       heading: "Acceptable use",
       blocks: [
-        { p: "Don't use Perch to break the law, to access other people's data without permission, to interfere with the service or its providers, or to scrape or overload it." },
+        { p: "Don't use PerchCR to break the law, to access other people's data without permission, to interfere with the service or its providers, or to scrape or overload it." },
       ],
     },
     {
       heading: "Your data",
       blocks: [
-        { p: "Your data is yours. You give us permission to store and process it only to run Perch for you, as described in the privacy policy. You can export it or delete your account at any time from Settings." },
+        { p: "Your data is yours. You give us permission to store and process it only to run PerchCR for you, as described in the privacy policy. You can export it or delete your account at any time from Settings." },
       ],
     },
     {
       heading: "Changes to the service",
       blocks: [
-        { p: "We may change, add or remove features. Perch may introduce paid features in the future; we'll tell you before anything is charged, and you'll always be able to export your data." },
+        { p: "We may change, add or remove features. PerchCR may introduce paid features in the future; we'll tell you before anything is charged, and you'll always be able to export your data." },
       ],
     },
     {
       heading: "Availability and liability",
       blocks: [
-        { p: "Perch is provided \"as is\", without warranties of any kind. We work to keep it available and accurate but can't guarantee it will be uninterrupted or error-free. To the extent the law allows, we aren't liable for indirect or consequential losses, or for decisions made based on information shown in Perch." },
+        { p: "PerchCR is provided \"as is\", without warranties of any kind. We work to keep it available and accurate but can't guarantee it will be uninterrupted or error-free. To the extent the law allows, we aren't liable for indirect or consequential losses, or for decisions made based on information shown in PerchCR." },
       ],
     },
     {
       heading: "Ending your use",
       blocks: [
-        { p: "You can stop using Perch and delete your account at any time. We may suspend accounts that break these terms, and will tell you why when we can." },
+        { p: "You can stop using PerchCR and delete your account at any time. We may suspend accounts that break these terms, and will tell you why when we can." },
       ],
     },
     {
@@ -76,20 +76,20 @@ const en: LegalDocument = {
 
 const es: LegalDocument = {
   title: "Términos del servicio",
-  updated: "Última actualización: 30 de septiembre de 2026",
+  updated: "Última actualización: 2 de octubre de 2026",
   intro:
-    "Estos términos rigen el uso de Perch, una aplicación de finanzas personales operada por un desarrollador independiente con sede en Costa Rica (\"nosotros\"). Al ingresar, los aceptas.",
+    "Estos términos rigen el uso de PerchCR, una aplicación de finanzas personales operada por un desarrollador independiente con sede en Costa Rica (\"nosotros\"). Al ingresar, los aceptas.",
   sections: [
     {
-      heading: "Qué es Perch",
+      heading: "Qué es PerchCR",
       blocks: [
-        { p: "Perch te ayuda a registrar y revisar tu propio dinero: cuentas, transacciones, presupuestos, metas e inversiones. Todo lo que contiene lo ingresas o importas tú. Perch no se conecta a bancos, no mueve dinero ni custodia fondos." },
+        { p: "PerchCR te ayuda a registrar y revisar tu propio dinero: cuentas, transacciones, presupuestos, metas e inversiones. Todo lo que contiene lo ingresas o importas tú. PerchCR no se conecta a bancos, no mueve dinero ni custodia fondos." },
       ],
     },
     {
       heading: "No es asesoría financiera",
       blocks: [
-        { p: "Perch muestra cálculos basados en lo que ingresas. No es asesoría financiera, de inversión, tributaria ni legal, y nada en la app es una recomendación de comprar, vender o mantener algo. Toma las decisiones importantes con un profesional calificado." },
+        { p: "PerchCR muestra cálculos basados en lo que ingresas. No es asesoría financiera, de inversión, tributaria ni legal, y nada en la app es una recomendación de comprar, vender o mantener algo. Toma las decisiones importantes con un profesional calificado." },
       ],
     },
     {
@@ -104,38 +104,38 @@ const es: LegalDocument = {
         { list: [
           "Ingresas con una cuenta de Google y eres responsable de mantenerla segura.",
           "Eres responsable de la exactitud de lo que ingresas y de con quién compartes tu presupuesto.",
-          "Debes tener al menos 18 años para usar Perch.",
+          "Debes tener al menos 18 años para usar PerchCR.",
         ] },
       ],
     },
     {
       heading: "Uso aceptable",
       blocks: [
-        { p: "No uses Perch para infringir la ley, acceder a datos de otras personas sin permiso, interferir con el servicio o sus proveedores, ni para extraer datos o sobrecargarlo." },
+        { p: "No uses PerchCR para infringir la ley, acceder a datos de otras personas sin permiso, interferir con el servicio o sus proveedores, ni para extraer datos o sobrecargarlo." },
       ],
     },
     {
       heading: "Tus datos",
       blocks: [
-        { p: "Tus datos son tuyos. Nos das permiso para guardarlos y procesarlos solo para que Perch funcione para ti, como se describe en la política de privacidad. Puedes exportarlos o eliminar tu cuenta en cualquier momento desde Ajustes." },
+        { p: "Tus datos son tuyos. Nos das permiso para guardarlos y procesarlos solo para que PerchCR funcione para ti, como se describe en la política de privacidad. Puedes exportarlos o eliminar tu cuenta en cualquier momento desde Ajustes." },
       ],
     },
     {
       heading: "Cambios en el servicio",
       blocks: [
-        { p: "Podemos cambiar, agregar o quitar funciones. Perch podría incluir funciones de pago en el futuro; te avisaremos antes de cobrar cualquier cosa y siempre podrás exportar tus datos." },
+        { p: "Podemos cambiar, agregar o quitar funciones. PerchCR podría incluir funciones de pago en el futuro; te avisaremos antes de cobrar cualquier cosa y siempre podrás exportar tus datos." },
       ],
     },
     {
       heading: "Disponibilidad y responsabilidad",
       blocks: [
-        { p: "Perch se ofrece \"tal cual\", sin garantías de ningún tipo. Trabajamos para mantenerlo disponible y exacto, pero no podemos garantizar que funcione sin interrupciones ni errores. En la medida en que la ley lo permita, no somos responsables por pérdidas indirectas o consecuentes, ni por decisiones tomadas con base en la información que muestra Perch." },
+        { p: "PerchCR se ofrece \"tal cual\", sin garantías de ningún tipo. Trabajamos para mantenerlo disponible y exacto, pero no podemos garantizar que funcione sin interrupciones ni errores. En la medida en que la ley lo permita, no somos responsables por pérdidas indirectas o consecuentes, ni por decisiones tomadas con base en la información que muestra PerchCR." },
       ],
     },
     {
-      heading: "Dejar de usar Perch",
+      heading: "Dejar de usar PerchCR",
       blocks: [
-        { p: "Puedes dejar de usar Perch y eliminar tu cuenta en cualquier momento. Podemos suspender cuentas que incumplan estos términos y, cuando sea posible, te diremos por qué." },
+        { p: "Puedes dejar de usar PerchCR y eliminar tu cuenta en cualquier momento. Podemos suspender cuentas que incumplan estos términos y, cuando sea posible, te diremos por qué." },
       ],
     },
     {

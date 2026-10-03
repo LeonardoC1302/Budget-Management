@@ -1,5 +1,5 @@
 ---
-name: Perch
+name: PerchCR
 description: A quiet place for your money to rest.
 colors:
   # Light mode ("stone paper"). Dark values follow with a -dark suffix.
@@ -128,13 +128,13 @@ components:
     padding: "4px 10px"
 ---
 
-# Design System: Perch
+# Design System: PerchCR
 
 ## Overview
 
 **Creative North Star: "Alcove": a quiet room lit from one window.**
 
-Perch looks like a well-kept paper ledger in a calm room. Light mode is warm
+PerchCR looks like a well-kept paper ledger in a calm room. Light mode is warm
 stone paper with near-black ink; dark mode is a cool night room with warm
 cream text. One celadon accent marks focus and the active place. Headings
 and figures are set in the Newsreader serif; everything functional (labels,
@@ -265,7 +265,7 @@ app components with labeled sample data, never screenshots.
 
 ## Elevation & Depth
 
-Perch is flat. Hierarchy comes from surface steps (bg → surface →
+PerchCR is flat. Hierarchy comes from surface steps (bg → surface →
 surface-2) and hairline walls, not shadows.
 
 - **Courtyard** (`.courtyard`, `.masthead-balance`): surface fill plus a
@@ -353,7 +353,7 @@ Every animation stops under `prefers-reduced-motion`.
 - Check new screens in both themes and in Spanish, which runs longer.
 - Keep amounts tabular and in the serif.
 - Group related content into rooms with hairline walls.
-- Keep the Perch name, tagline and PerchMark intact.
+- Keep the PerchCR name, tagline and PerchMark intact.
 
 ### Don't
 - Don't round cards. Square rooms are the look.

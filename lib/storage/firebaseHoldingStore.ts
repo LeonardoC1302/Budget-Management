@@ -1,6 +1,5 @@
 import {
   doc,
-  orderBy,
   query,
   setDoc,
   updateDoc,
@@ -62,7 +61,7 @@ export const firebaseHoldingStore: HoldingStore = {
       HOLDINGS,
       (id, data, owner) =>
         hydrateHolding(id, data as Omit<Holding, "id">, owner),
-      (col) => query(col, orderBy("createdAt")),
+      { field: "createdAt" },
     );
   },
   async addHolding(input, ownerUid) {
@@ -115,7 +114,7 @@ export const firebaseHoldingStore: HoldingStore = {
       VALUATIONS,
       (id, data, owner) =>
         hydrateValuation(id, data as Omit<HoldingValuation, "id">, owner),
-      (col) => query(col, orderBy("asOfDate", "desc")),
+      { field: "asOfDate", direction: "desc" },
     );
   },
   async addValuation(input, ownerUid) {

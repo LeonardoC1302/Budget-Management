@@ -183,7 +183,7 @@ export default function GoalsPage() {
               onEdit={(goal) => setMode({ kind: "edit", goal })}
               onDelete={(goal) => setPendingDelete(goal)}
               emptyTitle={t("No goals yet.")}
-              emptyDescription={t("Name something you're saving for and Perch will track your monthly pace toward it.")}
+              emptyDescription={t("Name something you're saving for and PerchCR will track your monthly pace toward it.")}
               emptyActionLabel={t("Create a goal")}
               emptyActionOnClick={() => setMode({ kind: "create" })}
             />

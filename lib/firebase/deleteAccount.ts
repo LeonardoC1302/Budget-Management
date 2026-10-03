@@ -21,7 +21,7 @@ import { auth, db, googleProvider, usingEmulator } from "@/lib/firebase/client";
 import { CONNECTION_CODES_COL, CONNECTIONS_COL } from "@/lib/firebase/connections";
 import { removeLock } from "@/lib/lock/appLock";
 
-// Every collection Perch writes under users/{uid}. Keep in sync with the
+// Every collection PerchCR writes under users/{uid}. Keep in sync with the
 // stores in lib/storage and lib/firebase (seed marker lives in "meta").
 const USER_COLLECTIONS = [
   "accounts",

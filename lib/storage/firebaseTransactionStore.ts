@@ -1,6 +1,5 @@
 import {
   doc,
-  orderBy,
   query,
   setDoc,
   updateDoc,
@@ -99,7 +98,7 @@ export const firebaseTransactionStore: TransactionStore = {
     return listAcrossOwners<Transaction>(
       COL,
       (id, data, owner) => hydrate(id, data as Omit<Transaction, "id">, owner),
-      (col) => query(col, orderBy("date", "desc")),
+      { field: "date", direction: "desc" },
     );
   },
   async add(input: NewTransaction, ownerUid?: string) {

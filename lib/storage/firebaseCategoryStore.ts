@@ -1,7 +1,5 @@
 import {
   doc,
-  orderBy,
-  query,
   setDoc,
 } from "firebase/firestore";
 import {
@@ -35,7 +33,7 @@ export const firebaseCategoryStore: CategoryStore = {
     const all = await listAcrossOwners<Category>(
       COL,
       (id, data, owner) => hydrate(id, data as Omit<Category, "id">, owner),
-      (col) => query(col, orderBy("createdAt")),
+      { field: "createdAt" },
     );
     // Default categories have fixed ids (`cat-food`, ...) that collide across
     // owners' subtrees, so they'd appear once per accessible owner. Dedupe by
