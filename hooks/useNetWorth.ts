@@ -15,6 +15,29 @@ import { apiFetch } from "@/lib/api/apiFetch";
 
 export const NET_WORTH_MONTHS = 12;
 
+// Month-end closes barely move during a session, but net worth reloads on
+// every data change. Keep each ticker's year of closes for a while instead of
+// asking the market API again each time.
+const HISTORY_TTL_MS = 15 * 60_000;
+const historyCache = new Map<string, { at: number; points: HistoryPoint[] }>();
+
+async function yearOfCloses(symbol: string): Promise<HistoryPoint[] | null> {
+  const cached = historyCache.get(symbol);
+  if (cached && Date.now() - cached.at < HISTORY_TTL_MS) return cached.points;
+  try {
+    const res = await apiFetch(
+      `/api/market/history?symbol=${encodeURIComponent(symbol)}&range=1Y`,
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as HistoryResult;
+    const points = data.points ?? [];
+    historyCache.set(symbol, { at: Date.now(), points });
+    return points;
+  } catch {
+    return null;
+  }
+}
+
 async function loadInputs(): Promise<NetWorthInputs> {
   const [accounts, transactions, holdings, valuations] = await Promise.all([
     accountStore.list(),
@@ -44,16 +67,8 @@ async function loadInputs(): Promise<NetWorthInputs> {
   ];
   const histories = await Promise.all(
     symbols.map(async (symbol) => {
-      try {
-        const res = await apiFetch(
-          `/api/market/history?symbol=${encodeURIComponent(symbol)}&range=1Y`,
-        );
-        if (!res.ok) return null;
-        const data = (await res.json()) as HistoryResult;
-        return [symbol, data.points ?? []] as const;
-      } catch {
-        return null;
-      }
+      const points = await yearOfCloses(symbol);
+      return points ? ([symbol, points] as const) : null;
     }),
   );
 

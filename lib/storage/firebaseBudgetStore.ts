@@ -1,7 +1,5 @@
 import {
   doc,
-  orderBy,
-  query,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -40,7 +38,7 @@ export const firebaseBudgetStore: BudgetStore = {
     return listAcrossOwners<Budget>(
       COL,
       (id, data, owner) => hydrate(id, data as Omit<Budget, "id">, owner),
-      (col) => query(col, orderBy("createdAt")),
+      { field: "createdAt" },
     );
   },
   async add(input: NewBudget, ownerUid?: string) {

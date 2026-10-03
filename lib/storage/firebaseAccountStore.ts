@@ -1,7 +1,5 @@
 import {
   doc,
-  orderBy,
-  query,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -60,7 +58,7 @@ export const firebaseAccountStore: AccountStore = {
     return listAcrossOwners<Account>(
       COL,
       (id, data, owner) => hydrate(id, data as Omit<Account, "id">, owner),
-      (col) => query(col, orderBy("createdAt")),
+      { field: "createdAt" },
     );
   },
   async add(input: NewAccount, ownerUid?: string) {

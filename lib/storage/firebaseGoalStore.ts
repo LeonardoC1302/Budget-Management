@@ -1,6 +1,5 @@
 import {
   doc,
-  orderBy,
   query,
   setDoc,
   updateDoc,
@@ -55,7 +54,7 @@ export const firebaseGoalStore: GoalStore = {
     return listAcrossOwners<Goal>(
       GOALS,
       (id, data, owner) => hydrateGoal(id, data as Omit<Goal, "id">, owner),
-      (col) => query(col, orderBy("createdAt")),
+      { field: "createdAt" },
     );
   },
   async addGoal(input: NewGoal, ownerUid?: string) {
@@ -107,7 +106,7 @@ export const firebaseGoalStore: GoalStore = {
       CONTRIBUTIONS,
       (id, data, owner) =>
         hydrateContribution(id, data as Omit<GoalContribution, "id">, owner),
-      (col) => query(col, orderBy("date", "desc")),
+      { field: "date", direction: "desc" },
     );
   },
   async addContribution(input: NewGoalContribution, ownerUid?: string) {

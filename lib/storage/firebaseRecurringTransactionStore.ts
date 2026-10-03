@@ -1,7 +1,5 @@
 import {
   doc,
-  orderBy,
-  query,
   setDoc,
   updateDoc,
   writeBatch,
@@ -52,7 +50,7 @@ export const firebaseRecurringTransactionStore: RecurringTransactionStore = {
       COL,
       (id, data, owner) =>
         hydrate(id, data as Omit<RecurringTransaction, "id">, owner),
-      (col) => query(col, orderBy("createdAt", "desc")),
+      { field: "createdAt", direction: "desc" },
     );
   },
   async add(input: NewRecurringTransaction, ownerUid?: string) {
