@@ -1,23 +1,19 @@
 // Window (ventanilla) USD/CRC rates posted by every authorized exchange
 // intermediary in Costa Rica, from the Banco Central de Costa Rica's
-// economic data API (SDDE). Table 1015, "Lista de intermediarios cambiarios
-// autorizados y sus tipos de cambio vigentes de ventanilla", has one daily
-// buy and one daily sell series per institution.
-//
-// Needs BCCR_SDDE_TOKEN (server-only): generate it at the BCCR economic
-// indicators site under Mi Perfil → Generar token.
-// API reference: Estándar electrónico para usar el nuevo Sistema de
-// Divulgación de Datos Económicos (SDDE), BCCR.
+// economic data API (see lib/services/bccrApi.ts). Table 1015, "Lista de
+// intermediarios cambiarios autorizados y sus tipos de cambio vigentes de
+// ventanilla", has one daily buy and one daily sell series per institution.
 
-const API_BASE =
-  "https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API";
+import {
+  fetchSddeTable,
+  latestPoint,
+  type SddeIndicator,
+} from "@/lib/services/bccrApi";
+
 const WINDOW_RATES_TABLE = 1015;
 const BCCR_TTL_MS = 30 * 60 * 1000;
 // Serve the last good snapshot while the API is down, up to this age.
 const STALE_LIMIT_MS = 24 * 60 * 60 * 1000;
-// Rates are daily and carried over weekends and holidays; a short window
-// always contains the latest posting.
-const LOOKBACK_DAYS = 10;
 
 export interface BccrEntityRate {
   id: string;
@@ -162,21 +158,6 @@ const INSTITUTIONS: Record<string, { id: string; name: string; category: string 
   PRIVAL: { id: "prival-securities-puesto-de-bolsa-s-a", name: "PRIVAL Securities Puesto de Bolsa S.A", category: "Stockbrokers" },
 };
 
-interface SddeSeriesPoint {
-  fecha: string;
-  valorDatoPorPeriodo: number | null;
-}
-interface SddeIndicator {
-  codigoIndicador: string;
-  nombreIndicador: string;
-  series: SddeSeriesPoint[];
-}
-interface SddeResponse {
-  estado: boolean;
-  mensaje?: string;
-  datos?: { indicadores?: SddeIndicator[] }[];
-}
-
 let cache: { snapshot: BccrSnapshot; storedAt: number } | null = null;
 
 function slugify(name: string): string {
@@ -187,28 +168,6 @@ function slugify(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-}
-
-/** YYYY/MM/DD in Costa Rica, `daysAgo` days back. */
-function crDate(daysAgo: number): string {
-  const d = new Date(Date.now() - daysAgo * 86_400_000);
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Costa_Rica",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d); // 2026-10-02
-  return parts.replace(/-/g, "/");
-}
-
-/** Latest non-empty value in a series. */
-function latest(series: SddeSeriesPoint[]): { value: number; date: string } | null {
-  let best: { value: number; date: string } | null = null;
-  for (const p of series) {
-    if (typeof p.valorDatoPorPeriodo !== "number" || p.valorDatoPorPeriodo <= 0) continue;
-    if (!best || p.fecha > best.date) best = { value: p.valorDatoPorPeriodo, date: p.fecha };
-  }
-  return best;
 }
 
 /**
@@ -231,13 +190,12 @@ function guessSeries(name: string): { side: Side; label: string } | null {
   return label ? { side, label } : null;
 }
 
-function parseWindowRates(body: SddeResponse): { entities: BccrEntityRate[]; asOf?: string } {
-  const indicators = body.datos?.[0]?.indicadores ?? [];
+function parseWindowRates(indicators: SddeIndicator[]): { entities: BccrEntityRate[]; asOf?: string } {
   const byId = new Map<string, BccrEntityRate>();
   let asOf: string | undefined;
 
   for (const indicator of indicators) {
-    const point = latest(indicator.series ?? []);
+    const point = latestPoint(indicator.series ?? []);
     if (!point) continue;
     if (!asOf || point.date > asOf) asOf = point.date;
 
@@ -273,40 +231,14 @@ function parseWindowRates(body: SddeResponse): { entities: BccrEntityRate[]; asO
   return { entities, asOf };
 }
 
-async function fetchWindowRates(token: string): Promise<SddeResponse> {
-  const params = new URLSearchParams({
-    fechaInicio: crDate(LOOKBACK_DAYS),
-    fechaFin: crDate(0),
-    idioma: "ES",
-  });
-  const res = await fetch(`${API_BASE}/cuadro/${WINDOW_RATES_TABLE}/series?${params}`, {
-    cache: "no-store",
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-  });
-  if (res.status === 401 || res.status === 403) {
-    throw new Error(
-      `BCCR rejected the token (${res.status}). Generate a new one under Mi Perfil → Generar token and update BCCR_SDDE_TOKEN.`,
-    );
-  }
-  if (res.status === 429) throw new Error("BCCR rate limit reached (429).");
-  if (!res.ok) throw new Error(`BCCR responded with ${res.status}`);
-  const body = (await res.json()) as SddeResponse;
-  if (!body.estado) throw new Error(`BCCR error: ${body.mensaje ?? "unknown"}`);
-  return body;
-}
-
 export async function getBccrSnapshot(
   options: { force?: boolean } = {},
 ): Promise<BccrSnapshot> {
   if (!options.force && cache && Date.now() - cache.storedAt < BCCR_TTL_MS) {
     return cache.snapshot;
   }
-  const token = process.env.BCCR_SDDE_TOKEN?.trim();
-  if (!token) {
-    throw new Error("BCCR_SDDE_TOKEN is not set; bank window rates are unavailable.");
-  }
   try {
-    const { entities, asOf } = parseWindowRates(await fetchWindowRates(token));
+    const { entities, asOf } = parseWindowRates(await fetchSddeTable(WINDOW_RATES_TABLE));
     if (entities.length === 0) {
       throw new Error("BCCR returned no window rates.");
     }

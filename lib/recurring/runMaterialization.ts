@@ -107,7 +107,7 @@ async function priceInvestmentOccurrences(txs: NewTransaction[]): Promise<void> 
  * For templates whose currency differs from their account's currency, the FX
  * rate is fetched right before insert — a BCCR bank rate when the template
  * carries `rateBccrEntity` and the pair is USD↔CRC, otherwise the generic
- * open.er-api.com fallback. The resolved `rateSource` is attached to each
+ * general BCCR rate. The resolved `rateSource` is attached to each
  * generated transaction so `firebaseTransactionStore.addMany` computes
  * `accountAmount`/`amountUSD` from the intended source.
  */

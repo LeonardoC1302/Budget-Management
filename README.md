@@ -6,7 +6,7 @@ Perch is a personal budgeting app for tracking accounts, credit cards, transacti
 
 - **Accounts** — Track balances across debit, credit, wallet, cash, and savings accounts, each in its own currency.
 - **Transactions** — Log income and expenses with categories, descriptions, and dates. Delete or inspect any transaction from the history view.
-- **USD and CRC with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Totals are computed in USD and shown in the display currency you pick (USD or CRC). General rates come from [open.er-api.com](https://open.er-api.com), cached for one hour; Costa Rican bank window rates (compra/venta) come from the Banco Central de Costa Rica's economic data API (SDDE) through `/api/rates/bccr`, and a purchase can store the exact rate your bank used.
+- **USD and CRC with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Totals are computed in USD and shown in the display currency you pick (USD or CRC). All rates come from the Banco Central de Costa Rica's economic data API (SDDE): general conversions use table 520 (dollar↔colón at the midpoint of the reference buy and sell rates, plus about 45 other currencies) through `/api/rates/usd`, cached for one hour; each bank's window rates (compra/venta) come from table 1015 through `/api/rates/bccr`, and a purchase can store the exact rate your bank used.
 - **Credit cards** — Cut and payment days, the current statement, credit left, and payments of the full statement or of chosen charges.
 - **Search, tags and refunds** — Search the ledger by description, category, account, amount or `#tag`, and filter by period. Tag transactions (e.g. `#japan-trip`) and tap a tag to see what it adds up to by category. Record a refund against an expense; it lowers that category's spend instead of counting as income.
 - **Reconcile** — Check any account or card against your bank. Perch posts a balance adjustment for the difference (not counted as income or spending) and shows when each account was last reconciled.
@@ -118,7 +118,7 @@ The `NEXT_PUBLIC_` variables are read at build time and shipped to the browser. 
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase App ID for the Web app. |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | (Optional) Google Analytics measurement ID. |
 | `TWELVEDATA_API_KEY` | (Optional) [Twelve Data](https://twelvedata.com) API key used by the Investments tab for live ETF/stock/crypto quotes and history. Free tier is fine (800 req/day, 8/min). When unset, the Investments tab still works — holdings simply show cost basis with no market data. This key is server-only and must NOT be prefixed with `NEXT_PUBLIC_`. |
-| `BCCR_SDDE_TOKEN` | Token for the [BCCR economic data API](https://www.bccr.fi.cr/indicadores-economicos/servicio-web), used for each institution's window buy/sell rates (table 1015). Register at the BCCR economic indicators site and generate it under Mi Perfil → Generar token. Server-only. When unset or rejected, the bank picker is unavailable and conversions fall back to open.er-api.com. |
+| `BCCR_SDDE_TOKEN` | Token for the [BCCR economic data API](https://www.bccr.fi.cr/indicadores-economicos/servicio-web), used for all exchange rates: general conversions (table 520) and each institution's window buy/sell rates (table 1015). Register at the BCCR economic indicators site and generate it under Mi Perfil → Generar token. Server-only and required: without it, new conversions fail (the last rates stay cached on each device for offline use). |
 | `NEXT_PUBLIC_SITE_URL` | (Optional) Public base URL, e.g. `https://perch.example`. Used for canonical links, Open Graph URLs, `robots.txt` and `sitemap.xml`. When empty, Vercel's production URL is used, then `http://localhost:3000`. |
 
 Never commit `.env.local` — it is already ignored by `.gitignore`. Use your hosting provider's secret manager (Vercel Environment Variables, etc.) in production.
@@ -209,5 +209,5 @@ Before going public, fill in `[CONTACT EMAIL]` and `[FIRESTORE REGION]` in `lib/
 ## Notes
 
 - This project uses a customized Next.js 16 setup. Check `AGENTS.md` and `node_modules/next/dist/docs/` for framework specifics before making structural changes.
-- Exchange rates are fetched from open.er-api.com's free endpoint. If you expect heavy usage or need SLAs, swap `lib/services/exchangeRates.ts` for a paid provider.
+- Exchange rates come from the BCCR. Currencies outside its table (e.g. TRY, CZK, HUF) have no rate, so holdings quoted in them stay at cost basis.
 - Market data (Investments tab) uses Twelve Data's free tier via a Next.js route proxy. Free tier limits are 800 requests/day and 8/min; switch to a paid plan if usage grows. Missing keys degrade the tab to cost-basis-only mode; nothing crashes.

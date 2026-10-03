@@ -15,8 +15,9 @@ export interface OwnerCtx {
 
 // FX rate applied to a transaction or transfer. `bccr` means the user picked a
 // Costa Rican bank's window rate (compra when the bank is buying USD, venta
-// when it's selling). `fallback` means BCCR was unreachable and the app used
-// the generic open.er-api.com mid-market rate — the transaction still records
+// when it's selling). `fallback` means no bank rate was available and the app
+// used the general rate (the BCCR reference midpoint; open.er-api.com on
+// transactions saved before October 2026) — the transaction still records
 // which source was used so history is traceable. `manual` is a rate the user
 // typed in themselves. Both `fallback` and `manual` rates are stored in the
 // from → to direction (target currency units per 1 unit of the source).
@@ -165,8 +166,8 @@ export interface RecurringTransaction {
   active: boolean;
   createdAt: string;
   // BCCR bank pick consulted at materialization time when currency differs
-  // from the account's. Only used for USD↔CRC; other pairs fall through to
-  // open.er-api.com. The rate itself is fetched each run, not stored here.
+  // from the account's. Only used for USD↔CRC; other pairs use the general
+  // BCCR rate table. The rate itself is fetched each run, not stored here.
   rateBccrEntity?: { id: string; name: string };
   // Investment templates only: the holding each occurrence buys into. Shares
   // are priced at that day's close when the occurrence is materialized.

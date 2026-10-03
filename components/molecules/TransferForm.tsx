@@ -23,7 +23,7 @@ interface TransferFormProps {
 // USD↔CRC transfers should go through the user-selected BCCR entity so the
 // stored rate matches the bank window that actually cleared the funds. Any
 // other pair (which the app doesn't currently produce, but existing data may)
-// falls through to open.er-api.com the way it always did.
+// falls through to the general BCCR rate table.
 function bccrDirection(
   from: string,
   to: string,

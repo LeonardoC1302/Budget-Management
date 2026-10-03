@@ -345,7 +345,7 @@ export const es: Record<string, string> = {
   "venta (CRC→USD)": "venta (CRC→USD)",
   "Loading BCCR rates…": "Cargando tipos de cambio del BCCR…",
   "Select entity": "Elegir entidad",
-  "BCCR unreachable ({error}). Using open.er-api.com fallback rate.": "No se pudo consultar el BCCR ({error}). Se usa el tipo de cambio de open.er-api.com.",
+  "Bank rates are unavailable ({error}). Using the BCCR reference rate.": "Los tipos de cambio de los bancos no están disponibles ({error}). Se usa el tipo de cambio de referencia del BCCR.",
   "{name} has no {direction} rate posted. Using fallback.": "{name} no tiene tipo de {direction} publicado. Se usa el de respaldo.",
   "Snapshot from {date}": "Datos del {date}",
   "BCCR unavailable ({status})": "BCCR no disponible ({status})",
