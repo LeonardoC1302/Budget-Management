@@ -5,7 +5,7 @@ import { LEGAL_PLACEHOLDERS as P, type LegalDocument } from "@/lib/legal/types";
 
 const en: LegalDocument = {
   title: "Privacy policy",
-  updated: "Last updated: September 30, 2026",
+  updated: "Last updated: October 2, 2026",
   intro:
     "Perch is a personal finance app operated by an individual developer based in Costa Rica (\"we\", \"us\"). This policy explains what information Perch handles, why, who else processes it, and the choices you have.",
   sections: [
@@ -52,7 +52,7 @@ const en: LegalDocument = {
           "Vercel Inc.: hosts the website; its servers log standard request data such as IP addresses.",
           "Twelve Data: provides market prices. Our server sends it ticker symbols and dates only, never your identity.",
           "open.er-api.com: provides exchange rates. Your browser requests the rates directly, so the provider sees your IP address.",
-          "tipodecambio.info: the source of Costa Rican bank window rates. Our server fetches them; no personal information is sent.",
+          "Banco Central de Costa Rica: the source of each bank's window exchange rates. Our server requests them; no personal information is sent.",
         ] },
         { p: "These providers may process data outside Costa Rica, including in the United States." },
       ],
@@ -105,7 +105,7 @@ const en: LegalDocument = {
 
 const es: LegalDocument = {
   title: "Política de privacidad",
-  updated: "Última actualización: 30 de septiembre de 2026",
+  updated: "Última actualización: 2 de octubre de 2026",
   intro:
     "Perch es una aplicación de finanzas personales operada por un desarrollador independiente con sede en Costa Rica (\"nosotros\"). Esta política explica qué información maneja Perch, para qué, quién más la procesa y qué opciones tienes.",
   sections: [
@@ -152,7 +152,7 @@ const es: LegalDocument = {
           "Vercel Inc.: aloja el sitio; sus servidores registran datos estándar de las solicitudes, como direcciones IP.",
           "Twelve Data: provee precios de mercado. Nuestro servidor solo le envía símbolos y fechas, nunca tu identidad.",
           "open.er-api.com: provee tipos de cambio. Tu navegador los solicita directamente, así que el proveedor ve tu dirección IP.",
-          "tipodecambio.info: la fuente de los tipos de cambio de ventanilla de los bancos de Costa Rica. Nuestro servidor los consulta; no se envía información personal.",
+          "Banco Central de Costa Rica: la fuente de los tipos de cambio de ventanilla de cada entidad. Nuestro servidor los consulta; no se envía información personal.",
         ] },
         { p: "Estos proveedores pueden procesar datos fuera de Costa Rica, incluso en Estados Unidos." },
       ],

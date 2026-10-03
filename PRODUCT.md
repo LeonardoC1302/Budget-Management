@@ -74,8 +74,9 @@ truthfully copy:
   - Firebase Authentication with Google Sign-In.
   - Firestore with persistent local cache for per-user data.
   - `open.er-api.com` for general exchange rates (fetched from the browser).
-  - `tipodecambio.info` for Costa Rican bank window rates, via
-    `/api/rates/bccr`.
+  - The Banco Central de Costa Rica's economic data API (SDDE) for each
+    institution's window rates, via `/api/rates/bccr` (needs
+    `BCCR_SDDE_TOKEN`).
   - Twelve Data for market prices, via `/api/market/*`.
   - Every `/api` route requires a Firebase ID token, verified server-side
     with `jose` against Google's public keys.
@@ -166,8 +167,8 @@ Explicitly undecided, recorded so future work does not silently lock it in:
 - The README describes the shipped features, setup and deployment.
 - Legal text lives in `lib/legal/`, with `[CONTACT EMAIL]` and
   `[FIRESTORE REGION]` placeholders in `lib/legal/types.ts`.
-- Rate and price sources: `open.er-api.com` (free tier),
-  `tipodecambio.info`, and Twelve Data's free tier (800 requests/day,
+- Rate and price sources: `open.er-api.com` (free tier), the BCCR SDDE
+  API (table 1015, window rates), and Twelve Data's free tier (800 requests/day,
   8/min) behind `TWELVEDATA_API_KEY`. Without that key, investments fall
   back to cost basis only.
 - There are **no** testimonials, user counts, press mentions, customer

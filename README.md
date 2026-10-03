@@ -6,7 +6,7 @@ Perch is a personal budgeting app for tracking accounts, credit cards, transacti
 
 - **Accounts** — Track balances across debit, credit, wallet, cash, and savings accounts, each in its own currency.
 - **Transactions** — Log income and expenses with categories, descriptions, and dates. Delete or inspect any transaction from the history view.
-- **USD and CRC with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Totals are computed in USD and shown in the display currency you pick (USD or CRC). General rates come from [open.er-api.com](https://open.er-api.com), cached for one hour; Costa Rican bank window rates (compra/venta) come from tipodecambio.info through `/api/rates/bccr`, and a purchase can store the exact rate your bank used.
+- **USD and CRC with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Totals are computed in USD and shown in the display currency you pick (USD or CRC). General rates come from [open.er-api.com](https://open.er-api.com), cached for one hour; Costa Rican bank window rates (compra/venta) come from the Banco Central de Costa Rica's economic data API (SDDE) through `/api/rates/bccr`, and a purchase can store the exact rate your bank used.
 - **Credit cards** — Cut and payment days, the current statement, credit left, and payments of the full statement or of chosen charges.
 - **Search, tags and refunds** — Search the ledger by description, category, account, amount or `#tag`, and filter by period. Tag transactions (e.g. `#japan-trip`) and tap a tag to see what it adds up to by category. Record a refund against an expense; it lowers that category's spend instead of counting as income.
 - **Reconcile** — Check any account or card against your bank. Perch posts a balance adjustment for the difference (not counted as income or spending) and shows when each account was last reconciled.
@@ -118,6 +118,7 @@ The `NEXT_PUBLIC_` variables are read at build time and shipped to the browser. 
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase App ID for the Web app. |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | (Optional) Google Analytics measurement ID. |
 | `TWELVEDATA_API_KEY` | (Optional) [Twelve Data](https://twelvedata.com) API key used by the Investments tab for live ETF/stock/crypto quotes and history. Free tier is fine (800 req/day, 8/min). When unset, the Investments tab still works — holdings simply show cost basis with no market data. This key is server-only and must NOT be prefixed with `NEXT_PUBLIC_`. |
+| `BCCR_SDDE_TOKEN` | Token for the [BCCR economic data API](https://www.bccr.fi.cr/indicadores-economicos/servicio-web), used for each institution's window buy/sell rates (table 1015). Register at the BCCR economic indicators site and generate it under Mi Perfil → Generar token. Server-only. When unset or rejected, the bank picker is unavailable and conversions fall back to open.er-api.com. |
 | `NEXT_PUBLIC_SITE_URL` | (Optional) Public base URL, e.g. `https://perch.example`. Used for canonical links, Open Graph URLs, `robots.txt` and `sitemap.xml`. When empty, Vercel's production URL is used, then `http://localhost:3000`. |
 
 Never commit `.env.local` — it is already ignored by `.gitignore`. Use your hosting provider's secret manager (Vercel Environment Variables, etc.) in production.
@@ -195,7 +196,7 @@ public/        Static assets and the service worker (sw.js)
 
 ## Deployment
 
-The app deploys to [Vercel](https://vercel.com): connect the repo, add the `NEXT_PUBLIC_FIREBASE_*` environment variables (plus `TWELVEDATA_API_KEY` for live prices) in the project settings, and deploy. Any host that supports Next.js 16 works; see the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying) for other targets.
+The app deploys to [Vercel](https://vercel.com): connect the repo, add the `NEXT_PUBLIC_FIREBASE_*` environment variables (plus `TWELVEDATA_API_KEY` for live prices and `BCCR_SDDE_TOKEN` for bank window rates) in the project settings, and deploy. Any host that supports Next.js 16 works; see the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying) for other targets.
 
 When you add a custom domain:
 
