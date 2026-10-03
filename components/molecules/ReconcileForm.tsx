@@ -9,13 +9,13 @@ import type { Account } from "@/lib/types";
 import { t } from "@/lib/i18n";
 interface ReconcileFormProps {
   account: Account;
-  // Balance Perch computes, in the account's currency (negative = owed).
+  // Balance PerchCR computes, in the account's currency (negative = owed).
   balance: number;
   onSubmit: (actualBalance: number) => void | Promise<void>;
 }
 
 /**
- * Compare Perch's balance with the bank's. Cards are entered as the amount
+ * Compare PerchCR's balance with the bank's. Cards are entered as the amount
  * owed, since that's the number the bank app shows.
  */
 export default function ReconcileForm({
@@ -55,17 +55,17 @@ export default function ReconcileForm({
       ? null
       : isCard
         ? diff < 0
-          ? t("The bank shows {0} more owed than Perch.", { "0": formatCurrency(-diff, account.currency) })
-          : t("The bank shows {0} less owed than Perch.", { "0": formatCurrency(diff, account.currency) })
+          ? t("The bank shows {0} more owed than PerchCR.", { "0": formatCurrency(-diff, account.currency) })
+          : t("The bank shows {0} less owed than PerchCR.", { "0": formatCurrency(diff, account.currency) })
         : diff > 0
-          ? t("The bank shows {0} more than Perch.", { "0": formatCurrency(diff, account.currency) })
-          : t("The bank shows {0} less than Perch.", { "0": formatCurrency(-diff, account.currency) });
+          ? t("The bank shows {0} more than PerchCR.", { "0": formatCurrency(diff, account.currency) })
+          : t("The bank shows {0} less than PerchCR.", { "0": formatCurrency(-diff, account.currency) });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="surface-2 px-4 py-3 flex items-center justify-between gap-3 text-sm">
         <span className="text-fg-subtle">
-          {isCard ? t("Perch says you owe") : t("Perch balance")}
+          {isCard ? t("PerchCR says you owe") : t("PerchCR balance")}
         </span>
         <span className="text-fg font-medium tabular-nums">
           {formatCurrency(shown, account.currency)}

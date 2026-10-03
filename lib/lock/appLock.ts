@@ -130,7 +130,7 @@ export async function enableBiometric(
   const credential = (await navigator.credentials.create({
     publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: { name: "Perch", id: window.location.hostname },
+      rp: { name: "PerchCR", id: window.location.hostname },
       user: {
         id: new TextEncoder().encode(uid.slice(0, 64)),
         name: userName,

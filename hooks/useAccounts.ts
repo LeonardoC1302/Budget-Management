@@ -196,7 +196,7 @@ export function useAccounts() {
   );
 
   /**
-   * Line Perch's balance up with the bank's. Posts an adjustment for any
+   * Line PerchCR's balance up with the bank's. Posts an adjustment for any
    * difference (neither income nor spending) and stamps the account as
    * reconciled. `actualBalance` is in the account's currency; negative means
    * owed, as with card balances.

@@ -115,7 +115,7 @@ const SERIES: Record<number, [string, Side]> = {
   91332: ["PRIVAL", "sell"],
 };
 
-// Institution code → the id, name and group Perch has always used for it.
+// Institution code → the id, name and group PerchCR has always used for it.
 // Ids must not change: recurring items and transactions store them.
 const INSTITUTIONS: Record<string, { id: string; name: string; category: string }> = {
   BANCOSTA: { id: "banco-de-costa-rica", name: "Banco de Costa Rica", category: "Banks" },

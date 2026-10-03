@@ -168,7 +168,7 @@ export default function AccountMenu() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title={t("Sign out of Perch?")}
+        title={t("Sign out of PerchCR?")}
         message={
           unsynced
             ? t("Some changes on this device haven't synced yet. Connect to the internet and wait for “Syncing changes” to finish, or they'll be lost.")

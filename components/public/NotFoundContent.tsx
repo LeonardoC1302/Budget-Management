@@ -13,7 +13,7 @@ export default function NotFoundContent() {
       actions={
         <>
           <Link href="/home" className="btn btn-primary btn-lg">
-            {t("Open Perch")}
+            {t("Open PerchCR")}
           </Link>
           <Link href="/?stay" className="btn btn-secondary btn-lg">
             {t("Go to the home page")}

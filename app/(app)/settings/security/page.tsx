@@ -96,7 +96,7 @@ export default function SecurityPage() {
       return;
     }
     await run(
-      () => enableBiometric(uid, user?.email ?? user?.displayName ?? "Perch"),
+      () => enableBiometric(uid, user?.email ?? user?.displayName ?? "PerchCR"),
       t("Fingerprint unlock is on."),
     );
   }
@@ -133,7 +133,7 @@ export default function SecurityPage() {
 
       <p className="lede text-sm">
         {t(
-          "Ask for a PIN, or your fingerprint or face, when Perch opens on this device. It's set per device: locking your phone doesn't lock your laptop.",
+          "Ask for a PIN, or your fingerprint or face, when PerchCR opens on this device. It's set per device: locking your phone doesn't lock your laptop.",
         )}
       </p>
 
@@ -215,7 +215,7 @@ export default function SecurityPage() {
 
       <p className="text-xs text-fg-subtle">
         {t(
-          "The lock keeps someone holding your unlocked phone out of Perch. It doesn't encrypt the data stored on this device. If you forget the PIN, sign out and sign back in with Google.",
+          "The lock keeps someone holding your unlocked phone out of PerchCR. It doesn't encrypt the data stored on this device. If you forget the PIN, sign out and sign back in with Google.",
         )}
       </p>
     </div>

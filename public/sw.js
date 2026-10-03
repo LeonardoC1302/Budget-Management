@@ -12,7 +12,7 @@
  * Next falls back to a full page load, which lands in the navigation handler.
  */
 
-const CACHE_NAME = "perch-shell-v4";
+const CACHE_NAME = "perch-shell-v5";
 
 const APP_ROUTES = [
   "/",

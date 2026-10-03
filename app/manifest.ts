@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Perch",
-    short_name: "Perch",
+    name: "PerchCR",
+    short_name: "PerchCR",
     description: "A quiet place for your money to rest.",
     // Installed copies are identified by `id`. It was implicitly "/" (the old
     // start_url); pinning it keeps existing installs the same app now that

@@ -18,15 +18,15 @@ export default function GlobalError({ reset }: { reset: () => void }) {
       >
         <main style={{ maxWidth: 480, padding: 24 }}>
           <p style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#c1bcae" }}>
-            Perch
+            PerchCR
           </p>
           <h1 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 36, lineHeight: 1.1, margin: "12px 0" }}>
             Something went wrong.
           </h1>
           <p style={{ color: "#c1bcae", lineHeight: 1.6 }}>
-            Perch couldn&apos;t load. Your data is safe.
+            PerchCR couldn&apos;t load. Your data is safe.
             <br />
-            Perch no pudo cargar. Tus datos están a salvo.
+            PerchCR no pudo cargar. Tus datos están a salvo.
           </p>
           <button
             type="button"

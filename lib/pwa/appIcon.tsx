@@ -6,7 +6,7 @@ interface IconOptions {
 }
 
 /**
- * Perch app icon: white bird on a horizontal perch, on a dark
+ * PerchCR app icon: white bird on a horizontal perch, on a dark
  * canvas that matches the app background. Renders identically at
  * any size — the eye is a small purple accent that disappears at
  * favicon scale, leaving a clean silhouette.

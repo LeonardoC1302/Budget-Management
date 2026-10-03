@@ -34,11 +34,11 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "Perch — a quiet place for your money to rest",
-    template: "%s · Perch",
+    default: "PerchCR — a quiet place for your money to rest",
+    template: "%s · PerchCR",
   },
   description: DESCRIPTION,
-  applicationName: "Perch",
+  applicationName: "PerchCR",
   keywords: [
     "presupuesto",
     "finanzas personales",
@@ -51,20 +51,20 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
-    siteName: "Perch",
-    title: "Perch — a quiet place for your money to rest",
+    siteName: "PerchCR",
+    title: "PerchCR — a quiet place for your money to rest",
     description: DESCRIPTION,
     locale: "en_US",
     alternateLocale: ["es_CR"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Perch — a quiet place for your money to rest",
+    title: "PerchCR — a quiet place for your money to rest",
     description: DESCRIPTION,
   },
   appleWebApp: {
     capable: true,
-    title: "Perch",
+    title: "PerchCR",
     statusBarStyle: "black-translucent",
   },
   formatDetection: {

@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
 
-// The preview shown when a Perch link is shared: the mark on the app's warm
+// The preview shown when a PerchCR link is shared: the mark on the app's warm
 // night, the name and the tagline.
-export const alt = "Perch — a quiet place for your money to rest";
+export const alt = "PerchCR — a quiet place for your money to rest";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -33,7 +33,7 @@ export default function OpengraphImage() {
             <circle cx="35" cy="40" r="1.8" fill="#a3d1c1" />
           </svg>
           <span style={{ fontSize: 30, letterSpacing: 10, textTransform: "uppercase" }}>
-            Perch
+            PerchCR
           </span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>

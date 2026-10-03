@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Perch",
+  name: "PerchCR",
   applicationCategory: "FinanceApplication",
   operatingSystem: "Web, Android, iOS",
   inLanguage: ["en", "es"],

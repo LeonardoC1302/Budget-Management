@@ -39,7 +39,7 @@ export default function LegalPage({
       </div>
       <p className="mt-12 text-sm">
         <Link href="/?stay" className="text-fg-muted hover:text-fg underline underline-offset-4">
-          {t("Back to Perch")}
+          {t("Back to PerchCR")}
         </Link>
       </p>
     </article>

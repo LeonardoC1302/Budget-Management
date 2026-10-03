@@ -1,6 +1,6 @@
-# Budget Management (Perch)
+# Budget Management (PerchCR)
 
-Perch is a personal budgeting app for tracking accounts, credit cards, transactions, budgets, savings goals and investments in US dollars and Costa Rican colones. It has a public landing page at `/` and the signed-in app at `/home`. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, and Firebase.
+PerchCR is a personal budgeting app for tracking accounts, credit cards, transactions, budgets, savings goals and investments in US dollars and Costa Rican colones. It has a public landing page at `/` and the signed-in app at `/home`. Built with Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, and Firebase.
 
 ## Features
 
@@ -9,7 +9,7 @@ Perch is a personal budgeting app for tracking accounts, credit cards, transacti
 - **USD and CRC with USD normalization** — Every transaction and account stores its original currency amount plus a USD-converted value. Totals are computed in USD and shown in the display currency you pick (USD or CRC). All rates come from the Banco Central de Costa Rica's economic data API (SDDE): general conversions use table 520 (dollar↔colón at the midpoint of the reference buy and sell rates, plus about 45 other currencies) through `/api/rates/usd`, cached for one hour; each bank's window rates (compra/venta) come from table 1015 through `/api/rates/bccr`, and a purchase can store the exact rate your bank used.
 - **Credit cards** — Cut and payment days, the current statement, credit left, and payments of the full statement or of chosen charges.
 - **Search, tags and refunds** — Search the ledger by description, category, account, amount or `#tag`, and filter by period. Tag transactions (e.g. `#japan-trip`) and tap a tag to see what it adds up to by category. Record a refund against an expense; it lowers that category's spend instead of counting as income.
-- **Reconcile** — Check any account or card against your bank. Perch posts a balance adjustment for the difference (not counted as income or spending) and shows when each account was last reconciled.
+- **Reconcile** — Check any account or card against your bank. PerchCR posts a balance adjustment for the difference (not counted as income or spending) and shows when each account was last reconciled.
 - **Card installments** — Split a credit-card purchase into monthly installments. The card owes the full amount right away; each month's slice lands on its own statement and budget month, and future slices are listed on the Cards page.
 - **CSV import & export** — Settings → Import & export downloads every transaction as CSV and imports income/expenses from a CSV (English or Spanish headers, comma or semicolon, either number format) with a preview, duplicate detection, and a one-tap undo.
 - **Transaction details modal** — Click any row on the `/transactions` page to view the full transaction with the amount in its original currency.
@@ -119,7 +119,7 @@ The `NEXT_PUBLIC_` variables are read at build time and shipped to the browser. 
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | (Optional) Google Analytics measurement ID. |
 | `TWELVEDATA_API_KEY` | (Optional) [Twelve Data](https://twelvedata.com) API key used by the Investments tab for live ETF/stock/crypto quotes and history. Free tier is fine (800 req/day, 8/min). When unset, the Investments tab still works — holdings simply show cost basis with no market data. This key is server-only and must NOT be prefixed with `NEXT_PUBLIC_`. |
 | `BCCR_SDDE_TOKEN` | Token for the [BCCR economic data API](https://www.bccr.fi.cr/indicadores-economicos/servicio-web), used for all exchange rates: general conversions (table 520) and each institution's window buy/sell rates (table 1015). Register at the BCCR economic indicators site and generate it under Mi Perfil → Generar token. Server-only and required: without it, new conversions fail (the last rates stay cached on each device for offline use). |
-| `NEXT_PUBLIC_SITE_URL` | (Optional) Public base URL, e.g. `https://perch.example`. Used for canonical links, Open Graph URLs, `robots.txt` and `sitemap.xml`. When empty, Vercel's production URL is used, then `http://localhost:3000`. |
+| `NEXT_PUBLIC_SITE_URL` | (Optional) Public base URL, e.g. `https://perchcr.dev`. Used for canonical links, Open Graph URLs, `robots.txt` and `sitemap.xml`. When empty, Vercel's production URL is used, then `http://localhost:3000`. |
 
 Never commit `.env.local` — it is already ignored by `.gitignore`. Use your hosting provider's secret manager (Vercel Environment Variables, etc.) in production.
 

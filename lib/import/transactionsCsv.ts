@@ -28,7 +28,7 @@ export type ColumnKey =
 
 export type ColumnMap = Record<ColumnKey, number>;
 
-// Header synonyms, lowercase and accent-free. Covers Perch's own export plus
+// Header synonyms, lowercase and accent-free. Covers PerchCR's own export plus
 // the usual English and Spanish bank/spreadsheet headers.
 const SYNONYMS: Record<ColumnKey, string[]> = {
   date: ["date", "fecha", "fecha de transaccion", "fecha contable", "posted", "transaction date"],
@@ -90,7 +90,7 @@ function typeFrom(raw: string): EntryType | "transfer" | "investment" | null {
   const v = fold(raw);
   if (["income", "ingreso", "ingresos", "credit", "credito", "abono"].includes(v)) return "income";
   if (["expense", "gasto", "gastos", "debit", "debito", "cargo"].includes(v)) return "expense";
-  // Perch's own export writes "transfer-out" / "transfer-in".
+  // PerchCR's own export writes "transfer-out" / "transfer-in".
   if (v.startsWith("transfer")) return "transfer";
   if (["investment", "inversion"].includes(v)) return "investment";
   return null;

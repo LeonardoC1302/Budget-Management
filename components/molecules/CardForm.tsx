@@ -75,7 +75,7 @@ export default function CardForm({ initial, onSubmit, onCancel }: CardFormProps)
     const pay = parseDay(paymentDay);
 
     if (cut === undefined || pay === undefined) {
-      setError(t("Add both a cut day and a payment day so Perch can track your cycle."));
+      setError(t("Add both a cut day and a payment day so PerchCR can track your cycle."));
       return;
     }
     if (cut < 1 || cut > 31 || pay < 1 || pay > 31) {

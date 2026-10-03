@@ -27,7 +27,7 @@ export default function ErrorPage({
             {t("Try again")}
           </button>
           <Link href="/home" className="btn btn-secondary btn-lg">
-            {t("Open Perch")}
+            {t("Open PerchCR")}
           </Link>
         </>
       }

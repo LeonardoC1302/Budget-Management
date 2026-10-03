@@ -182,7 +182,7 @@ function LockScreen({
         <PerchMark size={32} />
         <div className="flex flex-col gap-1">
           <h1 id="lock-title" className="heading-lg">
-            {t("Perch is locked")}
+            {t("PerchCR is locked")}
           </h1>
           <p className="text-sm text-fg-muted">
             {settings.credentialId
