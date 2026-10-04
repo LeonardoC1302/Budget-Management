@@ -6,6 +6,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { formatDateHeader } from "@/lib/utils/format";
 import { formatCurrencyCompact, formatCurrency } from "@/lib/utils/format";
 import type { Account, Category, Transaction } from "@/lib/types";
+import { countsAsIncome, spendSign } from "@/lib/utils/refunds";
 
 import { t } from "@/lib/i18n";
 interface TransactionListProps {
@@ -90,14 +91,14 @@ export default function TransactionList({
     );
   }
 
-  // Native amounts (already in displayCurrency) are summed as-is; amounts in
-  // other currencies fall back to the USD-normalized aggregate, converted once.
+  // Each day's net: income minus spending, with refunds lowering spending and
+  // reconcile adjustments left out, the same rules as the rest of the app.
+  // Amounts already in displayCurrency are summed as-is; the rest use their
+  // USD value, converted once below.
   const groups: {
     date: string;
-    nativeIncome: number;
-    nativeExpense: number;
-    usdIncome: number;
-    usdExpense: number;
+    native: number;
+    usd: number;
     items: Transaction[];
   }[] = [];
   for (const t of visible) {
@@ -110,32 +111,25 @@ export default function TransactionList({
         : (() => {
             const g = {
               date: dateKey,
-              nativeIncome: 0,
-              nativeExpense: 0,
-              usdIncome: 0,
-              usdExpense: 0,
+              native: 0,
+              usd: 0,
               items: [] as Transaction[],
             };
             groups.push(g);
             return g;
           })();
     group.items.push(t);
-    if (t.type === "income") {
-      if (isNative) group.nativeIncome += t.amount;
-      else group.usdIncome += t.amountUSD;
-    } else if (t.type === "expense") {
-      if (isNative) group.nativeExpense += t.amount;
-      else group.usdExpense += t.amountUSD;
-    }
+    const sign = countsAsIncome(t) ? 1 : -spendSign(t);
+    if (sign === 0) continue;
+    if (isNative) group.native += sign * t.amount;
+    else group.usd += sign * t.amountUSD;
   }
 
   return (
     <div className="flex flex-col">
       {groups.map((group) => {
-        const net =
-          group.nativeIncome -
-          group.nativeExpense +
-          convertUsd(group.usdIncome - group.usdExpense);
+        // Already in displayCurrency.
+        const net = group.native + convertUsd(group.usd);
         const netTone = net >= 0 ? "pos" : "neg";
         return (
           <section key={group.date}>
@@ -146,7 +140,7 @@ export default function TransactionList({
               <span className={`day-head-meta ${netTone}`}>
                 {net >= 0 ? "+" : "−"}
                 {(compact ? formatCurrencyCompact : formatCurrency)(
-                  Math.abs(convertUsd(net)),
+                  Math.abs(net),
                   displayCurrency,
                 )}
               </span>
