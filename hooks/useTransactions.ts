@@ -47,7 +47,14 @@ export function useTransactions() {
         return;
       }
       const created = await transactionStore.add(input);
-      setTransactions((prev) => sortByTransactionDate([created, ...prev]));
+      // The live listener can refresh the list (with the new doc) while the
+      // write is still waiting for the server, so drop any copy first.
+      setTransactions((prev) =>
+        sortByTransactionDate([
+          created,
+          ...prev.filter((t) => t.id !== created.id),
+        ]),
+      );
     },
     [refresh],
   );

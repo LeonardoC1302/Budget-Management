@@ -63,21 +63,13 @@ function PublicHeader() {
       </a>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center gap-3">
         <Link
-          href="/?stay"
+          href="/"
           className="nameplate-brand hover:opacity-80 transition-opacity"
           aria-label={t("PerchCR home")}
         >
           <PerchMark size={20} />
           <span>PerchCR</span>
         </Link>
-        <nav aria-label={t("Sections")} className="hidden md:flex items-center gap-1 ml-6">
-          <Link href="/?stay#features" className="btn btn-ghost btn-sm">
-            {t("Features")}
-          </Link>
-          <Link href="/?stay#questions" className="btn btn-ghost btn-sm">
-            {t("Questions")}
-          </Link>
-        </nav>
         <div className="ml-auto flex items-center gap-1">
           <LanguageSwitch />
           <ThemeToggle />

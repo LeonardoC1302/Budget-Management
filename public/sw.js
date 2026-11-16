@@ -10,13 +10,19 @@
  *
  * Next's client-side navigations fetch RSC payloads. Offline those fail and
  * Next falls back to a full page load, which lands in the navigation handler.
+ *
+ * Phones often have a signal that connects but carries nothing. A plain
+ * network-first fetch then hangs for half a minute before giving up, so both
+ * page loads and RSC fetches get a short timeout before falling back.
  */
 
-const CACHE_NAME = "perch-shell-v5";
+const CACHE_NAME = "perch-shell-v6";
+const PAGE_TIMEOUT_MS = 3000;
+const RSC_TIMEOUT_MS = 4000;
 
 const APP_ROUTES = [
-  "/",
   "/home",
+  "/",
   "/privacy",
   "/terms",
   "/transactions",
@@ -108,33 +114,71 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-async function handleNavigation(req) {
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("timeout")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+function storePage(url, fresh, cache) {
+  if (!fresh.ok || fresh.type !== "basic") return Promise.resolve();
+  // Refresh this page and its assets in the background after a deploy.
+  return fresh
+    .clone()
+    .text()
+    .then((html) =>
+      cache
+        .put(pageKey(url), new Response(html, { headers: fresh.headers }))
+        .then(() => cacheAssetsFrom(html, cache)),
+    )
+    .catch(() => {});
+}
+
+async function handleNavigation(event) {
+  const req = event.request;
   const cache = await caches.open(CACHE_NAME);
   const url = new URL(req.url);
-  try {
-    const fresh = await fetch(req);
-    if (fresh.ok && fresh.type === "basic") {
-      const copy = fresh.clone();
-      // Refresh this page and its assets in the background after a deploy.
-      copy
-        .text()
-        .then((html) =>
-          cache
-            .put(
-              pageKey(url),
-              new Response(html, { headers: fresh.headers }),
-            )
-            .then(() => cacheAssetsFrom(html, cache)),
-        )
-        .catch(() => {});
-    }
+  const network = fetch(req).then((fresh) => {
+    event.waitUntil(storePage(url, fresh, cache));
     return fresh;
-  } catch (err) {
+  });
+  // Keep the request alive after a timeout so the cache still gets refreshed.
+  event.waitUntil(network.catch(() => {}));
+  try {
+    return await withTimeout(network, PAGE_TIMEOUT_MS);
+  } catch {
     const cached =
-      (await cache.match(pageKey(url))) ?? (await cache.match(pageKey(new URL("/", url))));
+      (await cache.match(pageKey(url))) ??
+      (await cache.match(pageKey(new URL("/home", url))));
     if (cached) return cached;
-    throw err;
+    // Nothing cached for this page: keep waiting on the network.
+    return network;
   }
+}
+
+// RSC payloads for client-side navigations. Failing fast makes Next fall back
+// to a full page load, which the navigation handler can answer from cache.
+async function handleRsc(req) {
+  if (self.navigator.onLine === false) return Response.error();
+  try {
+    return await withTimeout(fetch(req), RSC_TIMEOUT_MS);
+  } catch {
+    return Response.error();
+  }
+}
+
+function isRsc(req, url) {
+  return req.headers.get("RSC") === "1" || url.searchParams.has("_rsc");
 }
 
 async function handleStatic(req) {
@@ -153,7 +197,11 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === "navigate") {
-    event.respondWith(handleNavigation(req));
+    event.respondWith(handleNavigation(event));
+    return;
+  }
+  if (isRsc(req, url)) {
+    event.respondWith(handleRsc(req));
     return;
   }
   if (isStatic(url)) {
