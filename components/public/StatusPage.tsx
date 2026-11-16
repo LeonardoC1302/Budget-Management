@@ -28,7 +28,7 @@ export default function StatusPage({ code, title, body, actions }: StatusPagePro
       <div className="flex-1 flex flex-col">
         <header className="border-b border-border">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center">
-            <Link href="/?stay" className="nameplate-brand hover:opacity-80 transition-opacity">
+            <Link href="/" className="nameplate-brand hover:opacity-80 transition-opacity">
               <PerchMark size={20} />
               <span>PerchCR</span>
             </Link>

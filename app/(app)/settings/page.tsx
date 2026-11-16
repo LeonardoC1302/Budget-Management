@@ -58,11 +58,6 @@ const SECTIONS: { heading: string; links: SettingsLink[] }[] = [
     heading: "About",
     links: [
       {
-        href: "/?stay",
-        title: "PerchCR website",
-        description: "The public home page.",
-      },
-      {
         href: "/privacy",
         title: "Privacy policy",
         description: "What PerchCR collects and how it's used.",

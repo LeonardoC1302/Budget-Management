@@ -72,6 +72,7 @@ export default function TransactionForm({
   const [splitInstallments, setSplitInstallments] = useState(false);
   const [installmentCount, setInstallmentCount] = useState("3");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   // Explicit user override for the transaction currency. `null` means "track
   // the account's currency", so switching accounts still auto-updates.
   const [currencyOverride, setCurrencyOverride] = useState<string | null>(
@@ -196,28 +197,34 @@ export default function TransactionForm({
     }
 
     setSubmitting(true);
-    await onSubmit(
-      {
-      type,
-      amount: parsed,
-      currency,
-      accountId,
-      categoryId,
-      description: description.trim(),
-      date,
-      ...(initial?.recurringId ? { recurringId: initial.recurringId } : {}),
-      ...(rateSource ? { rateSource } : {}),
-      // Send an empty list only when clearing tags an edit started with, so
-      // untagged transactions don't gain a `tags` field.
-      ...(tags.length > 0 || initial?.tags?.length ? { tags } : {}),
-      },
-      installments > 1 ? { installments } : undefined,
-    );
-    if (!isEditing) {
-      setAmount("");
-      setDescription("");
+    setSubmitError(null);
+    try {
+      await onSubmit(
+        {
+        type,
+        amount: parsed,
+        currency,
+        accountId,
+        categoryId,
+        description: description.trim(),
+        date,
+        ...(initial?.recurringId ? { recurringId: initial.recurringId } : {}),
+        ...(rateSource ? { rateSource } : {}),
+        // Send an empty list only when clearing tags an edit started with, so
+        // untagged transactions don't gain a `tags` field.
+        ...(tags.length > 0 || initial?.tags?.length ? { tags } : {}),
+        },
+        installments > 1 ? { installments } : undefined,
+      );
+      if (!isEditing) {
+        setAmount("");
+        setDescription("");
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t("Couldn't save."));
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   }
 
   const loading = accountsLoading || categoriesLoading;
@@ -383,6 +390,12 @@ export default function TransactionForm({
             </>
           )}
         </div>
+      )}
+
+      {submitError && (
+        <p role="alert" className="text-sm text-expense">
+          {submitError}
+        </p>
       )}
 
       <Button

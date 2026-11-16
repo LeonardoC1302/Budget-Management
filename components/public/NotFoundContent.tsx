@@ -15,9 +15,6 @@ export default function NotFoundContent() {
           <Link href="/home" className="btn btn-primary btn-lg">
             {t("Open PerchCR")}
           </Link>
-          <Link href="/?stay" className="btn btn-secondary btn-lg">
-            {t("Go to the home page")}
-          </Link>
         </>
       }
     />

@@ -33,7 +33,7 @@ export default function DeleteAccountPage() {
     try {
       await deleteAccountAndData(setStep);
       // Firestore was shut down; a full load gives a clean slate.
-      window.location.href = "/?stay&deleted";
+      window.location.href = "/";
     } catch (err) {
       setStep(null);
       const code = (err as { code?: string; message?: string } | null)?.code;
